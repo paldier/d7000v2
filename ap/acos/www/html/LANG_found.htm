@@ -1,0 +1,94 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR Router <%55%></title>
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<%12%>
+<script language="javascript" type="text/javascript">
+<!-- hide script from old browsers
+
+
+    $(document).ready(function()
+    {	
+        $("#target").submit(function() {
+            buttonFilter();
+        });     
+    });
+
+function goHome() {
+
+    if(document.forms[0].call_by_genie.value == 1 )
+             window.location.href="genie_redirect_successpage3.htm";
+    else if (document.forms[0].enable_ap_mode.value == 1 || document.forms[0].enable_sta_mode.value == 1)
+	    location.href="RST_status.htm";
+    else
+        location.href="BAS_basic.htm";
+        
+    return true;
+}
+//-->
+</script>
+</head>
+<body  style="margin:0px;background-color:#e5e5e5">
+<form name="formname" method="POST" action="lang_result.cgi"> 
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr>
+    <td colspan="2">
+        <h1><%2356%></h1>
+    </td>
+</tr>
+<tr>
+    <td colspan="2" background="liteblue.gif" height="12"></td>
+</tr>
+<tr>
+    <td colspan="2">
+        <b><%2367%></b>
+    </td>
+</tr>
+<tr>
+    <td width="50%">
+        <%2368%>
+    </td>
+    <td width="50%">
+        <%2363%>
+    </td>
+</tr>
+<tr>
+    <td width="50%">
+        <%2364%>
+    </td>
+    <td width="50%">
+        <%2365%>
+    </td>
+</tr>
+<tr>
+    <td colspan="2">
+        <b><%2369%></b>
+    </td>
+</tr>
+<tr>
+    <td colspan="2" background="liteblue.gif" height="12"></td>
+</tr>
+<tr>
+    <td colspan="2" align="center">
+        &nbsp;&nbsp;&nbsp;<button type="submit" name="Yes" value="<%379%>" class="button-rule" onClick="buttonClick(this,'<%379%>');return true;"><span class="roundleft_button">&nbsp;&nbsp; <%379%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+        &nbsp;&nbsp;&nbsp;<button type="button" name="No" value="<%380%>" class="button-rule" onClick="buttonClick(this,'<%380%>');return goHome();"><span class="roundleft_button">&nbsp;&nbsp; <%380%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+    </td>
+</tr>
+</table>
+<input type="hidden" name="enable_ap_mode" value="<%363%>">
+<input type="hidden" name="enable_sta_mode" value="<%364%>">
+</form>
+</body>
+</html>

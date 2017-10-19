@@ -1,0 +1,13 @@
+diff --git a/src/utils/eloop.c b/src/utils/eloop.c
+--- a/src/utils/eloop.c
++++ b/src/utils/eloop.c
+@@ -811,7 +811,7 @@ static void eloop_handle_signal(int sig)
+ 		 * would not allow the program to be killed. */
+ 		eloop.pending_terminate = 1;
+ 		signal(SIGALRM, eloop_handle_alarm);
+-		alarm(2);
++		alarm(30);
+ 	}
+ #endif /* CONFIG_NATIVE_WINDOWS */
+ 
+

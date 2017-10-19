@@ -1,0 +1,46 @@
+# HG changeset patch
+# Parent f0f29cc8fb44f0f54adb42ff9bf35d0a23de0f85
+diff --git a/hostapd/config_file.c b/hostapd/config_file.c
+--- a/hostapd/config_file.c
++++ b/hostapd/config_file.c
+@@ -3271,6 +3271,8 @@
+ 		bss->hs20 = atoi(pos);
+ 	} else if (os_strcmp(buf, "disable_dgaf") == 0) {
+ 		bss->disable_dgaf = atoi(pos);
++	} else if (os_strcmp(buf, "proxy_arp") == 0) {
++		bss->proxy_arp = atoi(pos);
+ 	} else if (os_strcmp(buf, "osen") == 0) {
+ 		bss->osen = atoi(pos);
+ 	} else if (os_strcmp(buf, "anqp_domain_id") == 0) {
+diff --git a/src/ap/ap_config.h b/src/ap/ap_config.h
+--- a/src/ap/ap_config.h
++++ b/src/ap/ap_config.h
+@@ -459,6 +459,7 @@
+ 	unsigned int qos_map_set_len;
+ 
+ 	int osen;
++	int proxy_arp;
+ #ifdef CONFIG_HS20
+ 	int hs20;
+ 	int disable_dgaf;
+diff --git a/src/ap/ieee802_11_shared.c b/src/ap/ieee802_11_shared.c
+--- a/src/ap/ieee802_11_shared.c
++++ b/src/ap/ieee802_11_shared.c
+@@ -174,6 +174,8 @@
+ 			*pos |= 0x01; /* Bit 0 - Coexistence management */
+ 		break;
+ 	case 1: /* Bits 8-15 */
++		if (hapd->conf->proxy_arp)
++			*pos |= 0x10; /* Bit 12 - Proxy ARP */
+ 		break;
+ 	case 2: /* Bits 16-23 */
+ 		if (hapd->conf->wnm_sleep_mode)
+@@ -229,6 +231,8 @@
+ 		len = 1;
+ 	if (len < 7 && hapd->conf->ssid.utf8_ssid)
+ 		len = 7;
++	if (len < 2 && hapd->conf->proxy_arp)
++		len = 2;
+ #ifdef CONFIG_WNM
+ 	if (len < 4)
+ 		len = 4;

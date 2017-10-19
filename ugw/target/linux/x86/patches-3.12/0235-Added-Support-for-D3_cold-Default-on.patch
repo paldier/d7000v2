@@ -1,0 +1,29 @@
+From 452e8688661c1f04e5dbdb2acdac11af7233b27d Mon Sep 17 00:00:00 2001
+From: "Christensen, Taylor" <taylor.christensen@intel.com>
+Date: Mon, 2 Nov 2015 14:44:57 -0800
+Subject: [PATCH] Added Support for D3_cold Default on
+
+For the PCIe port Power Management we want D3_Cold support we want
+it set to be default on, not default off, so the change is made to
+reflect this. It is a simple one line change, that has been verified
+by several people in the PM group.
+---
+ drivers/pci/pcie/portdrv_pci.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/pci/pcie/portdrv_pci.c b/drivers/pci/pcie/portdrv_pci.c
+index ecfa857..a174614 100644
+--- a/drivers/pci/pcie/portdrv_pci.c
++++ b/drivers/pci/pcie/portdrv_pci.c
+@@ -221,7 +221,7 @@ static int pcie_portdrv_probe(struct pci_dev *dev,
+ 	 * D3cold may not work properly on some PCIe port, so disable
+ 	 * it by default.
+ 	 */
+-	dev->d3cold_allowed = false;
++	dev->d3cold_allowed = true;
+ 	pm_runtime_put_noidle(&dev->dev);
+ 	return 0;
+ }
+-- 
+1.7.9.5
+

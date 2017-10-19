@@ -1,0 +1,137 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR   Genie</title>
+<link rel="stylesheet" href="<%13%>">
+
+<script language="javascript" type="text/javascript" src="utility.js"></script>
+<script language="javascript" type="text/javascript">
+<!--
+
+function nextFunction()
+{
+    var cf = document.forms[0];
+    var msg = "";
+    var vpi = cf.dsl_vpi.value;
+    var vci = cf.dsl_vci.value;
+
+    if( isNumeric(cf.dsl_vpi, 255) ) 
+        msg += "<%43%>.\n"
+    if( isNumeric(cf.dsl_vci, 65535) ) 
+        msg += "<%44%>.\n"
+    if (vpi < 0 || vpi > 255) 
+        msg += "<%45%>.\n"
+    if (vci < 32 || vci > 65535)
+        msg += "<%46%>."
+
+    if (msg.length > 1)
+    {
+        alert(msg);
+        return false;
+    }
+    document.forms[0].submit();
+}
+//-->
+</script>
+<style>
+.centerTd
+{
+	font-family:Arial;  
+	font-size:14px;
+	height:15px;
+    color:#404040;    
+	width:600px;
+	padding-left:20px;
+}
+.centerTd2
+{
+	font-family:Arial;  
+	font-size:10px;
+	height:15px;
+    color:#404040;    
+	width:600px;
+	text-align:center;
+}
+
+.centerTd3
+{
+	font-family:Arial;  
+	font-size:14px;
+	height:15px;
+	color:#404040;    
+	padding-left:30px;
+}
+
+.centerTd4
+{
+	font-family:Arial;  
+	font-size:14px;
+	height:15px;
+	color:#404040;    
+}
+
+.textRow
+{
+	font-family:Arial;  
+	font-size:14px;
+	height:15px;
+    color:#404040;              
+}
+</style>
+</head>
+
+<body bgcolor="#ffffff">
+<form name="formname" method="POST" action="changlang.cgi"> 
+	<table border="0" cellpadding="0" cellspacing="3" width="99%">
+	<tr style="height:20px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+
+	<tr>
+		<td>&nbsp;</td><td class="centerTd"><h2><%47%></h2></td><td>&nbsp;</td>
+	</tr>
+    <tr>
+		<td>&nbsp;</td><td class="centerTd"><%48%></td><td>&nbsp;</td>
+	</tr>
+	<tr style="height:20px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+	<td>&nbsp;</td><td class="centerTd"><span style="padding-left:30px;float:left"><%49%></span>
+		<select name="multiplex" size=1 style="float:right;margin-right:50px;width:220px"><option selected><%50%></option><option><%51%></option></select>
+	</td><td>&nbsp;</td>
+	</tr>
+	<tr style="height:20px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+	<tr>
+			<td>&nbsp;</td><td class="centerTd"><span style="padding-left:30px;float:left">VPI</span>
+			<input type="text" name="dsl_vpi" class="num" value="" size="3" maxlength="3" size=1 style="float:right;margin-right:50px;width:215px">
+	</td><td>&nbsp;</td>
+	</tr>
+	<tr style="height:20px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+	<tr>
+			<td>&nbsp;</td><td class="centerTd"><span style="padding-left:30px;float:left">VCI</span>
+			<input type="text" name="dsl_vci" class="num" value="" size="5" maxlength="5" size=1 style="float:right;margin-right:50px;width:215px">
+	</td><td>&nbsp;</td>
+	</tr>
+			
+	<tr style="line-height:40px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td><td class="centerTd"><%33%> <a href="log2.htm" target="_blank"><%34%></a> <%35%>  </td><td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>	
+		<td class="centerTd2"><button type="button" style="width:100px" value="submit" class="purpleBtn" name="next" onClick="nextFunction();" ><span><%36%></span></button></td>
+		<td>&nbsp;</td>	
+	</tr>
+	</table>
+<INPUT name=WANDetc type=hidden value= "adv_adsl">
+</form>
+</body>
+</html>
+

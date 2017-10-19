@@ -1,0 +1,50 @@
+diff --git a/src/ap/beacon.c b/src/ap/beacon.c
+--- a/src/ap/beacon.c
++++ b/src/ap/beacon.c
+@@ -913,12 +913,18 @@ int ieee802_11_build_ap_params(struct ho
+ 				ERP_INFO_USE_PROTECTION);
+ 	params->preamble = hapd->iface->num_sta_no_short_preamble == 0 &&
+ 		hapd->iconf->preamble == SHORT_PREAMBLE;
+-	if (hapd->iface->current_mode &&
+-	    hapd->iface->current_mode->mode == HOSTAPD_MODE_IEEE80211G)
+-		params->short_slot_time =
+-			hapd->iface->num_sta_no_short_slot_time > 0 ? 0 : 1;
+-	else
++	if (hapd->iface->current_mode) {
++		if (hapd->iface->current_mode->mode == HOSTAPD_MODE_IEEE80211B) {
++			params->short_slot_time = 0;
++		} else if (hapd->iface->current_mode->mode == HOSTAPD_MODE_IEEE80211G) {
++			params->short_slot_time =
++				hapd->iface->num_sta_no_short_slot_time > 0 ? 0 : 1;
++		} else {
++			params->short_slot_time = 1;
++		}
++	} else {
+ 		params->short_slot_time = -1;
++	}
+ 	if (!hapd->iconf->ieee80211n || hapd->conf->disable_11n)
+ 		params->ht_opmode = -1;
+ 	else
+diff --git a/src/ap/ieee802_11.c b/src/ap/ieee802_11.c
+--- a/src/ap/ieee802_11.c
++++ b/src/ap/ieee802_11.c
+@@ -182,10 +182,15 @@ u16 hostapd_own_capab_info(struct hostap
+ 	if (privacy)
+ 		capab |= WLAN_CAPABILITY_PRIVACY;
+ 
+-	if (hapd->iface->current_mode &&
+-	    hapd->iface->current_mode->mode == HOSTAPD_MODE_IEEE80211G &&
+-	    hapd->iface->num_sta_no_short_slot_time == 0)
+-		capab |= WLAN_CAPABILITY_SHORT_SLOT_TIME;
++	if (hapd->iface->current_mode) {
++		if (hapd->iface->current_mode->mode == HOSTAPD_MODE_IEEE80211G) {
++			if (hapd->iface->num_sta_no_short_slot_time == 0) {
++				capab |= WLAN_CAPABILITY_SHORT_SLOT_TIME;
++			}
++		} else if (hapd->iface->current_mode->mode != HOSTAPD_MODE_IEEE80211B) {
++			capab |= WLAN_CAPABILITY_SHORT_SLOT_TIME;
++		}
++	}
+ 
+ 	/*
+ 	 * Currently, Spectrum Management capability bit is set when directly

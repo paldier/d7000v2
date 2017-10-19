@@ -1,0 +1,39 @@
+From e897aba55b67ce1bfdf9cbccf07051cdd17873b4 Mon Sep 17 00:00:00 2001
+From: Alexander Usyskin <alexander.usyskin@intel.com>
+Date: Mon, 25 Aug 2014 16:46:53 +0300
+Subject: [PATCH] mei: bus: fix possible boundaries violation
+
+commit cfda2794b5afe7ce64ee9605c64bef0e56a48125 upstream.
+
+function 'strncpy' will fill whole buffer 'id.name' of fixed size (32)
+with string value and will not leave place for NULL-terminator.
+Possible buffer boundaries violation in following string operations.
+Replace strncpy with strlcpy.
+
+Signed-off-by: Alexander Usyskin <alexander.usyskin@intel.com>
+Signed-off-by: Tomas Winkler <tomas.winkler@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+(cherry picked from commit c01f090185b62b906e627e1fa3602a57e0db5f9f)
+
+Signed-off-by: Nagaraj S <sivasankaranx.nagaraj@intel.com>
+---
+ drivers/misc/mei/bus.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/misc/mei/bus.c b/drivers/misc/mei/bus.c
+index 4bc7d62..9a07bba 100644
+--- a/drivers/misc/mei/bus.c
++++ b/drivers/misc/mei/bus.c
+@@ -71,7 +71,7 @@ static int mei_cl_device_probe(struct device *dev)
+ 
+ 	dev_dbg(dev, "Device probe\n");
+ 
+-	strncpy(id.name, dev_name(dev), sizeof(id.name));
++	strlcpy(id.name, dev_name(dev), sizeof(id.name));
+ 
+ 	return driver->probe(device, &id);
+ }
+-- 
+1.7.9.5
+

@@ -1,0 +1,129 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR   Genie</title>
+<link rel="stylesheet" href="css/button.css">
+<%12%>
+<script language="javascript" type="text/javascript">
+<!--
+function check_restore()
+{
+	if(document.forms[0].mtenRestoreCfg.value.length == 0)
+	{
+		alert("<%365%>");
+		return false;
+	}
+	if(confirm("<%366%>"))
+		return true;
+	else
+		return false;
+}
+
+//-->
+</script> 
+<style type="text/css">
+h2
+{
+	padding-left:0%;
+	font-size:20px;
+	font-family:Simsun, sans-serif;
+        font-weight:bold;
+        color:#9d98ff;                
+}
+.inputRow
+{ 
+	font-family: Simsun, sans-serif;     		 
+	font-size:16px;
+	color:#404040; 
+}
+.centerTd
+{
+	font-family: Simsun, sans-serif; 
+	font-size:6px;
+	height:25px;
+        color:#404040;    
+	width:600px;
+	padding-left:20px;
+}
+
+.centerTd2
+{
+	font-family: Simsun, sans-serif;  
+	font-size:10px;
+	height:25px;
+        color:#404040;    
+	width:600px;
+	text-align:center;
+}
+.textRow
+{
+	font-family: Simsun, sans-serif;  
+	font-size:14px;
+	height:15px;
+        color:#404040;              
+}
+</style>
+
+</head>
+<body bgcolor="#ffffff">
+<form method="POST" action="genierestore.cgi" ENCTYPE="multipart/form-data">
+<table border="0" cellpadding="0" cellspacing="3" width="99%">
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="centerTd"><h2><%2506%></h2></td>
+	<td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="textRow centerTd"><%2507%></td>
+	<td>&nbsp;</td>
+</tr>
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<!--<tr>
+	<td>&nbsp;</td>
+	<td class="inputRow centerTd"><input type="FILE" class="file" name="mtenRestoreCfg" value="" size="40" maxlength="1024"
+		contentEditable=false onkeydown="return false;" onbeforeeditfocus="return false;" onpaste="return false;"></td>
+	<td>&nbsp;</td>
+</tr>
+-->
+<tr>
+	<td>&nbsp;</td>
+	<td class="inputRow centerTd">
+
+	<input type="file" name="mtenRestoreCfg" id="file" size="20" maxlength="1024" style="position:absolute;opacity:0;filter:alpha(opacity=0);" onchange="this.form.upfile.value=this.value.substr(this.value.lastIndexOf('\\')+1);" contentEditable=false onkeydown="return false;" onbeforeeditfocus="return false;" onpaste="return false;">
+	<input type="text" name="upfile" size="20" maxlength="1024" readonly >
+	&nbsp;&nbsp;&nbsp;<button type="button" value="browse"  class="button-rule" onclick="this.form.file.click();"><span class="roundleft_button">&nbsp;&nbsp; <%370%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>	
+	</td>
+</tr>
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="textRow centerTd2">	
+	    <!--
+		<button value="submit" class="purpleBtn" name="back" onClick="window.location.href='genie_result.htm';" type="button"><span><%2508%></span></button>
+		<button value="submit" class="purpleBtn" name="mtenRestore" onClick="if(!check_restore()) return false;" type="submit"><span><%36%></span></button>
+        -->
+        <button  type="button" NAME="back" VALUE="submit" class="button-rule" onClick="window.location.href='genie_result.htm';"><span class="roundleft_button">&nbsp;&nbsp;&nbsp;&nbsp; <%2508%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+	    &nbsp;&nbsp;&nbsp;<button type="submit" name="mtenRestore" VALUE="submit" class="button-rule" onClick="if(!check_restore()) return false;"><span class="roundleft_button">&nbsp;&nbsp;&nbsp;&nbsp; <%36%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+        </td>
+	<td>&nbsp;</td>
+</tr>
+<tr> <!-- RULE -->
+ <td colspan="2"  height="14"></td>
+</tr>
+</table>
+</form>
+</body>
+</html>
+

@@ -1,0 +1,203 @@
+Index: ppp-2.4.5/pppd/ipcp.c
+===================================================================
+--- ppp-2.4.5.orig/pppd/ipcp.c	2017-02-24 18:06:48.415659161 +0800
++++ ppp-2.4.5/pppd/ipcp.c	2017-02-24 18:06:48.439660836 +0800
+@@ -1993,7 +1993,7 @@
+ 	sifnpmode(f->unit, PPP_IP, NPMODE_QUEUE);
+     } else {
+ 	/* run the pre-down script, if any, and wait for it to finish */
+-	ipcp_script(path_ippredown, 1);
++	//ipcp_script(path_ippredown, 1);	/* foxconn removed */
+ 
+ 	sifnpmode(f->unit, PPP_IP, NPMODE_DROP);
+ 	sifdown(f->unit);
+@@ -2002,10 +2002,25 @@
+     }
+ 
+     /* Execute the ip-down script */
++#if 1 /* foxconn modifed */
++    /* 
++     * Use `system` to execute the ip-down script until it is finished, 
++     * then pppd continues RUNNING. 
++     */
++
++    if (ipcp_script_state == s_up && ipcp_script_pid == 0) {
++    	char cmd[128]="";
++    	sprintf(cmd, "%s %s", "/tmp/ppp/ip-down", ifname);
++        run_command(cmd);    
++    	ipcp_script_state = s_down;
++    }
++
++#else
+     if (ipcp_script_state == s_up && ipcp_script_pid == 0) {
+ 	ipcp_script_state = s_down;
+ 	ipcp_script(path_ipdown, 0);
+     }
++#endif
+ }
+ 
+ 
+Index: ppp-2.4.5/pppd/ipv6cp.c
+===================================================================
+--- ppp-2.4.5.orig/pppd/ipv6cp.c	2017-02-24 18:06:47.851619804 +0800
++++ ppp-2.4.5/pppd/ipv6cp.c	2017-02-24 18:06:48.443661115 +0800
+@@ -1338,8 +1338,14 @@
+ 
+     /* Execute the ipv6-down script */
+     if (ipv6cp_script_state == s_up && ipv6cp_script_pid == 0) {
++/*foxconn modified start*/
++	char cmd[128]="";
++	
+ 	ipv6cp_script_state = s_down;
+-	ipv6cp_script(path_ipv6down);
++	//ipv6cp_script(path_ipv6down);
++	sprintf(cmd, "%s %s", "/tmp/ppp/ipv6-down", ifname);
++	run_command(cmd);
++/*foxconn modified end*/
+     }
+ }
+ 
+Index: ppp-2.4.5/pppd/main.c
+===================================================================
+--- ppp-2.4.5.orig/pppd/main.c	2017-02-24 18:06:48.415659161 +0800
++++ ppp-2.4.5/pppd/main.c	2017-02-24 18:06:48.443661115 +0800
+@@ -171,6 +171,7 @@
+ int fd_devnull;			/* fd for /dev/null */
+ int devfd = -1;			/* fd of underlying device */
+ int fd_ppp = -1;		/* fd for talking PPP */
++int session_ctl_fd = -1;	
+ int phase;			/* where the link is at */
+ int kill_link;
+ int asked_to_quit;
+@@ -1750,7 +1751,56 @@
+     /* NOTREACHED */
+ }
+ 
++/* foxconn added start  */
++void run_command(char *command)
++{
++	int wait_val, pid;
++	__sighandler_t save_quit, save_int, save_chld;
++
++	if (command == NULL)
++		return;
+ 
++	save_quit = signal(SIGQUIT, SIG_IGN);
++	save_int = signal(SIGINT, SIG_IGN);
++	save_chld = signal(SIGCHLD, SIG_DFL);
++
++	if ((pid = vfork()) < 0)
++		goto ret;
++
++	if (pid == 0) {
++		/* safe fork */
++		sys_close();
++		closelog();
++		if (log_to_fd > 2)
++			close(log_to_fd);
++		if (the_channel->close)
++			(*the_channel->close)();
++		else
++			close(devfd);
++		close(fd_ppp);
++		close(fd_devnull);
++		if (session_ctl_fd >= 0)
++			close(session_ctl_fd);
++
++		signal(SIGQUIT, SIG_DFL);
++		signal(SIGINT, SIG_DFL);
++		signal(SIGCHLD, SIG_DFL);
++
++		execl("/bin/sh", "sh", "-c", command, (char *) NULL);
++		_exit(127);
++	}
++	/* Signals are not absolutly guarenteed with vfork */
++	signal(SIGQUIT, SIG_IGN);
++	signal(SIGINT, SIG_IGN);
++
++	wait4(pid, &wait_val, 0, 0);
++
++ret:
++	signal(SIGQUIT, save_quit);
++	signal(SIGINT, save_int);
++	signal(SIGCHLD, save_chld);
++}
++/* foxconn added end  */
+ /*
+  * run_program - execute a program with given arguments,
+  * but don't wait for it unless wait is non-zero.
+Index: ppp-2.4.5/pppd/auth.c
+===================================================================
+--- ppp-2.4.5.orig/pppd/auth.c	2009-11-17 06:26:07.000000000 +0800
++++ ppp-2.4.5/pppd/auth.c	2017-02-24 18:06:48.443661115 +0800
+@@ -733,6 +733,13 @@
+     lcp_options *ho = &lcp_hisoptions[unit];
+     int i;
+     struct protent *protp;
++    /* foxconn added start */
++	if( do_detect ){
++		printf("Link established.\n");
++		system("echo 1 > /tmp/ppp_exist");
++		sleep(2);
++	}
++     /* foxconn added end */
+ 
+     /*
+      * Tell higher-level protocols that LCP is up.
+Index: ppp-2.4.5/pppd/options.c
+===================================================================
+--- ppp-2.4.5.orig/pppd/options.c	2017-02-24 18:06:48.415659161 +0800
++++ ppp-2.4.5/pppd/options.c	2017-02-24 18:06:48.443661115 +0800
+@@ -133,6 +133,7 @@
+ int maxoctets_timeout = 1;   /* default 1 second */ 
+ #endif
+ 
++bool do_detect;  /* foxconn added */
+ 
+ extern option_t auth_options[];
+ extern struct stat devstat;
+@@ -363,7 +364,10 @@
+     { "mo-timeout", o_int, &maxoctets_timeout,
+       "Check for traffic limit every N seconds", OPT_PRIO | OPT_LLIMIT | 1 },
+ #endif
+-
++     /* foxconn added start */
++	{ "do_detect", o_bool, &do_detect,
++	  "do ppp server detect, for PPPoA", OPT_INITONLY | 1 },
++     /* foxconn added end */
+     { NULL }
+ };
+ 
+Index: ppp-2.4.5/pppd/pppd.h
+===================================================================
+--- ppp-2.4.5.orig/pppd/pppd.h	2017-02-24 18:06:48.419659441 +0800
++++ ppp-2.4.5/pppd/pppd.h	2017-02-24 18:06:48.447661395 +0800
+@@ -275,6 +275,7 @@
+  * Variables set by command-line options.
+  */
+ 
++extern bool do_detect;  /* foxconn added */
+ extern int	debug;		/* Debug flag */
+ extern int	kdebugflag;	/* Tell kernel to print debug messages */
+ extern int	default_device;	/* Using /dev/tty or equivalent */
+Index: ppp-2.4.5/pppd/pathnames.h
+===================================================================
+--- ppp-2.4.5.orig/pppd/pathnames.h	2017-02-24 18:06:48.415659161 +0800
++++ ppp-2.4.5/pppd/pathnames.h	2017-02-24 18:08:22.779356236 +0800
+@@ -18,10 +18,12 @@
+ #define _ROOT_PATH
+ #endif
+ 
+-#define _PATH_UPAPFILE 	 _ROOT_PATH "/etc/ppp/pap-secrets"
+-#define _PATH_CHAPFILE 	 _ROOT_PATH "/etc/ppp/chap-secrets"
+-#define _PATH_SRPFILE 	 _ROOT_PATH "/etc/ppp/srp-secrets"
+-#define _PATH_SYSOPTIONS _ROOT_PATH "/etc/ppp/options"
++/* foxconn modified start */
++#define _PATH_UPAPFILE 	 _ROOT_PATH "/tmp/ppp/pap-secrets"
++#define _PATH_CHAPFILE 	 _ROOT_PATH "/tmp/ppp/chap-secrets"
++#define _PATH_SRPFILE 	 _ROOT_PATH "/tmp/ppp/srp-secrets"
++#define _PATH_SYSOPTIONS _ROOT_PATH "/tmp/ppp/options"
++/* foxconn modified end */
+ #define _PATH_IPUP	 _ROOT_PATH "/etc/ppp/ip-up"
+ #define _PATH_IPDOWN	 _ROOT_PATH "/etc/ppp/ip-down"
+ #define _PATH_IPPREUP	 _ROOT_PATH "/etc/ppp/ip-pre-up"

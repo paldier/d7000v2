@@ -1,0 +1,35 @@
+From c5c924f3dd112ff27d800e199d1937bdd87fbd3f Mon Sep 17 00:00:00 2001
+From: Tomas Winkler <tomas.winkler@intel.com>
+Date: Mon, 21 Oct 2013 22:05:41 +0300
+Subject: [PATCH] mei: mei_cl_link remove duplicated check for
+ open_handle_count
+
+Signed-off-by: Tomas Winkler <tomas.winkler@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+(cherry picked from commit df667a1a2c6bf828c5959a0ba15bcf987a9d17fe)
+
+Signed-off-by: Nagaraj S <sivasankaranx.nagaraj@intel.com>
+---
+ drivers/misc/mei/client.c |    6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/drivers/misc/mei/client.c b/drivers/misc/mei/client.c
+index 876f312..c856d79 100644
+--- a/drivers/misc/mei/client.c
++++ b/drivers/misc/mei/client.c
+@@ -299,12 +299,6 @@ int mei_cl_link(struct mei_cl *cl, int id)
+ 		return -EMFILE;
+ 	}
+ 
+-	if (dev->open_handle_count >= MEI_MAX_OPEN_HANDLE_COUNT) {
+-		dev_err(&dev->pdev->dev, "open_handle_count exceded %d",
+-			MEI_MAX_OPEN_HANDLE_COUNT);
+-		return -ENOENT;
+-	}
+-
+ 	dev->open_handle_count++;
+ 
+ 	cl->host_client_id = id;
+-- 
+1.7.9.5
+

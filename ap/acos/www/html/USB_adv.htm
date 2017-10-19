@@ -1,0 +1,602 @@
+<!DOCTYPE HTML>
+<html><head>
+<%11%>
+<title>NETGEAR Router <%55%></title> 
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<style type="text/javascript">
+    classes.num.all.fontFamily = "Courier";
+    classes.num.all.fontSize = "10pt" ;
+</style>
+<%12%>
+<script language="javascript" type="text/javascript">
+<!--
+
+  
+    $(document).ready(function()
+    {
+        if(need_to_check_browser_type())
+            window.location.href="USB_adv_main.htm";	
+    
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.gif";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.gif";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size();
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+    function loadhelp(fname,anchname)
+    {
+                var pane = window.frames["helpframe"].$('#content');
+                var imgSrc=document.getElementById('help-button');
+                if(imgSrc.src.search("up")<0)
+                {
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+
+                        if ((loadhelp.arguments.length == 1 ) || (anchname == "" ))
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm";
+                                $(".help-frame-div").show();
+                        }
+                        else
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm#" + anchname;
+                                $(".help-frame-div").show();
+                        }
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+                }
+    }
+
+function need_to_check_browser_type()
+{
+    var isIE = navigator.userAgent.search("MSIE") > -1; 
+    var isFirefox = navigator.userAgent.search("Firefox") > -1;
+    var isOpera = navigator.userAgent.search("Opera") > -1;
+    var isChrome = navigator.userAgent.search("Chrome") > -1;
+    var isSafari = navigator.userAgent.search("Safari") > -1;
+    var router_smb_link_style = document.getElementsByName('router_smb_link_style');
+
+    if(isChrome & router_smb_link_style[0].value!="others")
+        return true;
+    else if(!isChrome & isSafari & router_smb_link_style[0].value!="safari")
+        return true;
+    else if(isIE & router_smb_link_style[0].value!="explorer")
+        return true;
+    else if(!isSafari & !isIE & router_smb_link_style[0].value!="others")
+        return true;
+    else
+        return false;
+}     
+
+function remove_disk()
+{
+    var msg = ""
+	cf=document.forms[0];
+	
+	if(cf.usb_num.value == 0)
+	{
+        msg+= "<%2016%>.\n";
+    }
+    if (msg.length > 1)
+	{
+		alert(msg);
+		return false;
+    }
+    return true;
+}	
+
+function edit_folder()
+{
+	cf = document.forms[0];
+	if(cf.no_usb_device.value == 1)
+	{
+	    alert("<%2016%>.");
+		return false;
+	}
+	if(cf.select.value == -1)
+	{
+		alert("<%2038%>");
+		return false;
+	}
+	cf.action.value = "edit";
+	buttonFilter();
+document.forms[0].submit();
+}
+
+function delete_folder()
+{
+	cf=document.forms[0];
+	if(cf.no_usb_device.value == 1)
+	{
+	    alert("<%2016%>.");
+		return false;
+	}
+	if(cf.select.value == -1)
+	{
+		alert("<%2038%>\n");
+		return false;
+	}
+    
+    /* There exist folder is "admin" privilege but no "All - no password" privilege. */
+    var folderElements = document.getElementsByTagName("input");
+    var i;    
+    var checkAdminFolder = 1, folderNum=0;
+    for(i=0;i<folderElements.length;i++)
+    {        
+        if(folderElements[i].type=='hidden')
+        {
+            if(folderElements[i].id=="USB_NO_PASSWD" || folderElements[i].id=="USB_ADMIN")
+            {
+                folderNum = folderElements[i].value+1;
+                if(folderElements[i].id=="USB_NO_PASSWD" && folderElements[i].value!=cf.select.value)
+                {
+                    checkAdminFolder = 0;
+                    break;
+                }
+            }
+        }
+    }
+
+    if ( cf.no_dlna.value != 1 )  {
+        if(checkAdminFolder==1 && folderNum>1)
+            alert("<%2039%>");
+    }
+    return true;
+}
+
+function checkData()
+{
+	var cf=document.forms[0];
+	var space_flag=0;
+	var msg = "";
+	var dev_name=cf.deviceName.value;
+
+	msg+= checkBlank(cf.deviceName, "deviceName");
+	msg+= checkBlank(cf.workGroup, "workGroup");
+	if (msg.length > 1)
+	{
+		alert(msg);
+		return false;
+	}
+	if (   (cf.deviceName.value.match( /[\x21-\x2C]/ ))
+	    || (cf.deviceName.value.match( /[\x2E-\x2F]/ ))
+        || (cf.deviceName.value.match( /[\x3A-\x40]/ ))
+        || (cf.deviceName.value.match( /[\x5B-\x60]/ ))
+        || (cf.deviceName.value.match( /[\x7B-\x80]/ ))
+        || (cf.deviceName.value.match( /[^\x21-\x7E]/ ))
+       )
+	{
+		alert("<%727%>\n");
+		return false;
+	}
+
+	if(cf.workGroup.value == ""){
+		alert("<%2040%>.\n");
+		return false;
+	}
+	if (cf.workGroup.value.match( /[^\x20-\x7E]/ ))
+	{
+		cf.workGroup.focus();
+		alert("<%2040%>.\n");
+		return false;
+	}
+	
+	var portvalue=parseInt(cf.http_via_port.value);
+	if ((cf.is_https.value == "1") && (portvalue == 80) )
+	{
+		alert("<%2041%>");
+		return false;
+	} else
+	if( (isNaN(cf.http_via_port.value) || !_isNumeric(cf.http_via_port.value)||
+	   parseInt(cf.http_via_port.value,10) < 1024 ||
+	   parseInt(cf.http_via_port.value,10) > 65534 ||
+	   cf.http_via_port.value.indexOf(".") != -1 ) && (cf.http_via_port.value !=443) )
+	{
+		alert("<%2041%>");
+		return false;
+	} else if ( (cf.is_https.value == "0") && (portvalue == 443) ) {
+		alert("<%2041%>");
+                return false;
+        }		
+
+    portvalue=parseInt(cf.ftp_via_port.value);
+    if( isNaN(cf.ftp_via_port.value) || cf.ftp_via_port.value < 21 || (cf.ftp_via_port.value > 21 & cf.ftp_via_port.value < 1024) || cf.ftp_via_port.value > 65534)
+    {
+	    alert("<%2042%>");
+	    return false;
+    }
+    if (cf.ftp_via_port.value == cf.http_via_port.value)
+    {
+        alert("<%2043%>");
+	    return false;
+    }
+    
+
+    
+    buttonFilter();
+document.forms[0].submit();
+	return true;
+}
+
+function chgSel(index)
+{
+ document.forms[0].select.value = index;
+ return true;
+}
+
+function adjust_table_column()
+{
+	var i;
+	var obj = document.getElementsByName("folderName");
+	
+	for(i=0 ; i<obj.length ; i++)
+	{
+		$(obj[i]).addClass('folderName_ie10');
+	}
+}
+
+function loadSettings()
+{
+    var cf=document.forms[0];
+    var adv_add_edit_page = <%2044%>;
+	if (cf.no_usb_device.value == 1)
+        {
+
+var removeButton;
+cf.Remove.disabled = 'true';
+removeButton=document.getElementsByName("Remove");
+removeButton[0].outerHTML='<button type="submit" disabled value="<%2018%>" name="Remove" class="button-grey" onClick="buttonClick(this,\'<%2018%>\');return remove_disk();"><span class="roundleft_grey">&nbsp;&nbsp; <%2018%></span><span class="roundright_grey">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>';
+removeButton[0].style.cursor='default';
+}
+
+    if (cf.umountsucc.value == "1")
+    {
+         alert("<%2019%>");
+    }
+    else if (cf.umountsucc.value == "2")
+    {
+        openWarnWindow();
+    }
+    if (adv_add_edit_page == "2")
+    {
+		winoptions = "width=780,height=580,status=yes,resizable=yes, scrollbars=yes";
+		datSubWinVar = window.open('USB_adv_edit.htm','datasub_win',winoptions);
+	}
+    else if (adv_add_edit_page == "1")
+	{
+		winoptions = "width=780,height=580,status=yes,resizable=yes, scrollbars=yes";
+		datSubWinVar = window.open('USB_adv_add.htm','datasub_win',winoptions);
+	}
+    if (cf.enable_apmode.value == "1" || cf.enable_stamode.value == "1") {
+        cf.enable_wan_http.disabled=true;
+        cf.http_via_port.disabled=true;
+        cf.enable_wan_ftp.disabled=true;
+        cf.ftp_via_port.disabled=true;
+    } else {
+        cf.enable_wan_http.disabled=false;
+        cf.http_via_port.disabled=false;
+        cf.enable_wan_ftp.disabled=false;
+        cf.ftp_via_port.disabled=false;
+    }
+	if(get_ie_ver()==10 && get_browser()=="IE")
+		adjust_table_column();
+	
+}
+var trWarnWinVar = null;
+
+function openTrWarnWin(filename,win_type)
+{
+	trWarnWinVar = window.open(filename,'trwarn_win',win_type);
+}
+
+function openWarnWindow()
+{
+	var winoptions;
+
+    winoptions = "width=400,height=380,status=yes,resizable=no";
+    openTrWarnWin('USB_umount.htm',winoptions);
+}
+function creat_folder()
+{
+    var cf=document.forms[0];
+    if(cf.no_usb_device.value == 1)
+	{
+	    alert("<%2016%>.\n");
+		return false;
+	}
+	if(cf.sharefolderNum.value >= 256)
+	{
+	    alert("The number of shared folder has reached the maximum.");
+		return false;
+	}
+    cf.action.value = "add";
+    buttonFilter();
+document.forms[0].submit();
+}
+
+function adv_folder(index)
+{
+	var cf = document.forms[0];
+	if(cf.no_usb_device.value == 1)
+	{
+	    alert("<%2016%>.");
+		return false;
+	}
+
+    if(index==0) // edit
+	{
+		if(cf.select.value == -1)
+		{
+			alert("<%2038%>");
+			return false;
+		}
+		cf.action.value = "edit";
+		buttonFilter();
+		document.forms[0].submit();	
+		winoptions = "width=780,height=580,status=yes,resizable=yes, scrollbars=yes";
+		datSubWinVar = window.open('USB_adv_edit.htm','datasub_win',winoptions);
+	}
+    else if(index==1) // Create
+    {
+		if(cf.sharefolderNum.value >= 256)
+		{
+			alert("The number of shared folder has reached the maximum.");
+			return false;
+		}
+		cf.action.value = "add";
+		buttonFilter();
+		document.forms[0].submit();		
+		winoptions = "width=780,height=580,status=yes,resizable=yes, scrollbars=yes";
+		datSubWinVar = window.open('USB_adv_add.htm','datasub_win',winoptions);
+    }
+}
+
+//-->
+</script></head>
+<body onload="change_size();loadSettings();"  class="subpage-body" onResize="change_size();" >
+<img class="cover-image" src="<%57%>">
+<img class="body-image" src="<%58%>">
+<div id="full-page-container">
+
+<form id="target"  name="frmService" method="post" action="usb_adv.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+<img class="subtop-image" src="<%59%>">
+<%2045%>
+<div class="subhead2"> <%2046%></div>
+<%2047%>
+<table border="0"    style="height:370px"  class="subhead2-table">
+
+<tr align="left" valign="middle">
+<td  style="padding-top:10px;padding-bottom:10px" align="center" colspan="2" class="table-seperate-border">
+&nbsp;&nbsp;&nbsp;<button value="<%61%>"  onclick="buttonClick(this,'<%61%>');checkData();" type="button" name="Apply" class="button-apply" > <span class="roundleft_apply" ><%62%>&nbsp;<span class="apply-icon">&nbsp;&nbsp;&nbsp;&nbsp;</span></span><span class="roundright_apply">&nbsp;&nbsp;&nbsp;</span></button>
+&nbsp;&nbsp;&nbsp;<button value="<%63%>" onclick="buttonClick(this,'<%667%>');location.href='USB_adv.htm'" type="button" name="Refresh" class="button-rule" ><span class="roundleft_button"><span class="refresh-icon">&nbsp;&nbsp;&nbsp;&nbsp; <%667%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+</td>
+</tr>
+
+<tr><td class="scrollpane-table-seperate-border" colspan="2"><div class="scroll-pane" style="height:365px;width:620px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<tr>
+<td colspan="2">
+<table border="0" cellpadding="2" cellspacing="0" width="60%">
+<tr>
+<td><a href="javascript:loadhelp('USB_adv','device')" 
+	tabindex="-1"><b><%2023%> :</b></a></td>
+<td width="30%"><input type="text" name="deviceName" size="21" maxlength="15" value="<%2048%>"></td>
+</tr>
+<tr><td></td></tr>
+<tr>
+<td><a href="javascript:loadhelp('USB_adv','workgroup')" 
+	tabindex="-1"><b><%2049%> :</b></a></td>
+<td width="30%"><input type="text" name="workGroup" size="21" maxlength="15" value="<%2050%>"></td>
+</tr>
+</table>
+</td>
+</tr>
+
+<tr><td colspan="2" ></td></tr>
+<tr>
+<td colspan="2">
+<table border="1" cellpadding="2" cellspacing="0" width="60%">
+<tr>
+<td align="center" nowrap="nowrap"><span class="thead"><%454%></span></td>
+<td align="center" nowrap="nowrap"><span class="thead"><%2051%></span></td>
+<td align="center" nowrap="nowrap"><span class="thead"><%2052%></span></td>
+<td align="center" nowrap="nowrap"><span class="thead"><%610%></span></td>
+<%2053%>
+<td align="center" nowrap="nowrap"><span class="thead"><%2054%></span></td>
+<%2055%>
+</tr>
+<tr>
+<td align="center" nowrap="nowrap"><input type="checkbox" name="enable_samba" value="enable_samba" <%2056%>></td>
+<td align="center" nowrap="nowrap"><%2057%></td>
+<td align="center" nowrap="nowrap"><%2024%></td>
+<td align="center" nowrap="nowrap">-</td>
+<%2053%>
+<td align="center" nowrap="nowrap"><input type="checkbox" name="enable_samba_protect" value="enable_samba_protect" <%2058%>></td>
+<%2055%>
+</tr>
+<tr>
+<td align="center" nowrap="nowrap"><input type="checkbox" name="enable_http" value="enable_http" <%2059%>></td>
+<td align="center" nowrap="nowrap"><%2060%></td>
+<td align="center" nowrap="nowrap"><%2061%></td>
+<td align="center" nowrap="nowrap">80</td>
+<%2053%>
+<td align="center" nowrap="nowrap"><input type="checkbox" name="enable_http_protect" value="enable_http_protect" <%2062%>></td>
+<%2055%>
+</tr>
+<tr>
+<td align="center" nowrap="nowrap"><input type="checkbox" name="enable_wan_http" value="enable_wan_http" <%2063%>></td>
+<%2064%>
+<td align="center" nowrap="nowrap"><%2060%>S (<%2065%>)</td>
+<%2066%>
+<td align="center" nowrap="nowrap"><%2060%> (<%2065%>)</td>
+<%2067%>
+<td align="center" nowrap="nowrap"><%2068%></td>
+<td align="center" nowrap="nowrap"><input type="text" name="http_via_port" size="5" maxlength="5" value="<%2069%>"></td>
+<%2053%>
+<td align="center" nowrap="nowrap"><input type="checkbox" name="enable_wan_http_protect" value="enable_wan_http_protect" <%2070%>></td>
+<%2055%>
+</tr>
+<tr>
+<td align="center" nowrap="nowrap"><input type="checkbox" name="enable_ftp" value="enable_ftp" <%2071%>></td>
+<td align="center" nowrap="nowrap"><%2072%></td>
+<td align="center" nowrap="nowrap"><%2073%></td>
+<td align="center" nowrap="nowrap">21</td>
+<%2053%>
+<td align="center" nowrap="nowrap"><input type="checkbox" name="enable_ftp_protect" value="enable_ftp_protect" <%2074%>></td>
+<%2055%>
+</tr>
+<tr>
+<td align="center" nowrap="nowrap"><input type="checkbox" name="enable_wan_ftp" value="enable_wan_ftp" <%2075%>></td>
+<td align="center" nowrap="nowrap"><%2072%> (<%2065%>)</td>
+<td align="center" nowrap="nowrap"><%2076%></td>
+<td align="center" nowrap="nowrap"><input type="text" name="ftp_via_port" size="5" maxlength="5" value="<%2077%>"></td>
+<%2053%>
+<td align="center" nowrap="nowrap"><input type="checkbox" name="enable_wan_ftp_protect" value="enable_wan_ftp_protect" <%2078%>></td>
+<%2055%>
+</tr>
+</table>
+</td>
+</tr>
+<%2053%>
+<tr><td colspan="2" ><%2079%></td></tr>
+<%2055%>
+
+<tr><td colspan="2" ></td></tr><tr><td colspan="2" ></td></tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<tr>
+<td colspan="2" ><a href="javascript:loadhelp('USB_adv','available')" tabindex="-1"><b><%2025%></b></a></td>
+</tr>
+<tr><td colspan="2" ></td></tr><tr><td colspan="2" ></td></tr>
+<tr>
+<td colspan="2">
+	<table border="1" cellpadding="2" cellspacing="0" width="100%">
+	<tr>
+	<td align="center" nowrap="nowrap" width="5%"><span class="thead"> &nbsp;</span></td>
+	<td align="center" nowrap="nowrap" width="17%"><span class="thead"><%2026%></span></td>
+	<td align="center" nowrap="nowrap" width="14%"><span class="thead"><%2027%></span></td>
+	<td align="center" nowrap="nowrap" width="14%"><span class="thead"><%2028%></span></td>
+	<td align="center" nowrap="nowrap" width="15%"><span class="thead"><%2029%></span></td>
+	<td align="center" nowrap="nowrap" width="15%"><span class="thead"><%2030%></span></td>
+	<td align="center" nowrap="nowrap" width="10%"><span class="thead"><%2031%></span></td>
+	<td align="center" nowrap="nowrap" width="10%"><span class="thead"><%2032%></span></td>
+	</tr>
+
+	<%2080%>
+	</table>
+	</td>
+</tr>
+<tr><td colspan="2" ></td></tr><tr><td colspan="2" ></td></tr><tr><td colspan="2" ></td></tr>
+<tr>
+<td colspan="3" >
+<tr >
+	<td colspan="3" >
+	<table ><tr>
+	 <td colspan="1" class="button-rule"   onClick="adv_folder(0);" onMouseOver="changeCursorPointer();" onMouseOut="changeCursorDefault();">
+		 <span class="roundleft_button"><span class="edit-icon">&nbsp;&nbsp;&nbsp;&nbsp; <%614%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+	&nbsp;&nbsp;&nbsp;		 
+	</td>
+	 <td colspan="1" class="button-rule"  onClick="adv_folder(1);" onMouseOver="changeCursorPointer();" onMouseOut="changeCursorDefault();">
+		 <span class="roundleft_button">&nbsp;&nbsp; <%2081%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+	&nbsp;&nbsp;&nbsp;
+	</td>
+	 <td colspan="1" >
+&nbsp;&nbsp;&nbsp;<button type="submit" value="<%615%>" name="Delete" class=<%2082%> onclick="buttonClick(this,'<%615%>');return delete_folder();"><span class="<%2083%>"><span class="cancel-icon">&nbsp;&nbsp;&nbsp;&nbsp;  <%615%></span></span><span class="<%2084%>">&nbsp;&nbsp;&nbsp;&nbsp;</span></button></td>
+	</td>	
+	</tr>
+	</table></td>
+</tr>
+</tr>
+<tr><td colspan="2" ></td></tr><tr><td colspan="2" ></td></tr>
+<tr><td colspan="2" ><%2085%></td></tr>
+<tr><td colspan="2" ></td></tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+<tr><td colspan="2" ></td></tr><tr><td colspan="2" ></td></tr>
+<tr>
+<td colspan="2" >
+&nbsp;&nbsp;&nbsp;<button type="submit" value="<%2018%>" name="Remove" class="button-rule" onClick="buttonClick(this,'<%2018%>');return remove_disk();"><span class="roundleft_button">&nbsp;&nbsp; <%2018%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+</td>
+</tr>
+<tr><td colspan="2" ></td></tr><tr><td colspan="2" ></td></tr><tr><td colspan="2" ></td></tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+<tr><td colspan="2" ></td></tr><tr><td colspan="2" ></td></tr>
+
+</table></div></td></tr>
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div class="help-frame-div" > <iframe id="helpframe"  src="USB_adv_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <img class="subfooter-image" src="img/subhead2-bottom.gif">
+<div class="subhead2-bottom" >
+    <span style="float:left;padding-left:10px;padding-top:5px"><img src="img/help-icon.gif" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span class="subhead2-text" style="float:left;padding-left:3px;" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%211%> </span>
+    <span class="button-help-arrow">
+      <img src="img/helparrowdown-icon.gif" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span class="subhead2-text" style="text-decoration:underline;float:right;padding-right:10px" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%212%> </span>
+      </div>
+
+
+
+<input type="hidden" name="usb_num" value="<%2034%>">
+<input type="hidden" name="select" value="0">
+<input type="hidden" name="action" value="advance">
+<INPUT name=umountsucc type=hidden value="<%2035%>">
+<input type="hidden" name="enable_apmode" value="<%363%>">
+<input type="hidden" name="enable_stamode" value="<%364%>">
+<input type="hidden" name="is_https" value="<%2086%>">
+<INPUT name=router_smb_link_style type=hidden value="<%2036%>">
+<input name="no_dlna" type="hidden" value="<%2087%>">
+<a name="helpframe-anchor"></a>
+</form>
+</div>
+</body></html>

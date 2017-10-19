@@ -1,0 +1,541 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR Router <%55%></title>
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style>
+<%12%>
+<script language="javascript" type="text/javascript">
+<!--
+var isInited = 0;
+  
+    $(document).ready(function()
+    {	
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            imgSrc.src="img/helparrowdown-icon.gif";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.gif";
+            setTimeout(setHelpIframeVisible,500);
+        }
+             change_size();
+
+    }
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+    function loadhelp(fname,anchname)
+    {
+                var pane = window.frames["helpframe"].$('#content');
+                var imgSrc=document.getElementById('help-button');
+                if(imgSrc.src.search("up")<0)
+                {
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+
+                        if ((loadhelp.arguments.length == 1 ) || (anchname == "" ))
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm";
+                                $(".help-frame-div").show();
+                        }
+                        else
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm#" + anchname;
+                                $(".help-frame-div").show();
+                        }
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+                }
+    }
+
+   
+
+function BlockPeriodClick(cf)
+{
+	if(cf.checkboxNamehours.checked)
+	{
+		cf.starthour.disabled = true;
+		cf.startminute.disabled = true;
+		cf.endhour.disabled = true;
+		cf.endminute.disabled = true;
+		TimePeriodDisabled = true;
+	}
+	else
+	{
+		cf.starthour.disabled = false;
+		cf.startminute.disabled = false;
+		cf.endhour.disabled = false;
+		cf.endminute.disabled = false;
+		TimePeriodDisabled = false;
+	}
+	return;
+}
+
+function BlockAllClickCheck()
+{
+	var cf = document.forms[0];
+	if(cf.checkboxNameAll.checked)
+	{
+		cf.checkboxNameMon.checked = true;
+		cf.checkboxNameTue.checked = true;
+		cf.checkboxNameWed.checked = true;
+		cf.checkboxNameThu.checked = true;
+		cf.checkboxNameFri.checked = true;
+		cf.checkboxNameSat.checked = true;
+		cf.checkboxNameSun.checked = true;
+
+		cf.checkboxNameMon.disabled = true;
+		cf.checkboxNameTue.disabled = true;
+		cf.checkboxNameWed.disabled = true;
+		cf.checkboxNameThu.disabled = true;
+		cf.checkboxNameFri.disabled = true;
+		cf.checkboxNameSat.disabled = true;
+		cf.checkboxNameSun.disabled = true;
+	}
+	else
+	{
+		cf.checkboxNameMon.disabled = false;
+		cf.checkboxNameTue.disabled = false;
+		cf.checkboxNameWed.disabled = false;
+		cf.checkboxNameThu.disabled = false;
+		cf.checkboxNameFri.disabled = false;
+		cf.checkboxNameSat.disabled = false;
+		cf.checkboxNameSun.disabled = false;
+	}
+    BlockPeriodClick(cf);
+    
+    if (cf.enable_apmode.value == "1") {
+		cf.checkboxNameAll.disabled = true;
+		cf.checkboxNameSun.disabled = true;
+		cf.checkboxNameMon.disabled = true;
+		cf.checkboxNameTue.disabled = true;
+		cf.checkboxNameWed.disabled = true;
+		cf.checkboxNameThu.disabled = true;
+		cf.checkboxNameFri.disabled = true;
+		cf.checkboxNameSat.disabled = true;  
+        
+        cf.checkboxNamehours.disabled = true;
+		cf.starthour.disabled = true;
+		cf.startminute.disabled = true;
+		cf.endhour.disabled = true;
+		cf.endminute.disabled = true;        
+    }  
+    
+    
+	return;
+}
+
+function init()
+{
+	var cf = document.forms[0];
+	var temp;
+	var old;
+	BIN=new Array(4);
+	cf.adjust.checked = false;
+	
+	if (cf.schedule_daylightadjust.value == 1)
+		cf.adjust.checked = true;
+
+	if (cf.schedule_day.value == 127) //check everyday if all check except everyday
+	{
+		cf.checkboxNameAll.checked = true;
+    }
+
+	for(var i=0; i<8; i++)
+			BIN[i]=0;
+
+	if (cf.schedule_day.value > 1)
+	{
+		temp = cf.schedule_day.value;
+		for(var i=0; i<8; i++)
+		{
+			old = temp;
+			temp = Math.floor(temp/2);
+
+			if (temp >= 1)
+			{
+				if ((temp*2) != old)
+					BIN[7-i] = 1;
+				else
+					BIN[7-i] = 0;
+				if (temp == 1)
+				{
+					BIN[6-i] = temp;
+					i=7;
+				}
+			}
+			else
+				i=7;
+		}
+	}
+	else if (cf.schedule_day.value == 1)
+		BIN[7]=1;
+
+	if (BIN[0] == 1) //128
+		cf.checkboxNameAll.checked = true;
+	if (BIN[1] == 1) //64
+		cf.checkboxNameSun.checked = true;
+	if (BIN[2] == 1) //32
+		cf.checkboxNameMon.checked = true;
+	if (BIN[3] == 1) //16
+		cf.checkboxNameTue.checked = true;
+	if (BIN[4] == 1) //8
+		cf.checkboxNameWed.checked = true;
+	if (BIN[5] == 1) //4
+		cf.checkboxNameThu.checked = true;
+	if (BIN[6] == 1) //2
+		cf.checkboxNameFri.checked = true;
+	if (BIN[7] == 1) //1
+		cf.checkboxNameSat.checked = true;
+
+	if ((cf.schedule_starthour.value == 0) && (cf.schedule_startminute.value == 0) && (cf.schedule_endhour.value == 23) && (cf.schedule_endminute.value == 59))
+		cf.checkboxNamehours.checked = true;
+	else
+	{
+		cf.starthour.value = cf.schedule_starthour.value;
+		cf.startminute.value = cf.schedule_startminute.value;
+		cf.endhour.value = cf.schedule_endhour.value;
+		cf.endminute.value = cf.schedule_endminute.value;
+	}
+	if(cf.checkboxNamehours.checked == true)
+	{
+		cf.starthour.value = 0;
+		cf.startminute.value = 0;
+		cf.endhour.value = 24;
+		cf.endminute.value = 0;
+	}
+	BlockAllClickCheck();
+
+    isInited = 1;
+}
+
+function checkSchedule()
+{
+	var cf = document.forms[0];
+	var value = 0;
+
+    if (cf.adjust.checked)
+		cf.schedule_daylightadjust.value = 1;
+	else
+		cf.schedule_daylightadjust.value = 0;
+
+	if (cf.checkboxNamehours.checked)
+		cf.schedule_alldayenable.value = 1;
+	else
+		cf.schedule_alldayenable.value = 0;
+
+	if (cf.checkboxNameAll.checked)
+		value = 128;
+	if (cf.checkboxNameSun.checked)
+		value = value + 64;
+	if (cf.checkboxNameMon.checked)
+		value = value + 32;
+	if (cf.checkboxNameTue.checked)
+		value = value + 16;
+	if (cf.checkboxNameWed.checked)
+		value = value + 8;
+	if (cf.checkboxNameThu.checked)
+		value = value + 4;
+	if (cf.checkboxNameFri.checked)
+		value = value + 2;
+	if (cf.checkboxNameSat.checked)
+		value = value + 1;
+
+	cf.schedule_day.value = value;
+
+	if (!(cf.checkboxNamehours.checked))
+	{
+		if((isNumeric(cf.starthour,23) || isNumeric(cf.endhour,23)
+		  ||isNumeric(cf.startminute,59) || isNumeric(cf.endminute,59)) 
+		  && ( cf.endhour.value != 24 && cf.endminute.value != 0 ) )
+		{
+			alert("<%970%>");
+			return false;
+		}
+		else
+		{
+			cf.starthour.value = parseInt(cf.starthour.value,10);
+			cf.endhour.value = parseInt(cf.endhour.value,10);
+			cf.startminute.value = parseInt(cf.startminute.value,10);
+			cf.endminute.value = parseInt(cf.endminute.value,10);
+		}
+
+    	if (cf.starthour.value == cf.endhour.value &&
+    	    cf.startminute.value == cf.endminute.value)
+    	{
+    		alert("<%970%>");
+    		return false;
+        }
+
+		if(cf.starthour.value >= cf.endhour.value &&
+			(!cf.checkboxNameAll.checked && !(cf.checkboxNameSun.checked && cf.checkboxNameSat.checked) 
+			&&!(cf.checkboxNameSat.checked && cf.checkboxNameFri.checked) 
+			&&!(cf.checkboxNameFri.checked && cf.checkboxNameThu.checked)
+			&&!(cf.checkboxNameThu.checked && cf.checkboxNameWed.checked)
+			&&!(cf.checkboxNameWed.checked && cf.checkboxNameTue.checked)
+			&&!(cf.checkboxNameTue.checked && cf.checkboxNameMon.checked)
+			&&!(cf.checkboxNameMon.checked && cf.checkboxNameSun.checked)))
+		{
+			alert("<%970%>");
+			return false;
+		}
+		
+        if (cf.starthour.value == 24 && cf.startminute.value == 0)
+        {
+			alert("<%970%>");
+			return false;
+		}
+
+		if (cf.endhour.value == 24 && cf.endminute.value == 0)
+		{
+			// allow end time to be 24:00
+            if ((cf.starthour.value < 0) || (cf.starthour.value > 23) ||
+                (cf.startminute.value < 0) || (cf.startminute.value > 59))
+            {
+                alert("<%970%>");
+                return false;
+            }
+		}
+		else
+        if ((cf.starthour.value < 0) || (cf.starthour.value > 23) ||
+            (cf.endhour.value < 0) || (cf.endhour.value > 23) ||
+            (cf.startminute.value < 0) || (cf.startminute.value > 59) ||
+            (cf.endminute.value < 0) || (cf.endminute.value > 59))
+    	{
+    		alert("<%970%>");
+    		return false;
+    	}
+
+    	if ((!_isNumeric(cf.starthour.value)) ||
+    	    (!_isNumeric(cf.endhour.value)) ||
+    	    (!_isNumeric(cf.startminute.value)) ||
+    	    (!_isNumeric(cf.endminute.value)))
+    	{
+    		alert("<%970%>");
+    		return false;
+    	}
+
+    	if ((cf.starthour.value == '') || (cf.endhour.value == ''))
+    	{
+    		alert("<%970%>");
+    		return false;
+    	}
+
+    	if ((cf.starthour.value != '') && (cf.endhour.value != ''))
+    	{
+    		if (cf.startminute.value == '')
+    			cf.startminute.value = 0;
+    		if (cf.endminute.value == '')
+    			cf.endminute.value = 0;
+    	}
+	}
+	return true;
+}
+
+function CancelAction()
+{
+    var cf = document.forms[0];
+
+    cf.result.value="cancel";
+    return true;
+}
+
+<%576%>
+function chSession(newsession)
+{
+    if(newsession == 2)
+        location.href = "FW_schedule_ppp2.htm";		
+    else if(newsession == 1)
+        location.href = "FW_schedule.htm";		
+}
+<%577%>
+//-->
+</script>
+</head>
+<body  onload="change_size();BlockAllClickCheck();init();" class="page-body"  onResize="change_size();" >
+<img class="cover-image" src="<%57%>">
+<img class="body-image" src="<%58%>">
+<div id="full-page-container">
+
+<form id="target"  method="POST" action="fwSchedule.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+	<img class="subtop-image" src="<%59%>">
+<div class="subhead2"> <%322%></div>
+<table border="0"    style="height:370px"  class="subhead2-table">
+
+<tr align="left" valign="middle">
+<td  style="padding-top:10px;padding-bottom:10px" align="center" colspan="2" class="table-seperate-border">
+&nbsp;&nbsp;&nbsp;<button value="<%61%>"  onclick="if(!isInited) return false; buttonClick(this,'<%61%>');if(!checkSchedule()) return false;" type=submit name=action class="button-apply" > <span class="roundleft_apply" ><%62%>&nbsp;<span class="apply-icon">&nbsp;&nbsp;&nbsp;&nbsp;</span></span><span class="roundright_apply">&nbsp;&nbsp;&nbsp;</span></button>
+&nbsp;&nbsp;&nbsp;<button value="<%63%>" onclick="buttonClick(this,'<%63%>');CancelAction()" type=submit name=action class="button-rule" ><span class="roundleft_button"><span class ="cancel-icon">&nbsp;&nbsp;&nbsp;&nbsp;<%64%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+</td>
+</tr>
+
+<tr><td class="scrollpane-table-seperate-border" colspan="2"><div class="scroll-pane" style="height:365px;width:620px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+		
+        <tr> <td colspan="2">
+<%578%>			
+    			<input checked type="radio" name=pppoesession value=session1 onClick="chSession(1);"><%579%>
+    			<input type="radio" name=pppoesession value=session2 onClick="chSession(2);"><%580%><br>
+<%581%>			
+            </td>
+        </tr>
+        <tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+		<tr>
+			<td colspan="2"><b><a href="javascript:loadhelp('FW_schedule','blocksch')" tabindex="-1"><%971%>:</a></b></td></tr>
+        <TR>
+            <TD colSpan=2 colspan="2" >
+                <INPUT name=checkboxNameAll onclick=BlockAllClickCheck(); type=checkbox value=checkboxValue><%972%> </TD></TR>
+        <TR>
+            <TD colSpan=2 colspan="2" >
+                <INPUT name=checkboxNameSun type=checkbox value=checkboxValue ><%868%></TD></TR>
+        <TR>
+            <TD colSpan=2 colspan="2" >
+                <INPUT name=checkboxNameMon type=checkbox value=checkboxValue><%869%></TD></TR>
+        <TR>
+            <TD colSpan=2 colspan="2" >
+                <INPUT name=checkboxNameTue type=checkbox value=checkboxValue><%870%></TD></TR>
+        <TR>
+            <TD colSpan=2 colspan="2" >
+                <INPUT name=checkboxNameWed type=checkbox value=checkboxValue><%871%></TD></TR>
+        <TR>
+            <TD colSpan=2 colspan="2" >
+                <INPUT name=checkboxNameThu type=checkbox value=checkboxValue><%872%></TD></TR>
+        <TR>
+            <TD colSpan=2 colspan="2" >
+                <INPUT name=checkboxNameFri type=checkbox value=checkboxValue><%873%></TD></TR>
+        <TR>
+            <TD colSpan=2 colspan="2" >
+                <INPUT name=checkboxNameSat type=checkbox value=checkboxValue><%874%></TD></TR>
+        <tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+		<tr>
+			<td colspan="2"><b><a href="javascript:loadhelp('FW_schedule','blocksch')" tabindex="-1"><%973%></a></b><%974%></td></tr>
+        <TR>
+            <TD colSpan=2 colspan="2" >
+                <INPUT name=checkboxNamehours onclick=BlockPeriodClick(this.form); type=checkbox value=checkboxValue> <%975%></TD></TR>
+        <TR>
+            <TD width="50%"><%976%></TD>
+            <TD width="50%">
+                <INPUT class=num maxLength=2 name=starthour onfocus="if(TimePeriodDisabled) this.blur()" size=3><%977%>
+                <INPUT class=num maxLength=2 name=startminute onfocus="if(TimePeriodDisabled) this.blur()" size=3><%978%></TD></TR>
+        <TR>
+            <TD width="50%"><%979%></TD>
+            <TD>
+                <INPUT class=num maxLength=2 name=endhour onfocus="if(TimePeriodDisabled) this.blur()" size=3><%977%>
+                <INPUT class=num maxLength=2 name=endminute onfocus="if(TimePeriodDisabled) this.blur()" size=3><%978%></TD></TR>
+        <tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+        <tr>
+            <td colspan="2"><a href="javascript:loadhelp('FW_schedule','timezone')" tabindex="-1"><b><%980%></b></a></td></tr>
+        <tr>
+            <td colspan="2">
+                <SELECT name=time_zone size=1>
+                    <OPTION value=-12 <%981%>><%982%></OPTION>
+                    <OPTION value=-11 <%983%>><%984%></OPTION>
+                    <OPTION value=-10 <%985%>><%986%></OPTION>
+                    <OPTION value=-9 <%987%>><%988%></OPTION>
+                    <OPTION value=-8 <%989%>><%990%></OPTION>
+                    <OPTION value=-7 <%991%>><%992%></OPTION>
+                    <OPTION value=-6 <%993%>><%994%></OPTION>
+                    <OPTION value=-5 <%995%>><%996%></OPTION>
+                    <OPTION value=-4 <%997%>><%998%></OPTION>
+                    <OPTION value=-35 <%999%>><%1000%></OPTION>
+                    <OPTION value=-3 <%1001%>><%1002%></OPTION>
+                    <OPTION value=-2 <%1003%>><%1004%></OPTION>
+                    <OPTION value=-1 <%1005%>><%1006%></OPTION>
+                    <OPTION value=0 <%1007%>><%1008%></OPTION>
+                    <OPTION value=1 <%1009%>><%1010%></OPTION>
+                    <OPTION value=2 <%1011%>><%1012%></OPTION>
+                    <OPTION value=3 <%1013%>><%1014%></OPTION>
+                    <OPTION value=4 <%1015%>><%1016%></OPTION>
+                    <OPTION value=5 <%1017%>><%1018%></OPTION>
+                    <OPTION value=55 <%1019%>><%1020%></OPTION>
+                    <OPTION value=6 <%1021%>><%1022%></OPTION>
+                    <OPTION value=7 <%1023%>><%1024%></OPTION>
+                    <OPTION value=8 <%1025%>><%1026%></OPTION>
+                    <OPTION value=9 <%1027%>><%1028%></OPTION>
+                    <OPTION value=10 <%1029%>><%1030%></OPTION>
+                    <OPTION value=11 <%1031%>><%1032%></OPTION>
+                    <OPTION value=12 <%1033%>><%1034%></OPTION>
+                    <OPTION value=13 <%1035%>><%1036%></OPTION></SELECT></td></tr>
+        <tr>
+            <td colspan="2">
+                <input type="checkbox" name="adjust" value="adjust"><%1037%></td></tr>
+        <tr>
+            <td colspan="2" align="center"><BR><b><%931%>: &nbsp; <%1038%></b><BR> &nbsp; </td></tr>
+        <tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+        
+    </table></div></td></tr>
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div class="help-frame-div" > <iframe id="helpframe"  src="FW_schedule_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <img class="subfooter-image" src="img/subhead2-bottom.gif">
+<div class="subhead2-bottom" >
+    <span style="float:left;padding-left:10px;padding-top:5px"><img src="img/help-icon.gif" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span class="subhead2-text" style="float:left;padding-left:3px;" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%211%> </span>
+    <span class="button-help-arrow">
+      <img src="img/helparrowdown-icon.gif" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span class="subhead2-text" style="text-decoration:underline;float:right;padding-right:10px" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%212%> </span>
+      </div>
+
+
+
+    <INPUT name=schedule_day type=hidden value= "<%1039%>">
+    <INPUT name=schedule_alldayenable type=hidden>
+    <INPUT name=schedule_starthour type=hidden value= "<%1040%>">
+    <INPUT name=schedule_startminute type=hidden value= "<%1041%>">
+    <INPUT name=schedule_endhour type=hidden value= "<%1042%>">
+    <INPUT name=schedule_endminute type=hidden value= "<%1043%>">
+    <INPUT name=schedule_daylightadjust type=hidden value= "<%1044%>">
+    <INPUT name=result type=hidden value= "apply">
+    <INPUT type="hidden" name="enable_apmode" value="<%363%>">
+<a name="helpframe-anchor"></a>
+</form>
+
+</div>
+</body>
+ <head>
+  <%11%>
+</head>
+</html>
+

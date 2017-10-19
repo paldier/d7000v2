@@ -1,0 +1,25 @@
+From f06a431a51f5f2a0b4c42fa603e26a3f88e71e10 Mon Sep 17 00:00:00 2001
+From: Shweta <shweta.s.kulkarni@intel.com>
+Date: Tue, 2 Jun 2015 13:09:12 -0700
+Subject: [PATCH] Added ISS, SENSCOL dependencies for HID
+
+---
+ drivers/hid/Kconfig |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/hid/Kconfig b/drivers/hid/Kconfig
+index 1fc1569..212ce30 100644
+--- a/drivers/hid/Kconfig
++++ b/drivers/hid/Kconfig
+@@ -779,7 +779,7 @@ config HID_ZYDACRON
+ 
+ config HID_SENSOR_HUB
+ 	tristate "HID Sensors framework support"
+-	depends on HID
++	depends on HID && ISS_PATH_SENSCOL
+ 	select MFD_CORE
+ 	default n
+ 	---help---
+-- 
+1.7.9.5
+

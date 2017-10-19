@@ -1,0 +1,27 @@
+From 6d7d48074d1b115b11b48f3d26d4678bfb62dfab Mon Sep 17 00:00:00 2001
+From: "Brett T. Warden" <brett.t.warden@intel.com>
+Date: Wed, 28 Jan 2015 13:59:15 -0800
+Subject: [PATCH] Add support for CGM SATA controller in IDE mode
+
+---
+ drivers/ata/ata_piix.c |    4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/ata/ata_piix.c b/drivers/ata/ata_piix.c
+index 513ad7e..dba4c17 100644
+--- a/drivers/ata/ata_piix.c
++++ b/drivers/ata/ata_piix.c
+@@ -340,6 +340,10 @@ static const struct pci_device_id piix_pci_tbl[] = {
+ 	{ 0x8086, 0x0F21, PCI_ANY_ID, PCI_ANY_ID, 0, 0, ich8_2port_sata_byt },
+ 	/* SATA Controller IDE (Coleto Creek) */
+ 	{ 0x8086, 0x23a6, PCI_ANY_ID, PCI_ANY_ID, 0, 0, ich8_2port_sata },
++	/* SATA Controller IDE (Cougar Mountain).
++	 * Attach iff the controller is in IDE mode. */
++	{ 0x8086, 0x2ba0, PCI_ANY_ID, PCI_ANY_ID,
++	  PCI_CLASS_STORAGE_IDE << 8, 0xffff00, ich8_2port_sata },
+ 
+ 	{ }	/* terminate list */
+ };
+-- 
+1.7.9.5
+

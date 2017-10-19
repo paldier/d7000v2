@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<head>
+<script>
+		var t,objFrame,loadingImg;
+
+	function wait1()
+	{		
+		t = setTimeout('do_submit()',500);
+	}
+
+	function do_submit()
+	{
+		document.forms[0].submit();		  
+	}
+
+
+
+
+</script>
+</head>
+<body onLoad="wait1();">
+<form name="formname" method="POST" action="genie_to_success.cgi">
+</form>
+</body>

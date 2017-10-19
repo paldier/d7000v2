@@ -1,0 +1,38 @@
+From 7881754ad3e82288bb2fdec67aa7532d8898b772 Mon Sep 17 00:00:00 2001
+From: Alexander Usyskin <alexander.usyskin@intel.com>
+Date: Thu, 17 Jul 2014 10:53:35 +0300
+Subject: [PATCH] mei: start disconnect request timer consistently
+
+commit 22b987a325701223f9a37db700c6eb20b9924c6f upstream.
+
+Link must be reset in case the fw doesn't
+respond to client disconnect request.
+We did charge the timer only in irq path
+from mei_cl_irq_close and not in mei_cl_disconnect
+
+Signed-off-by: Alexander Usyskin <alexander.usyskin@intel.com>
+Signed-off-by: Tomas Winkler <tomas.winkler@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+(cherry picked from commit dcb785742a05ffa8be4d00a886daa7ba5d831302)
+
+Signed-off-by: Nagaraj S <sivasankaranx.nagaraj@intel.com>
+---
+ drivers/misc/mei/client.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/misc/mei/client.c b/drivers/misc/mei/client.c
+index 89a5579..833da35 100644
+--- a/drivers/misc/mei/client.c
++++ b/drivers/misc/mei/client.c
+@@ -413,6 +413,7 @@ int mei_cl_disconnect(struct mei_cl *cl)
+ 			cl_err(dev, cl, "failed to disconnect.\n");
+ 			goto free;
+ 		}
++		cl->timer_count = MEI_CONNECT_TIMEOUT;
+ 		mdelay(10); /* Wait for hardware disconnection ready */
+ 		list_add_tail(&cb->list, &dev->ctrl_rd_list.list);
+ 	} else {
+-- 
+1.7.9.5
+

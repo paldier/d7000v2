@@ -1,0 +1,3 @@
+iconvert.lo: iconvert.c ../../../config.h
+
+../../../config.h:

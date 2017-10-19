@@ -1,0 +1,16 @@
+diff --exclude 'msvc*' -Npur hostap-724fce8/src/ap/sta_info.c hostap-patched_ap_free_sta/src/ap/sta_info.c
+--- hostap-724fce8/src/ap/sta_info.c	2015-05-19 17:14:48.000000000 +0300
++++ hostap-patched_ap_free_sta/src/ap/sta_info.c	2015-05-25 14:01:12.000000000 +0300
+@@ -156,8 +156,12 @@ void ap_free_sta(struct hostapd_data *ha
+ 	if (sta->flags & WLAN_STA_WDS)
+ 		hostapd_set_wds_sta(hapd, NULL, sta->addr, sta->aid, 0);
+ 
++#if 0
+ 	if (!hapd->iface->driver_ap_teardown &&
+ 	    !(sta->flags & WLAN_STA_PREAUTH))
++#else
++	if (!(sta->flags & WLAN_STA_PREAUTH))
++#endif
+ 		hostapd_drv_sta_remove(hapd, sta->addr);
+ 
+ 	ap_sta_hash_del(hapd, sta);

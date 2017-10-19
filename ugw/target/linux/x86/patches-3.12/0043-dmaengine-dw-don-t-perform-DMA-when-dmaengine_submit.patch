@@ -1,0 +1,82 @@
+From ff4fc0007190e05f3f501b4e1800705f0f0adfe8 Mon Sep 17 00:00:00 2001
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Date: Wed, 18 Jun 2014 12:15:38 +0300
+Subject: [PATCH] dmaengine: dw: don't perform DMA when dmaengine_submit is
+ called
+
+commit dd8ecfcac66b4485416b2d1df0ec4798b198d7d6 upstream.
+
+Accordingly to discussion [1] and followed up documentation the DMA controller
+driver shouldn't start any DMA operations when dmaengine_submit() is called.
+
+This patch fixes the workflow in dw_dmac driver to follow the documentation.
+
+[1] http://www.spinics.net/lists/arm-kernel/msg125987.html
+
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Signed-off-by: Vinod Koul <vinod.koul@intel.com>
+Cc: "Petallo, MauriceX R" <mauricex.r.petallo@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+(cherry picked from commit 5257a3de5b34b7f89f71026fb553a0b84736ff66)
+
+Signed-off-by: Brett T. Warden <brett.t.warden@intel.com>
+---
+ drivers/dma/TODO      |    1 -
+ drivers/dma/dw/core.c |   19 +++++++------------
+ 2 files changed, 7 insertions(+), 13 deletions(-)
+
+diff --git a/drivers/dma/TODO b/drivers/dma/TODO
+index 734ed02..b8045cd 100644
+--- a/drivers/dma/TODO
++++ b/drivers/dma/TODO
+@@ -7,7 +7,6 @@ TODO for slave dma
+ 	- imx-dma
+ 	- imx-sdma
+ 	- mxs-dma.c
+-	- dw_dmac
+ 	- intel_mid_dma
+ 4. Check other subsystems for dma drivers and merge/move to dmaengine
+ 5. Remove dma_slave_config's dma direction.
+diff --git a/drivers/dma/dw/core.c b/drivers/dma/dw/core.c
+index 5283f6b..2a0f526 100644
+--- a/drivers/dma/dw/core.c
++++ b/drivers/dma/dw/core.c
+@@ -703,17 +703,9 @@ static dma_cookie_t dwc_tx_submit(struct dma_async_tx_descriptor *tx)
+ 	 * possible, perhaps even appending to those already submitted
+ 	 * for DMA. But this is hard to do in a race-free manner.
+ 	 */
+-	if (list_empty(&dwc->active_list)) {
+-		dev_vdbg(chan2dev(tx->chan), "%s: started %u\n", __func__,
+-				desc->txd.cookie);
+-		list_add_tail(&desc->desc_node, &dwc->active_list);
+-		dwc_dostart(dwc, dwc_first_active(dwc));
+-	} else {
+-		dev_vdbg(chan2dev(tx->chan), "%s: queued %u\n", __func__,
+-				desc->txd.cookie);
+ 
+-		list_add_tail(&desc->desc_node, &dwc->queue);
+-	}
++	dev_vdbg(chan2dev(tx->chan), "%s: queued %u\n", __func__, desc->txd.cookie);
++	list_add_tail(&desc->desc_node, &dwc->queue);
+ 
+ 	spin_unlock_irqrestore(&dwc->lock, flags);
+ 
+@@ -1118,9 +1110,12 @@ dwc_tx_status(struct dma_chan *chan,
+ static void dwc_issue_pending(struct dma_chan *chan)
+ {
+ 	struct dw_dma_chan	*dwc = to_dw_dma_chan(chan);
++	unsigned long		flags;
+ 
+-	if (!list_empty(&dwc->queue))
+-		dwc_scan_descriptors(to_dw_dma(chan->device), dwc);
++	spin_lock_irqsave(&dwc->lock, flags);
++	if (list_empty(&dwc->active_list))
++		dwc_dostart_first_queued(dwc);
++	spin_unlock_irqrestore(&dwc->lock, flags);
+ }
+ 
+ static int dwc_alloc_chan_resources(struct dma_chan *chan)
+-- 
+1.7.9.5
+

@@ -1,0 +1,58 @@
+<!DOCTYPE HTML>
+<html>
+<head><link rel="stylesheet" type="text/css" media="all" href="css/jScrollPane.css" />
+<link rel="stylesheet" href="css/help.css">
+<link rel="stylesheet" href="css/scrollbar.css">
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jScrollPane.js"></script>
+
+<script src="script/script.js"></script>
+
+<%11%>
+<title>NETGEAR Router <%55%></title>
+<script type="text/javascript" id="sourcecode">
+    $(function()
+    {
+        $('#content').each(
+            function()
+            {
+                $(this).jScrollPane(
+                {
+                    showArrows: $(this).is('.arrow')
+                }
+            );
+            var api = $(this).data('jsp');
+            var throttleTimeout;
+            $(window).bind(
+                'resize',
+            function()
+            {
+                if ($.browser.msie) {
+                    // IE fires multiple resize events while you are dragging the browser window which
+                    // causes it to crash if you try to update the scrollpane on every one. So we need
+                    // to throttle it to fire a maximum of once every 50 milliseconds...
+                    if (!throttleTimeout) {
+                        throttleTimeout = setTimeout(
+                            function()
+                            {
+                                api.reinitialise();
+                                throttleTimeout = null;
+                            },
+                            50
+                        );
+                    }
+                } else {
+                    api.reinitialise();
+                }
+            }
+            );
+            }
+        )
+    });
+</script>
+
+</head>
+<%1372%>
+</html>
+

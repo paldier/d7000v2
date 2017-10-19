@@ -1,0 +1,12 @@
+diff -Nur hostapd20-01/src/drivers/driver_mtlk.c hostapd20/src/drivers/driver_mtlk.c
+--- hostapd20-01/src/drivers/driver_mtlk.c	2013-04-23 15:35:26.000000000 +0300
++++ hostapd20/src/drivers/driver_mtlk.c	2013-04-23 15:46:44.000000000 +0300
+@@ -721,7 +721,7 @@
+ 	memset(&iwr, 0, sizeof(iwr));
+ 	strncpy(iwr.ifr_name, drv->iface, IFNAMSIZ);
+ 	iwr.u.essid.pointer = (caddr_t) buf;
+-	iwr.u.essid.length = len;
++	iwr.u.essid.length = len + 1;
+ 
+ 	if (ioctl(drv->ioctl_sock, SIOCGIWESSID, &iwr) < 0) {
+ 		perror("ioctl[SIOCGIWESSID]");

@@ -1,0 +1,28 @@
+diff -Npur '-x*.*.rej' '-x*.*.orig' '-x*.patch' a/net/wireless/core.c b/net/wireless/core.c
+--- a/net/wireless/core.c	2014-04-03 08:32:32.000000000 +0000
++++ b/net/wireless/core.c	2015-11-11 15:52:26.678771800 +0000
+@@ -740,6 +740,12 @@ void cfg80211_unregister_wdev(struct wir
+ }
+ EXPORT_SYMBOL(cfg80211_unregister_wdev);
+ 
++struct workqueue_struct *cfg80211_get_cfg80211_wq(void)
++{
++	return cfg80211_wq;
++}
++EXPORT_SYMBOL(cfg80211_get_cfg80211_wq);
++
+ static struct device_type wiphy_type = {
+ 	.name	= "wlan",
+ };
+diff -Npur '-x*.*.rej' '-x*.*.orig' '-x*.patch' a/net/wireless/mlme.c b/net/wireless/mlme.c
+--- a/net/wireless/mlme.c	2016-01-19 10:24:02.761176400 +0000
++++ b/net/wireless/mlme.c	2016-01-19 10:24:57.071176400 +0000
+@@ -708,7 +708,7 @@ void cfg80211_dfs_channels_update_work(s
+ 				continue;
+ 
+ 			timeout = c->dfs_state_entered +
+-				  IEEE80211_DFS_MIN_NOP_TIME_MS;
++				msecs_to_jiffies(IEEE80211_DFS_MIN_NOP_TIME_MS);
+ 
+ 			if (time_after_eq(jiffies, timeout)) {
+ 				c->dfs_state = NL80211_DFS_USABLE;

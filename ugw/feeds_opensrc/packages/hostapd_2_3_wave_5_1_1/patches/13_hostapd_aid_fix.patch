@@ -1,0 +1,27 @@
+diff --exclude-from=/home/krikis/.diff_ignore.txt -Naur hostap-coex/src/ap/ieee802_11.c hostap-aidfix/src/ap/ieee802_11.c
+--- hostap-coex/src/ap/ieee802_11.c	2015-04-20 19:31:51.000000000 +0300
++++ hostap-aidfix/src/ap/ieee802_11.c	2015-04-20 19:22:00.000000000 +0300
+@@ -1536,6 +1536,9 @@
+ 	ieee802_1x_free_station(sta);
+ 	hostapd_drv_sta_remove(hapd, sta->addr);
+ 
++	if (sta->aid > 0 && hapd->driver->free_aid)
++		(*hapd->driver->free_aid)(hapd->drv_priv, &sta->aid);
++
+ 	if (sta->timeout_next == STA_NULLFUNC ||
+ 	    sta->timeout_next == STA_DISASSOC) {
+ 		sta->timeout_next = STA_DEAUTH;
+diff --exclude-from=/home/krikis/.diff_ignore.txt -Naur hostap-coex/src/ap/sta_info.c hostap-aidfix/src/ap/sta_info.c
+--- hostap-coex/src/ap/sta_info.c	2015-04-20 19:31:51.000000000 +0300
++++ hostap-aidfix/src/ap/sta_info.c	2015-04-20 19:23:08.000000000 +0300
+@@ -660,6 +660,10 @@
+ 			   " from kernel driver.", MAC2STR(sta->addr));
+ 		return -1;
+ 	}
++
++	if (sta->aid > 0 && hapd->driver->free_aid)
++		(*hapd->driver->free_aid)(hapd->drv_priv, &sta->aid);
++
+ 	return 0;
+ }
+ 

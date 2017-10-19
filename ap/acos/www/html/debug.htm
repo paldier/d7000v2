@@ -1,0 +1,136 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+
+<title>NETGEAR Router <%55%></title>
+
+<link rel="stylesheet" href="css/button.css">
+<link rel="stylesheet" href="form.css">
+
+<script src="script/script.js"></script>
+<%12%>
+<script language="javascript" type="text/javascript">
+<!--
+function init()
+{
+	var cf2 = document.forms[1];
+	if (cf2.capture_in_process.value != "")	
+		cf2.action_Start_Capture.outerHTML='<button type="SUBMIT" value="Start_Capture" name=action_Start_Capture class="button-grey" disabled="disabled"><span class="roundleft_grey">&nbsp;&nbsp; Start Capture </span><span class="roundright_grey">&nbsp;&nbsp;</span></button>';		
+}
+
+function isChecked()
+{
+	var cf2 = document.forms[1];
+	var cf3 = document.forms[2];
+
+	if (cf2.dump_LAN_WAN_pkt.value == "On")
+		cf2.action_Capture_Packets.checked=true;
+	else 
+		cf2.action_Capture_Packets.checked=false;
+
+	if (cf3.Enable_Telnet.value == "On")
+		cf3.action_Enable_Telnet.checked=true;
+	else 
+		cf3.action_Enable_Telnet.checked=false;		
+/*		
+	if (cf3.WAN_port_mirror_to_LAN_port.value == "On")
+		cf3.action_Mirror_Port.checked=true;
+	else 
+		cf3.action_Mirror_Port.checked=false;	
+*/
+}
+
+function clickSaveButton()
+{
+    var cf2 = document.forms[1];
+    
+    cf2.DebugLog.disabled=true;
+    cf2.DebugLog.outerHTML='<button type="SUBMIT" value="DebugLog" name=DebugLog class="button-grey" disabled="disabled"><span class="roundleft_grey">&nbsp;&nbsp; Save Debug Log </span><span class="roundright_grey">&nbsp;&nbsp;</span></button>';		
+
+//	if (cf2.action_Start_Capture.disabled)
+//		alert("Debug Log capturing in progress");
+        
+//	cf2.action_Start_Capture.outerHTML='<button type="SUBMIT" value="Start_Capture" name=action_Start_Capture class="button-rule" ><span class="roundleft_button">&nbsp;&nbsp; Start Capture </span><span class="roundright_button">&nbsp;&nbsp;</span></button>';
+}
+//-->
+</script>
+</head>
+<body onload="init();isChecked();">
+<form id="cf" action=newdebug.cgi method="POST">
+<img style="position:relative;left:-7px;" src="img/NewNetgeargenie.png" >
+<br>
+<span id="ModuleName"><b><%55%></b></span>
+<br>
+<div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div>
+<b>Basic Information</b>
+<table width="100%">
+<tr>
+<td width="22%"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CPU Load</b><br><br></td>
+<td width="78%"><b>CPU1: <%2297%>% CPU2: <%2298%>%</b><br><br></td>
+</tr>
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Memory Usage (Used/Total)</b><br><br></td>
+<td><b><%2299%>MB/<%2300%>MB</b><br><br></td>
+</tr>
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Flash Usage (Used/Total)</b><br><br></td>
+<td><b><%2301%>MB/<%2302%>MB</b><br><br></td>
+</tr>
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Network Session (Active/Total)</b><br><br></td>
+<td><b><%2303%></b><br><br></td>
+</tr>
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System Uptime</b><br><br></td>
+<td><b><%2304%></b><br><br></td>
+</tr>
+
+<tr>
+<td><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CPU junction temperature</b><br><br></td>
+<td><b><%2305%></b><br><br></td>
+</tr>
+
+</table>
+</form>
+<form id="cf2" action=newdebug.cgi method="POST">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="checkbox" name="action_Capture_Packets" value="Capture_Packet"><b> Enable LAN/WAN Packet Capture</b>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<b>Store location</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<select name="store_location">
+<option value="memory" <%2306%>>System Memory&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</option>
+<option value="usb" <%2307%>>USB Storage</option>
+</select>
+<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<button type="SUBMIT" value="Start_Capture" name="action_Start_Capture" class="button-rule" >
+<span class="roundleft_button">&nbsp;&nbsp; Start Capture </span><span class="roundright_button">&nbsp;&nbsp;</span>
+</button>
+<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<button type="BUTTON" value="DebugLog" name="DebugLog" onclick="window.location.href = 'Debug_log.zip';clickSaveButton();" class="button-rule">
+<span class="roundleft_button">Save Debug Log</span><span class="roundright_button">&nbsp;</span>
+</button> 
+<br><br>
+<input type="hidden" name="capture_in_process" value="<%2308%>">
+<input type="hidden" name="dump_LAN_WAN_pkt" value="<%2309%>">
+<input type="hidden" name="form" value="2" >
+</form>
+<form id="cf3" action=newdebug.cgi method="POST">
+&nbsp;&nbsp;
+<input type="checkbox" name="action_Enable_Telnet" value="Telnet_Enable" onclick="document.forms[2].submit();"><b> Enable Telnet</b>
+<input type="hidden" name="Enable_Telnet" value="<%2310%>">
+<br><br>
+&nbsp;&nbsp;
+<!--
+<input type="checkbox" name="action_Mirror_Port" value="Port_mirror" onclick="document.forms[3].submit();"><b> WAN Port mirror to LAN port 1</b>
+<input type="hidden" name="WAN_port_mirror_to_LAN_port" value="<%2311%>">
+//-->
+<input type="hidden" name="form" value="3" >
+</form>
+</body>
+</html>

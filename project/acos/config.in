@@ -1,0 +1,469 @@
+#
+# Copyright 2016  Hon Hai Precision Ind. Co. Ltd.
+# All Rights Reserved.
+# No portions of this material shall be reproduced in any form without the
+# written permission of Hon Hai Precision Ind. Co. Ltd.
+#
+# All information contained in this document is Hon Hai Precision Ind.
+# Co. Ltd. company private, proprietary, and trade secret property and
+# are protected by international intellectual property laws and treaties.
+#
+# $Id$
+#
+#
+#
+
+### For Intel Solution.
+include $(TOPDIR)/rules.mk
+
+#CONFIG_UCLIBC=n
+#CONFIG_GLIBC=y
+
+#
+# Paths
+#
+
+# Source bases
+export LINUXDIR LIBDIR USRLIBDIR
+
+
+
+
+#
+# Environment
+#
+PLATFORM=mips-openwrt
+LINUXDIR=$(COMMON_KERNELPATH)
+LIBDIR=$(TOOLCHAIN)/lib
+USRLIBDIR=$(TOOLCHAIN)/usr/lib
+
+#
+# Cross-compile environment variables
+#
+
+# Build platform
+export BUILD := x86_64-unknown-linux-gnu
+export HOSTCC := gcc
+
+CFLAGS += -Os
+
+
+
+export AS		= $(TARGET_CROSS)as
+export LD		= $(TARGET_CROSS)ld
+export CC		= $(TARGET_CROSS)gcc
+export CPP		= $(CC) -E
+export AR		= $(TARGET_CROSS)ar
+export NM		= $(TARGET_CROSS)nm
+export STRIP		= $(TARGET_CROSS)strip
+export OBJCOPY		= $(TARGET_CROSS)objcopy
+export OBJDUMP		= $(TARGET_CROSS)objdump
+export RANLIB := $(TARGET_CROSS)ranlib
+export SIZE := $(TARGET_CROSS)size
+
+
+
+#
+# Install and target directories
+#
+# reference qsdk/rules.mk
+BUILD_DIR_BASE:=$(TOPDIR)/build_dir
+BUILD_DIR_HOST:=$(BUILD_DIR_BASE)/host
+
+BOARD:=
+BUILD_DIR:=$(BUILD_DIR_BASE)/$(TARGET_DIR_NAME)
+
+export INSTALLDIR:=$(STAGING_DIR)
+export TARGETDIR:=$(TARGET_DIR)
+
+
+export MODPATH := ${TARGETDIR}/lib/modules/${KERNELRELEASE}/kernel
+MODLIB	:= $(TARGETDIR)/lib/modules/$(KERNELRELEASE)
+export MODLIB
+
+
+#ROUTERDIR= $(SRCBASE)/router
+ACOSTOPDIR= $(SRCBASE)/ap/acos
+export ACOSTOPDIR
+#export ROUTERDIR
+
+ifeq ($(CONFIG_BCMWPA2),y)
+export CFLAGS += -DBCMWPA2
+endif
+
+ifeq ($(CONFIG_NEW_WANDETECT),y)
+export CFLAGS += -DNEW_WANDETECT
+endif
+
+#Foxconn add start FinerainZhou 04/25/2011
+ifeq ($(ENABLE_MWAN),y)
+CFLAGS	+= -DMULTI_WAN
+endif
+
+
+ifeq ($(ENABLE_VLAN),y)
+CFLAGS += -DINCLUDE_VLAN
+endif
+
+ifeq ($(ENABLE_MLAN),y)
+CFLAGS	+= -DMULTI_LAN
+endif
+#Foxconn add end FinerainZhou 04/25/2011
+
+#Foxconn add end FinerainZhou 08/26/2010 @miniDLNA
+ifeq ($(CONFIG_DLNA),y)
+CFLAGS += -DDLNA
+endif
+
+ifeq ($(ENABLE_IGMP_PROXY),y)
+CFLAGS += -DIGMP_PROXY
+endif
+CFLAGS += -DFLASH_SECTOR_128K
+
+ifeq ($(MULTI_LANG_ENABLE),y)
+CFLAGS	+= -DENABLE_ML
+endif
+
+# Platform dependent flags
+CFLAGS += -DNEW_WLAN_REGION 
+CFLAGS += -DINCLUDE_WAN_LAN_SUBNET -DINCLUDE_BURNSN -DINCLUDE_WCN
+CFLAGS += -DINCLUDE_QOS -DAG_QOS
+CFLAGS += -DINCLUDE_L7_FILTER
+CFLAGS += -DBANDWIDTH_DETECT
+CFLAGS += -DINCLUDE_BCM_WPS
+CFLAGS += -DNEW_BCM_WPS_IPC
+CFLAGS += -DMULTIPLE_SSID
+CFLAGS += -DLINUX26
+CFLAGS += -DX_ST_ML
+CFLAGS += -DSINGLE_FIRMWARE
+CFLAGS += -DINCLUDE_BURNSKU  
+CFLAGS += -DMULTI_LANGUAGE_ENHANCE
+CFLAGS += -DENABLE_INTERNET_FIRMWARE_UPGRADE
+CFLAGS += -DUSB_LOG
+CFLAGS += -DFW_UPGRADE_BLINK_LED
+CFLAGS += -DBIG_ENDIAN
+ifeq ($(POT_ENABLE_FLAG),y)
+CFLAGS += -DINCLUDE_POT
+endif
+ifeq ($(CONFIG_PPP_RU_DESIGN),y)
+CFLAGS += -DPPP_RU_DESIGN
+endif
+
+ifeq ($(L2TP_ENABLE_FLAG),y)
+CFLAGS += -DINCLUDE_L2TP
+endif
+
+ifeq ($(CONFIG_SOAP_API_20),y)
+CFLAGS += -DSOAP_API_20
+endif
+ifeq ($(CONFIG_OPENSSL),y)
+CFLAGS += -DSUPPORT_REMOTE_HTTPS
+endif
+
+ifeq ($(CONFIG_QOS_AUTO_CHECK_BW),y)
+CFLAGS += -DQOS_AUTO_CHECK_BANDWIDTH
+endif
+
+ifeq ($(HTTP_ACCESS_USB_FLAG),y)
+CFLAGS	+= -DHTTP_ACCESS_USB
+else
+CFLAGS	+= -UHTTP_ACCESS_USB
+endif
+
+ifeq ($(ENABLE_MCPD_FLAG),y)
+CFLAGS	+= -DIGMP_PROXY_MCPD
+CFLAGS	+= -DSUPPORT_MLD
+endif
+
+ifeq ($(FTP_ACCESS_USB_FLAG),y)
+CFLAGS += -DFTP_ACCESS_USB
+CFLAGS += -DMAX_USB_ACCESS
+else
+CFLAGS += -UFTP_ACCESS_USB
+endif
+
+ifeq ($(DSL_TYPE), B)
+CFLAGS += -D_ANNEXB_
+endif
+
+ifeq ($(NEW_FORWARD_SPEC),y)
+CFLAGS += -DNEW_FORWARD_SPEC
+endif
+
+ifeq ($(CONFIG_NTP_SYNC_RECORD),y)
+CFLAGS += -DNTP_SYNC_RECORD
+endif
+
+ifeq ($(CONFIG_WL_ACCESS_RECORD),y)
+CFLAGS += -DWL_ACCESS_RECORD
+endif
+
+
+ifeq ($(ENABLE_CDLESS),y)
+CFLAGS += -DENABLE_CDLESS
+endif
+
+#Foxconn added start, Wins, 06/22/2011, @WPS v2.0
+ifeq ($(CONFIG_WPS_V20),y)
+CFLAGS += -DINCLUDE_WPS_V20
+endif
+#Foxconn added end, Wins, 06/22/2011, @WPS v2.0
+
+ifeq ($(CONFIG_OPENVPN),y)
+CFLAGS += -DOPENVPN_SUPPORT
+endif
+
+ifeq ($(ENABLE_VPN),y)
+CFLAGS += -DINCLUDE_VPN
+endif
+
+ifeq ($(INCLUDE_IPV6_FLAG),y)
+CFLAGS += -DIPv6_ENABLED
+CFLAGS += -DINCLUDE_IPV6
+endif
+
+ifeq ($(SAMBA_ENABLE_FLAG),y)
+CFLAGS += -DSAMBA_ENABLE
+export LIB_NAT_CFLAGS += -DSAMBA_ENABLE
+endif
+
+ifeq ($(CONFIG_REMOTE_SMB_CONF),y)
+CFLAGS += -DREMOTE_SMB_CONF
+endif
+#Foxconn Perry added end, 2011/11/18, for remote_smb_conf
+#Foxconn added start by Kathy, 11/04/2013 @ remote_user_conf
+ifeq ($(CONFIG_REMOTE_USER_CONF),y)
+CFLAGS += -DREMOTE_USER_CONF
+endif
+#Foxconn added end by Kathy, 11/04/2013 @ remote_user_conf
+
+#Foxconn added by Kathy, 11/04/2013
+ifeq ($(CONFIG_USERSETUP),y)
+CFLAGS += -DUSERSETUP_SUPPORT
+endif
+
+ifeq ($(CONFIG_USE_KERNEL_NTFS),y)
+CFLAGS += -DUSE_KERNEL_NTFS
+endif
+
+ifeq ($(CONFIG_USE_KERNEL_USB_PRINTER),y)
+CFLAGS += -DUSE_KERNEL_USB_PRINTER
+endif
+ifeq ($(CONFIG_ACCESSCONTROL),y)
+CFLAGS += -DINCLUDE_ACCESSCONTROL
+endif
+
+ifeq ($(STA_MODE),y)
+CFLAGS += -DSTA_MODE
+endif
+
+ifeq ($(AP_MODE),y)
+CFLAGS += -DAP_MODE
+endif
+
+ifeq ($(LLTD_ENABLE_FLAG),y)
+CFLAGS += -DLLTD_ENABLE
+endif
+
+ifeq ($(CONFIG_TIMEMACHINE),y)
+CFLAGS += -DINCLUDE_AFP
+endif
+
+CFLAGS += -DPRESET_WL_SECURITY
+
+CFLAGS += -DWIFI_ON_OFF_SCHE
+ifeq ($(strip $(PROFILE)),D6400)
+CFLAGS += -D_XDSL_PRODUCT
+CFLAGS += -DSUPPORT_VDSL
+CFLAGS += -DD6400
+CFLAGS += -DU12L274_D6300v2
+CFLAGS += -DWLAN_5G_BAND -DINCLUDE_DUAL_BAND
+CFLAGS += -DCHIP_6362 -I$(BCM_LIB_DIR) 
+CFLAGS += -DSUPPORT_AC_MODE
+CFLAGS += -DSINGLE_WAN_GUI 
+CFLAGS += -DU12L274_D6400
+CFLAGS += -DNO_PPTP_DETECTION
+endif
+
+ifeq ($(strip $(PROFILE)),D6220)
+CFLAGS += -D_XDSL_PRODUCT
+CFLAGS += -DSUPPORT_VDSL
+CFLAGS += -DD6220
+CFLAGS += -DU12L342_D6220
+CFLAGS += -DWLAN_5G_BAND -DINCLUDE_DUAL_BAND
+CFLAGS += -DCHIP_6362 -I$(BCM_LIB_DIR) 
+CFLAGS += -DSUPPORT_AC_MODE
+CFLAGS += -DSINGLE_WAN_GUI 
+CFLAGS += -DNO_PPTP_DETECTION
+endif
+
+ifeq ($(CONFIG_INTEL_SDK),y)
+LDFLAGS += -L$(STAGING_DIR)/opt/lantiq/usr/lib
+LDFLAGS	+= -L$(STAGING_DIR)/usr/lib 
+LDFLAGS	+= -L$(STAGING_DIR)/usr/lib/mcast
+LDFLAGS	+= -L$(STAGING_DIR)/lib 
+LDFLAGS	+= -L$(TOOLCHAIN_DIR)/usr/lib 
+LDFLAGS	+= -L$(TOOLCHAIN_DIR)/lib
+#LDFLAGS	+= -ldslfapi -lucimap 
+#LDFLAGS	+= -lsysfapi 
+#LDFLAGS	+= -ldl 
+#LDFLAGS	+= -lhelper -luci
+#LDFLAGS	+= -lethfapi
+endif
+
+
+ifeq ($(PROFILE),D7000v2)
+BOARDID_FILE=compatible_intel.txt
+CFLAGS += -DD7000v2
+CFLAGS += -DSUPPORT_VDSL
+CFLAGS += -DWLAN_5G_BAND -DINCLUDE_DUAL_BAND
+CFLAGS += -DINCLUDE_INTEL_SDK
+CFLAGS += -DSINGLE_FIRMWARE
+CFLAGS += -DWIFI_ON_OFF_SCHE
+CFLAGS += -DSUPPORT_AC_MODE
+CFLAGS += -DSINGLE_WAN_GUI 
+CFLAGS += -DNO_PPTP_DETECTION
+CFLAGS += -DNO_BIGPOND_PPTP_DETECTION
+CFLAGS += -DNO_ACOS_NAT -DCONFIG_ARNONAT
+CFLAGS += -DCHECK_FW_OPTIMIZE
+#CFLAGS += -DNAND_BD 
+CFLAGS += -DNAND_POT -DNAND_STRING_TABLE -DNAND_TRAFFIC_METER 
+endif
+
+ifeq ($(PROFILE),D6220v2)
+BOARDID_FILE=compatible_intel.txt
+CFLAGS += -DD6220v2
+CFLAGS += -DSUPPORT_VDSL
+CFLAGS += -DWLAN_5G_BAND -DINCLUDE_DUAL_BAND
+CFLAGS += -DINCLUDE_INTEL_SDK
+CFLAGS += -DSINGLE_FIRMWARE
+CFLAGS += -DWIFI_ON_OFF_SCHE
+CFLAGS += -DSUPPORT_AC_MODE
+CFLAGS += -DSINGLE_WAN_GUI 
+CFLAGS += -DNO_PPTP_DETECTION
+CFLAGS += -DNO_BIGPOND_PPTP_DETECTION
+CFLAGS += -DNO_ACOS_NAT -DCONFIG_ARNONAT
+#CFLAGS += -DNAND_BD 
+CFLAGS += -DNAND_POT -DNAND_STRING_TABLE -DNAND_TRAFFIC_METER 
+endif
+
+
+ifeq ($(CONFIG_DETECT_AP_MODE),y)
+CFLAGS += -DINCLUDE_DETECT_AP_MODE
+endif
+ifeq ($(ENABLE_SCRATCHPAD_FLAG),y)
+CFLAGS  += -DINCLUDE_SCRATCHPAD
+endif
+
+ifeq ($(CONFIG_IMPLICIT_BEAMFORMING),y)
+CFLAGS += -DCONFIG_IMPLICIT_BEAMFORMING
+endif
+
+CFLAGS  += -DDSL_SPEC_V1_0
+
+ifeq ($(PARSER_ENABLE),y)
+CFLAGS += -DINCLUDE_UCP
+endif
+ifeq ($(CONFIG_RUSSIA_IPTV),y)
+CFLAGS += -DCONFIG_RUSSIA_IPTV
+endif
+
+ifeq ($(VLAN_SUPPORT),y)
+CFLAGS += -DVLAN_SUPPORT
+endif
+
+ifeq ($(INCLUDE_WIZ_LOG),y)
+CFLAGS += -DWIZ_LOG
+endif
+
+ifeq ($(INCLUDE_CONSOLE_LOG),y)
+CFLAGS += -DCONSOLE_LOG
+endif
+ifeq ($(IPTV6RD_ENABLE_FLAG),y)
+CFLAGS	+= -DACOS_IPV6RD
+endif
+
+CFLAGS += -DINCLUDE_DEVICE_MODE
+
+
+ifeq ($(CONFIG_HIDDEN_PAGE_DEBUG),y)
+CFLAGS += -DHIDDEN_PAGE_DEBUG
+endif
+
+ifeq ($(CONFIG_NEW_DEBUG_HIDDEN_PAGE),y)
+CFLAGS += -DNEW_DEBUG_HIDDEN_PAGE
+endif
+
+
+ifeq ($(CONFIG_CLOUD_XAGENT_CONF),y)
+CFLAGS += -DXAGENT_CLOUD_SUPPORT
+endif
+
+ifeq ($(CONFIG_OPENDNS),y)
+CFLAGS += -DOPENDNS_PARENTAL_CONTROL
+endif
+
+ifeq ($(USB_NEW_SPEC_FLAG),y)
+CFLAGS += -DUSB_NEW_SPEC
+endif
+
+ifeq ($(CONFIG_RESTART_ALL_PROCESS),y)
+CFLAGS += -DRESTART_ALL_PROCESSES
+endif
+
+ifeq ($(MULTIPLE_SSID_ENABLE_FLAG), y)
+CFLAGS += -DMULTIPLE_SSID
+endif
+
+ifeq ($(INCLUDE_IPV6_FLAG),y)
+CFLAGS += -DINCLUDE_IPV6
+endif
+
+ifeq ($(TRAFFIC_METER_FLAG),y)
+CFLAGS += -DINCLUDE_TRAFFIC_METER
+export LIB_NAT_CFLAGS += -DINCLUDE_TRAFFIC_METER
+endif
+
+export LIB_NAT_CFLAGS += -DINCLUDE_WAN_LAN_SUBNET -DAG_QOS -DBANDWIDTH_DETECT
+
+ifndef ACOS_LINUX_VERSION
+export ACOSNAT_LINUX_VERSION := linux26
+endif
+
+ifeq ($(CONFIG_QCA_SDK),y)
+CFLAGS += -DCONFIG_QCA_SDK -DDUAL_TRI_BAND_HW_SUPPORT
+endif
+
+ifeq ($(CONFIG_INTEL_SDK),y)
+CFLAGS += -DCONFIG_INTEL_SDK
+endif
+
+
+ifeq ($(CONFIG_ADMIN_ACCOUNT),y)
+CFLAGS += -DCONFIG_ADMIN_ACCOUNT
+endif
+
+ifeq ($(CONFIG_REMOTE_USB_PROTECT),y)
+CFLAGS += -DCONFIG_REMOTE_USB_PROTECT
+endif
+
+ifeq ($(CONFIG_IOCTL_NO_POINTER),y)
+CFLAGS += -DIOCTL_NO_POINTER
+endif
+
+ifeq ($(CONFIG_ARNONAT),y)
+CFLAGS += -DCONFIG_ARNONAT
+endif
+
+ifeq ($(CONFIG_BONJOUR_PRINTER),y)
+CFLAGS += -DBONJOUR_PRINTER
+endif
+
+ifeq ($(CONFIG_READYCLOUD_NEW_PATH),y)
+CFLAGS += -DCONFIG_READYCLOUD_NEW_PATH
+endif
+
+
+export LDFLAGS
+export CFLAGS
+export BYTE_ORDER := BIG_ENDIAN

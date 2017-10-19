@@ -1,0 +1,176 @@
+# HG changeset patch
+# Parent fe7c0d49d83e2672bb6b6159ef76e1ab3bee0c2b
+
+diff --git a/src/ap/ap_drv_ops.c b/src/ap/ap_drv_ops.c
+--- a/src/ap/ap_drv_ops.c
++++ b/src/ap/ap_drv_ops.c
+@@ -358,7 +358,8 @@ int hostapd_sta_add(struct hostapd_data 
+ 		    u16 listen_interval,
+ 		    const struct ieee80211_ht_capabilities *ht_capab,
+ 		    const struct ieee80211_vht_capabilities *vht_capab,
+-		    u32 flags, u8 qosinfo, u8 vht_opmode)
++		    u32 flags, u8 qosinfo, u8 vht_opmode,
++        struct ieee80211_mgmt *last_assoc_req, size_t last_assoc_req_len)
+ {
+ 	struct hostapd_sta_add_params params;
+ 
+@@ -380,6 +381,8 @@ int hostapd_sta_add(struct hostapd_data 
+ 	params.vht_opmode = vht_opmode;
+ 	params.flags = hostapd_sta_flags_to_drv(flags);
+ 	params.qosinfo = qosinfo;
++	params.last_assoc_req = last_assoc_req;
++	params.last_assoc_req_len = last_assoc_req_len;
+ 	return hapd->driver->sta_add(hapd->drv_priv, &params);
+ }
+ 
+diff --git a/src/ap/ap_drv_ops.h b/src/ap/ap_drv_ops.h
+--- a/src/ap/ap_drv_ops.h
++++ b/src/ap/ap_drv_ops.h
+@@ -15,6 +15,7 @@ struct wpa_driver_scan_params;
+ struct ieee80211_ht_capabilities;
+ struct ieee80211_vht_capabilities;
+ struct hostapd_freq_params;
++struct ieee80211_mgmt;
+ 
+ u32 hostapd_sta_flags_to_drv(u32 flags);
+ int hostapd_build_ap_extra_ies(struct hostapd_data *hapd,
+@@ -40,7 +41,8 @@ int hostapd_sta_add(struct hostapd_data 
+ 		    u16 listen_interval,
+ 		    const struct ieee80211_ht_capabilities *ht_capab,
+ 		    const struct ieee80211_vht_capabilities *vht_capab,
+-		    u32 flags, u8 qosinfo, u8 vht_opmode);
++		    u32 flags, u8 qosinfo, u8 vht_opmode,
++        struct ieee80211_mgmt *last_assoc_req, size_t last_assoc_req_len);
+ int hostapd_set_privacy(struct hostapd_data *hapd, int enabled);
+ int hostapd_set_generic_elem(struct hostapd_data *hapd, const u8 *elem,
+ 			     size_t elem_len);
+diff --git a/src/ap/ieee802_11.c b/src/ap/ieee802_11.c
+--- a/src/ap/ieee802_11.c
++++ b/src/ap/ieee802_11.c
+@@ -1444,6 +1444,13 @@ static void handle_assoc(struct hostapd_
+ 	}
+ #endif /* CONFIG_IEEE80211W */
+ 
++  if (sta->last_assoc_req)
++    os_free(sta->last_assoc_req);
++  sta->last_assoc_req_len = len;
++  sta->last_assoc_req = os_malloc(len);
++  if (sta->last_assoc_req)
++    os_memcpy(sta->last_assoc_req, mgmt, len);
++
+ 	/* Make sure that the previously registered inactivity timer will not
+ 	 * remove the STA immediately. */
+ 	sta->timeout_next = STA_NULLFUNC;
+@@ -1922,7 +1929,7 @@ static void handle_assoc_cb(struct hosta
+ 		status = le_to_host16(mgmt->u.assoc_resp.status_code);
+ 
+ 	if (status != WLAN_STATUS_SUCCESS)
+-		return;
++		goto fail;
+ 
+ 	/* Stop previous accounting session, if one is started, and allocate
+ 	 * new session id for the new session. */
+@@ -1976,7 +1983,8 @@ static void handle_assoc_cb(struct hosta
+ 			    sta->listen_interval,
+ 			    sta->flags & WLAN_STA_HT ? &ht_cap : NULL,
+ 			    sta->flags & WLAN_STA_VHT ? &vht_cap : NULL,
+-			    sta->flags, sta->qosinfo, sta->vht_opmode)) {
++			    sta->flags, sta->qosinfo, sta->vht_opmode,
++          sta->last_assoc_req, sta->last_assoc_req_len)) {
+ 		hostapd_logger(hapd, sta->addr, HOSTAPD_MODULE_IEEE80211,
+ 			       HOSTAPD_LEVEL_NOTICE,
+ 			       "Could not add STA to kernel driver");
+@@ -1984,7 +1992,7 @@ static void handle_assoc_cb(struct hosta
+ 		ap_sta_disconnect(hapd, sta, sta->addr,
+ 				  WLAN_REASON_DISASSOC_AP_BUSY);
+ 
+-		return;
++		goto fail;
+ 	}
+ 
+ 	if (sta->flags & WLAN_STA_WDS) {
+@@ -2004,11 +2012,11 @@ static void handle_assoc_cb(struct hosta
+ 		 * interface selection is not going to change anymore.
+ 		 */
+ 		if (ap_sta_bind_vlan(hapd, sta, 0) < 0)
+-			return;
++			goto fail;
+ 	} else if (sta->vlan_id) {
+ 		/* VLAN ID already set (e.g., by PMKSA caching), so bind STA */
+ 		if (ap_sta_bind_vlan(hapd, sta, 0) < 0)
+-			return;
++			goto fail;
+ 	}
+ 
+ 	hostapd_set_sta_flags(hapd, sta);
+@@ -2020,6 +2028,13 @@ static void handle_assoc_cb(struct hosta
+ 	hapd->new_assoc_sta_cb(hapd, sta, !new_assoc);
+ 
+ 	ieee802_1x_notify_port_enabled(sta->eapol_sm, 1);
++
++fail:
++  /* Copy of the association request is not needed anymore */
++  if (sta->last_assoc_req) {
++    os_free(sta->last_assoc_req);
++    sta->last_assoc_req = NULL;
++  }
+ }
+ 
+ 
+diff --git a/src/ap/sta_info.c b/src/ap/sta_info.c
+--- a/src/ap/sta_info.c
++++ b/src/ap/sta_info.c
+@@ -243,7 +243,8 @@ void ap_free_sta(struct hostapd_data *ha
+ 		radius_client_flush_auth(hapd->radius, sta->addr);
+ #endif /* CONFIG_NO_RADIUS */
+ 
+-	os_free(sta->challenge);
++  os_free(sta->last_assoc_req);
++  os_free(sta->challenge);
+ 
+ #ifdef CONFIG_IEEE80211W
+ 	os_free(sta->sa_query_trans_id);
+diff --git a/src/ap/sta_info.h b/src/ap/sta_info.h
+--- a/src/ap/sta_info.h
++++ b/src/ap/sta_info.h
+@@ -75,7 +75,11 @@ struct sta_info {
+ 	/* IEEE 802.1X related data */
+ 	struct eapol_state_machine *eapol_sm;
+ 
+-	u32 acct_session_id_hi;
++	/* IEEE 802.11f (IAPP) related data */
++  struct ieee80211_mgmt *last_assoc_req;
++  size_t last_assoc_req_len;
++
++  u32 acct_session_id_hi;
+ 	u32 acct_session_id_lo;
+ 	struct os_reltime acct_session_start;
+ 	int acct_session_started;
+diff --git a/src/drivers/driver.h b/src/drivers/driver.h
+--- a/src/drivers/driver.h
++++ b/src/drivers/driver.h
+@@ -1106,6 +1106,8 @@ struct hostapd_sta_add_params {
+ 	size_t supp_channels_len;
+ 	const u8 *supp_oper_classes;
+ 	size_t supp_oper_classes_len;
++	struct ieee80211_mgmt *last_assoc_req;
++	size_t last_assoc_req_len;
+ };
+ 
+ struct mac_address {
+diff --git a/src/drivers/driver_nl80211.c b/src/drivers/driver_nl80211.c
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -7778,6 +7778,12 @@ static int wpa_driver_nl80211_sta_add(vo
+ 		nla_nest_end(msg, wme);
+ 	}
+ 
++	if (params->last_assoc_req && (params->last_assoc_req_len)) {
++		NLA_PUT(msg, NL80211_ATTR_FRAME,
++				params->last_assoc_req_len,
++				params->last_assoc_req);
++	}
++
+ 	ret = send_and_recv_msgs(drv, msg, NULL, NULL);
+ 	msg = NULL;
+ 	if (ret)

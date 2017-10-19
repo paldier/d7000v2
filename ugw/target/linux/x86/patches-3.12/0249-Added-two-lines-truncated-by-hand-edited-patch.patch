@@ -1,0 +1,22 @@
+From bb42ede652640f7182e1661260c24ce1484f234d Mon Sep 17 00:00:00 2001
+From: Alan Olsen <alanx.olsen@intel.com>
+Date: Fri, 20 Nov 2015 11:11:23 -0800
+Subject: [PATCH] Added two lines truncated by hand edited patch
+
+---
+ drivers/mtd/spi-nor/spi-nor.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/mtd/spi-nor/spi-nor.c b/drivers/mtd/spi-nor/spi-nor.c
+index 5186fdd..2b67767 100644
+--- a/drivers/mtd/spi-nor/spi-nor.c
++++ b/drivers/mtd/spi-nor/spi-nor.c
+@@ -1153,3 +1153,5 @@ static const struct spi_device_id *spi_nor_match_id(const char *name)
+ 
+ MODULE_LICENSE("GPL");
+ MODULE_AUTHOR("Huang Shijie <shijie8@gmail.com>");
++MODULE_AUTHOR("Mike Lavender");
++MODULE_DESCRIPTION("framework for SPI NOR");
+-- 
+1.7.9.5
+

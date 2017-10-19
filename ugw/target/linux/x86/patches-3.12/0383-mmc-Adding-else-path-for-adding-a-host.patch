@@ -1,0 +1,26 @@
+From 7632caf6e268bb6f8ace227b44f65d9a32f33511 Mon Sep 17 00:00:00 2001
+From: Bryce Poole <Bryce.Poole@intel.com>
+Date: Fri, 18 Mar 2016 14:20:00 -0700
+Subject: [PATCH] mmc: Adding else path for adding a host
+
+Was missing the else path for non HW Mutex hosts.
+---
+ drivers/mmc/host/sdhci-acpi.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/mmc/host/sdhci-acpi.c b/drivers/mmc/host/sdhci-acpi.c
+index 6b0c010..c4b30a5 100644
+--- a/drivers/mmc/host/sdhci-acpi.c
++++ b/drivers/mmc/host/sdhci-acpi.c
+@@ -507,6 +507,8 @@ static int sdhci_acpi_probe(struct platform_device *pdev)
+ 		host->flags &= ~SDHCI_DISABLE_REGISTER_WRITE;
+ 
+ 		MMC_UNLOCK_HW_MUTEX(host->mmc);
++	} else {
++		err = sdhci_add_host(host);
+ 	}
+ #else 
+ 	err = sdhci_add_host(host);
+-- 
+1.7.9.5
+

@@ -1,0 +1,62 @@
+# HG changeset patch
+# Parent 1f01e52f0df0a8dd1b08c4cb5386bbce4601eecb
+
+diff --git a/net/ipv4/Kconfig b/net/ipv4/Kconfig
+--- a/net/ipv4/Kconfig
++++ b/net/ipv4/Kconfig
+@@ -619,3 +619,7 @@ config TCP_MD5SIG
+ 	  on the Internet.
+ 
+ 	  If unsure, say N.
++
++config LTQ_MCAST_LATENCY_OPTIMIZATION
++        bool "Lantiq Multicast Latency Optimization"
++	default y
+diff --git a/net/ipv4/igmp.c b/net/ipv4/igmp.c
+--- a/net/ipv4/igmp.c
++++ b/net/ipv4/igmp.c
+@@ -1206,7 +1206,14 @@ static void igmp_group_dropped(struct ip
+ 		/* IGMPv3 */
+ 		igmpv3_add_delrec(in_dev, im);
+ 
++#ifdef CONFIG_LTQ_MCAST_LATENCY_OPTIMIZATION
++		in_dev->mr_ifc_count = in_dev->mr_qrv ? in_dev->mr_qrv :IGMP_Unsolicited_Report_Count;
++		in_dev_hold(in_dev);
++		igmp_ifc_timer_expire((unsigned long)in_dev);
++#else
+ 		igmp_ifc_event(in_dev);
++#endif
++
+ 	}
+ #endif
+ }
+@@ -1227,17 +1234,29 @@ static void igmp_group_added(struct ip_m
+ 	if (in_dev->dead)
+ 		return;
+ 	if (IGMP_V1_SEEN(in_dev) || IGMP_V2_SEEN(in_dev)) {
++#ifdef CONFIG_LTQ_MCAST_LATENCY_OPTIMIZATION
++		atomic_inc(&im->refcnt);
++		igmp_timer_expire((unsigned long)im);
++#else
+ 		spin_lock_bh(&im->lock);
+ 		igmp_start_timer(im, IGMP_Initial_Report_Delay);
+ 		spin_unlock_bh(&im->lock);
++#endif
+ 		return;
+ 	}
+ 	/* else, v3 */
+ 
+ 	im->crcount = in_dev->mr_qrv ? in_dev->mr_qrv :
+ 		IGMP_Unsolicited_Report_Count;
++
++#ifdef CONFIG_LTQ_MCAST_LATENCY_OPTIMIZATION
++	in_dev->mr_ifc_count = in_dev->mr_qrv ? in_dev->mr_qrv : IGMP_Unsolicited_Report_Count;
++        in_dev_hold(in_dev);
++        igmp_ifc_timer_expire((unsigned long)in_dev);
++#else
+ 	igmp_ifc_event(in_dev);
+ #endif
++#endif
+ }
+ 
+ 

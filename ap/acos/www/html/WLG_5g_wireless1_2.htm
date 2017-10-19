@@ -1,0 +1,372 @@
+<html>
+<head>
+<%11%>
+<title>NETGEAR Router <%55%></title>
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+    classes.num.all.fontFamily = "Courier";
+    classes.num.all.fontSize = "10pt" ;
+</style>
+<%12%>
+<script language="javascript" type="text/javascript">
+<!-- hide script from old browsers
+var initialized = false;
+
+function initScrn()
+{
+    var defaultKey;
+    var fm=document.forms[0];
+    var i;
+
+    if (fm.bssid_enable.value == "1")
+        fm.enable_bssid_an.checked = true;
+    else
+        fm.enable_bssid_an.checked = false;
+
+    if (fm.ssid_bc_enable.value == "1")
+        fm.enable_ssid_bc_an.checked = true;
+    else
+        fm.enable_ssid_bc_an.checked = false;
+
+  if (fm.enable_allow_see_access.value == "1" || fm.enable_apmode.value == "1")
+        fm.allow_see_access_an.checked = true;
+    else
+        fm.allow_see_access_an.checked = false;
+
+  if(fm.enable_apmode.value == "1")
+        fm.allow_see_access_an.disabled = true;
+
+
+
+    for (i=0; i<fm.authAlgm_an.length; i++)
+    {
+        if (fm.authAlgm_an[i].value == fm.initAuthType.value)
+        {
+            fm.authAlgm_an[i].selected = true;
+            break;
+        }
+    }
+
+    defaultKey = parseInt(fm.initDefaultKey.value);
+    if ( defaultKey >= 0 && defaultKey <= 3)
+        document.forms[0].wep_key_no_an[defaultKey].checked = true;
+    else
+		document.forms[0].wep_key_no_an[0].checked = true;
+
+    initialized = true;
+}
+
+function setKeys()
+{
+    var cf = document.forms[0];
+    cf.KEY1_an.disabled = cf.KEY2_an.disabled = cf.KEY3_an.disabled = cf.KEY4_an.disabled = false;
+    if (cf.wepenc_an.selectedIndex == 0)
+    {
+        keysize = 10;
+        cf.KEY1_an.size = cf.KEY2_an.size = cf.KEY3_an.size = cf.KEY4_an.size = keysize + 2 ; // extra for Mac
+        if (cf.KEY1_an.value.length>10)
+            cf.KEY1_an.value = cf.KEY1_an.value.substring(0,10);
+        if (cf.KEY2_an.value.length>10)
+            cf.KEY2_an.value = cf.KEY2_an.value.substring(0,10);
+        if (cf.KEY3_an.value.length>10)
+            cf.KEY3_an.value = cf.KEY3_an.value.substring(0,10);
+        if (cf.KEY4_an.value.length>10)
+            cf.KEY4_an.value = cf.KEY4_an.value.substring(0,10);
+    }
+    else if(cf.wepenc_an.selectedIndex == 1)
+    {
+        keysize = 26;
+        cf.KEY1_an.size = cf.KEY2_an.size = cf.KEY3_an.size = cf.KEY4_an.size = keysize + 2; // extra for Mac
+        if (cf.KEY1_an.value.length>26)
+            cf.KEY1_an.value = cf.KEY1_an.value.substring(0,26);
+        if (cf.KEY2_an.value.length>26)
+            cf.KEY2_an.value = cf.KEY2_an.value.substring(0,26);
+        if (cf.KEY3_an.value.length>26)
+            cf.KEY3_an.value = cf.KEY3_an.value.substring(0,26);
+        if (cf.KEY4_an.value.length>26)
+            cf.KEY4_an.value = cf.KEY4_an.value.substring(0,26);
+    }
+    else if(cf.wepenc_an.selectedIndex == 2)
+    {
+        keysize = 32;
+        cf.KEY1_an.size = cf.KEY2_an.size = cf.KEY3_an.size = cf.KEY4_an.size = keysize + 2; // extra for Mac
+    }
+}
+
+function wpapskCheck()
+{
+    var cf = document.forms[0];
+    var wlan_mode = "<%1626%>";
+    if (wlan_mode != "g&#32;and&#32;b")
+    {
+        alert("<%100%>");
+    	document.forms[0].submit();
+    }
+    else
+        document.forms[0].submit();
+}
+function autopskCheck()
+{
+    var cf = document.forms[0];
+    var wlan_mode = "<%1626%>";
+    if (wlan_mode != "g&#32;and&#32;b")
+    {
+        alert("<%103%>");
+        document.forms[0].submit();
+    }
+    else
+        document.forms[0].submit();
+    return true;
+}
+
+function checkData()
+{
+    var msg_key64_type = "<%104%> ";
+    var msg_key128_type = "<%105%> ";
+
+    var cf = document.forms[0];
+    var msg = ""; var blankFlag = false; var sizeOK = false; var i;
+    var len = (cf.wepenc_an.selectedIndex==0)?10:((cf.wepenc_an.selectedIndex==1)?26:32);
+    
+    if (cf.ssid_an.value == "")
+    {
+        alert("<%108%>");
+        return false;
+    }
+
+    if (cf.ssid_an.value.match( /[^\x20-\x7E]/ ))
+    {
+        alert("<%109%>");
+        cf.ssid.focus();
+        return false;
+    }
+
+    for (i = 1; i < 5; i++ )
+    {
+        msg = "";
+        blankFlag = ! (eval("(cf.wep_key_no_an[" + (i-1) + "].checked)")); // default key
+        if( (blankFlag) && (eval("(cf.KEY" + i + "_an" + ".value.length == 0)")) )
+            continue; // blank ok
+        sizeOK = ((eval("isHex(cf.KEY" + i + "_an" +".value)")) && (eval("(cf.KEY" + i + "_an" + ".value.length == len)")));
+        if (!sizeOK)
+        {
+            msg += (len == 10)?msg_key64_type:msg_key128_type;
+            alertR(msg);
+            if (i==1)
+                cf.KEY1_an.focus();
+            else if (i==2)
+                cf.KEY2_an.focus();
+            else if (i==3)
+                cf.KEY3_an.focus();
+            else if (i==4)
+                cf.KEY4_an.focus();
+            return false;
+        }
+    }
+    
+    if(cf.enable_ssid_bc_an.checked)
+    {
+        parent.document.forms[0].enable_ssid_bc_an.value = "ssid_5G_bc";    
+    }
+    else
+    {
+        parent.document.forms[0].enable_ssid_bc_an.value = "";
+    }
+    if(cf.enable_bssid_an.checked)
+    {
+        parent.document.forms[0].enable_bssid_an.value = 1;
+    }
+    else
+    {
+        parent.document.forms[0].enable_bssid_an.value = "";
+    }
+
+    if(cf.allow_see_access_an.checked)
+    {
+        parent.document.forms[0].allow_see_access_an.value = 1;
+    }
+    else
+    {
+        parent.document.forms[0].allow_see_access_an.value = "";
+    }
+
+
+
+    if(cf.wep_key_no_an[0].checked == true)
+    {
+        parent.document.forms[0].wep_key_no_an.value = "1";
+    }
+    else if(cf.wep_key_no_an[1].checked == true)
+    {
+        parent.document.forms[0].wep_key_no_an.value = "2";
+    }
+    else if(cf.wep_key_no_an[2].checked == true)
+    {
+        parent.document.forms[0].wep_key_no_an.value = "3";
+    }
+    else if(cf.wep_key_no_an[3].checked == true)
+    {
+        parent.document.forms[0].wep_key_no_an.value = "4";
+    }
+    parent.document.forms[0].ssid_an.value = cf.ssid_an.value;
+    parent.document.forms[0].security_type_an.value = "WEP";
+    parent.document.forms[0].authAlgm_an.value = cf.authAlgm_an.value;
+    parent.document.forms[0].wepenc_an.value = cf.wepenc_an.value;
+    parent.document.forms[0].KEY1_an.value = cf.KEY1_an.value;
+    parent.document.forms[0].KEY2_an.value = cf.KEY2_an.value;
+    parent.document.forms[0].KEY3_an.value = cf.KEY3_an.value;
+    parent.document.forms[0].KEY4_an.value = cf.KEY4_an.value;
+    parent.document.forms[0].load_5g_frame.value = "1";
+    return true;
+}
+// ---------------------------- Start WEP functions
+var lastkeypressed;
+var keyTooBig = false;
+var mustbeHEX = false;
+var keysize;
+var lastObj;
+
+if (document.layers) document.captureEvents(Event.KEYPRESS);
+    document.onkeypress = checkKey;
+function checkKey(evt)
+{
+    evt = (evt) ? evt : ((window.event) ? window.event : null);
+    if (evt)
+        lastkeypressed = (evt.keyCode) ? evt.keyCode : (evt.which ) ? evt.which : null;
+    if ((lastkeypressed != 13) && (lastkeypressed != 8) && ( keyTooBig ))
+    {
+        keyTooBig = false;
+        alert("<%1418%> " + keysize + " <%1419%>");
+        chkSize(lastObj); // for NS 6/7
+        return false;
+    }
+    else if (mustbeHEX) // not used here, don't know which input is being used
+    {
+        mustbeHEX = false;
+        if ( ((lastkeypressed > 47) && (lastkeypressed < 58 ))
+            || ((lastkeypressed > 96) && (lastkeypressed < 103))
+            || ((lastkeypressed > 64) && (lastkeypressed < 71 ))
+            || (lastkeypressed == 8)
+            || (lastkeypressed == 13) )
+            return true; // OK
+        else
+            return false;
+    }
+    return true;
+}
+function chkSize(fobj)
+{
+    if(fobj.value.length > keysize)
+        fobj.value = fobj.value.substr(0,keysize);
+}
+function keyCheck(fobj)
+{
+    lastObj = fobj;
+    keyTooBig = (fobj.value.length >= keysize ) ? true : false;
+}
+
+// -->
+</script>
+</head>
+<body  onload="initScrn();setKeys();" style="background-color:transparent">
+<form method="POST" action="wlg_sec_profile_main.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr>
+<td colspan="2" background="liteblue.gif" height="12">&nbsp; </td></tr>
+<tr>
+<td colspan="2"><a href="javascript:parent.loadhelp('WLG_wireless_2','wireless')" tabindex="-1"><b><%194%> - <%1605%></b></a></td>
+</tr>
+<tr>
+<td align="left"><input type="checkbox" name="enable_bssid_an" value="1"><%1606%></td>
+</tr>
+
+<tr>
+<td align="left"><input type="checkbox" name="enable_ssid_bc_an" value="1"><%142%></td>
+</tr>
+
+<%137%>
+<td align="left"><input type="checkbox" name="allow_see_access_an" value="1"><%1607%></td>
+</tr>
+<%140%>
+
+<tr>
+<td width="50%" align="left"><%1608%>:</td>
+<td width="50%">
+<input type="text" name="ssid_an" value="<%1627%>" size="20" maxlength="32"></td>
+</tr>
+
+<tr>
+    <td colspan="2" background="liteblue.gif" height="12">&nbsp; </td></tr>
+<tr>
+    <td colspan="2"><a href="javascript:parent.loadhelp('WLG_wireless_2','security')" tabindex="-1"><b><%151%> - <%1605%></b></a></td></tr>
+
+<tr><td colspan="2">
+<table cellpadding="0" cellspacing="3" width="100%">
+<tr>
+        <td colspan="2"><input type="radio" name="security_type_an" value="Disable" onClick="buttonFilter();this.form.submit();" ><%152%><td></tr>
+<tr>
+        <td colspan="2"><input type="radio" name="security_type_an" value="WEP" checked ><%153%></td></tr>
+<tr>
+    <td colspan="2"><input type="radio" name="security_type_an" value="WPA-PSK" <%199%> onClick="wpapskCheck();" ><%155%></td></tr>
+<tr>
+        <td colspan="2"><input type="radio" name="security_type_an" value="WPA2-PSK" <%199%> onClick="buttonFilter();this.form.submit();" ><%156%></td></tr>
+<tr>
+        <td colspan="2"><input type="radio" name="security_type_an" value="AUTO-PSK" <%199%> onClick="autopskCheck();" ><%157%></td></tr>
+</table>
+</td></tr>
+
+    <tr>
+      <td colspan="2" background="liteblue.gif" height="12">&nbsp; </td></tr>
+    <tr>
+      <td colspan="2"><a href="javascript:parent.loadhelp('WLG_wireless_2','wep')" tabindex="-1"><b><%159%></b></a></td></tr>
+    <tr>
+      <td nowrap><%160%>:</td>
+      <td>
+          <select name="authAlgm_an" size=1><option value="automatic"><%161%></option><!--<option selected value="opensystem">Open System</option>--><option value="sharedkey"><%162%></option></select></td></tr>
+    <tr>
+      <td nowrap><%163%>:</td>
+	  <td><select name="wepenc_an" size=1 onchange="setKeys();"><option <%1628%> value="1"><%165%></option><option <%1629%> value="2"><%167%></option></select></td></tr>
+    <tr>
+      <td colspan="2" background="liteblue.gif" height="12">&nbsp; </td></tr>
+    <tr>
+      <td colspan="2"><a href="javascript:parent.loadhelp('WLG_wireless_2','wepkey')" tabindex="-1"><b><%168%></b></a></td></tr>
+    <tr>
+      <td colspan="2">
+        <table>
+          <tr>
+            <td><%169%>:<input type="radio"  checked name="wep_key_no_an" value="1"></td>
+            <td align=left><input type="text" name="KEY1_an" autocomplete="off" maxLength=32 size=34 value="<%1630%>" onkeydown="keyCheck(this)" onfocus="this.form.wep_key_no_an[0].checked=true;"></td></tr>
+          <tr>
+            <td><%171%>:<input type="radio" name="wep_key_no_an" value="2"></td>
+            <td align=left><input type="text" name="KEY2_an" autocomplete="off" maxLength=32 size=34 value="<%1631%>" onkeydown="keyCheck(this)" onfocus="this.form.wep_key_no_an[1].checked=true;"></td></tr>
+          <tr>
+            <td><%173%>:<input type="radio" name="wep_key_no_an" value="3"></td>
+            <td align=left><input type="text" name="KEY3_an" autocomplete="off" maxLength=32 size=34 value="<%1632%>" onkeydown="keyCheck(this)" onfocus="this.form.wep_key_no_an[2].checked=true;"></td>
+            <td></td></tr>
+          <tr>
+            <td><%175%>:<input type="radio" name="wep_key_no_an" value="4"></td>
+            <td align=left><input type="text" name="KEY4_an" autocomplete="off" maxLength=32 size=34 value="<%1633%>" onkeydown="keyCheck(this)" onfocus="this.form.wep_key_no_an[3].checked=true;"></td></tr>
+        </table></td></TR>
+  </table>
+  <input type="hidden" name="initAuthType" value="<%1634%>">
+  <input type="hidden" name="initDefaultKey" value="<%1635%>">
+  <input type="hidden" name="only_mode" value="0">
+  <input type="hidden" name="bssid_enable" value="<%1636%>">
+  <input type="hidden" name="ssid_bc_enable" value="<%1637%>">
+ 
+  <input type="hidden" name="enable_allow_see_access" value="<%1638%>">
+  <input type="hidden" name="enable_apmode" value="<%363%>">
+</form>
+</body>
+</html>
+

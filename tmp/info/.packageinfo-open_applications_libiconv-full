@@ -1,0 +1,56 @@
+Source-Makefile: package/feeds/open_applications/libiconv-full/Makefile
+Package: libcharset
+Version: 1.11.1-1
+Depends: +!PACKAGE_ecos:libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread 
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Build-Depends: libtool libintl libiconv
+Section: libs
+Category: Libraries
+Title: Character set conversion library
+Maintainer: 
+Source: libiconv-1.11.1.tar.gz
+Type: ipkg
+Description: Character set conversion library
+http://www.gnu.org/software/libiconv/
+
+@@
+
+Package: libiconv-full
+Version: 1.11.1-1
+Depends: +!PACKAGE_ecos:libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread 
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Build-Depends: libtool libintl libiconv
+Section: libs
+Category: Libraries
+Title: Character set conversion library
+Maintainer: 
+Source: libiconv-1.11.1.tar.gz
+Type: ipkg
+Description: Character set conversion library
+http://www.gnu.org/software/libiconv/
+
+@@
+
+Package: iconv
+Version: 1.11.1-1
+Depends: +!PACKAGE_ecos:libc +SSP_SUPPORT:libssp +USE_GLIBC:librt +USE_GLIBC:libpthread +libiconv-full +libcharset
+Conflicts: 
+Menu-Depends: 
+Provides: 
+Build-Depends: libtool libintl libiconv
+Section: utils
+Category: Utilities
+Title: Character set conversion utility
+Maintainer: 
+Source: libiconv-1.11.1.tar.gz
+Type: ipkg
+Description: Character set conversion utility
+http://www.gnu.org/software/libiconv/
+
+@@
+
+

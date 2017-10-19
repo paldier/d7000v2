@@ -1,0 +1,64 @@
+--- /dev/null
++++ b/ChangeLog
+@@ -0,0 +1,61 @@
++2016-05-26:
++	WLANSW-2727 fixed - LDPC cannot disabled on the web. Add 48_hostapd_LDPC.patch
++
++2016-05-03:
++	WLANSW-2511 fixed - CLONE - AP:GPB 505 stuck on 11b while connected to AC2600 as bridge. Add hostapd patch 46_hostapd_vht_cap_on_2ghz_fix.patch
++
++2016-04-05:
++	Align hostapd to integration_default_wave_5.1.0_Candidate_20160331T140000+0300
++
++2016-03-02:
++	WLANSW-2218 fixed - AP: Radar DFS-Switching from ETSI to FCC regulatory cause interface down. Add hostapd patch 45_hostapd_radar_simulation_country_change.patch
++
++2016-02-04:
++	WLANSW-1979 fixed - Add hostapd patch 43_hostapd_fixed_vht_chan_scan.patch
++
++2016-02-01:
++	WLANSW-2145 done - Create new hostapd folder in feed_opensource_apps for hostapd patches for wave-5.1.1. The following patches added
++	00_hostapd_add_config_file.patch
++	01_hostapd_cflags_add_for_owrt_build.patch
++	02_hostapd_debug_info.patch
++	03_hostapd_probe_req_dbg_cleanup.patch
++	04_hostapd_ltq_bssm.patch
++	05_hostapd_get_and_free_aid.patch
++	06_hostapd_fix_max_rts_and_frag_threshold.patch
++	07_hostapd_wds.patch
++	08_hostapd_802.11ac.patch
++	09_hostapd_fix_wds_ie_length.patch
++	10_hostapd_vap_limits.patch
++	11_hostapd_acs.patch
++	12_hostapd_2040_coex.patch
++	13_hostapd_aid_fix.patch
++	14_hostapd_regdomain_vendor_cmd.patch
++	15_hostapd_ap_free_sta-removed_teardown_check.patch
++	16_hostapd_mask_out_ht_vht_mcs_bits.patch
++	17_hostapd_numbss.patch
++	18_disable_pairwise_rekeying.patch
++	19_hostapd_socket_size.patch
++	20_hostapd_send_deauthentication_after_activate_ap.patch
++	21_hostapd_recovery_flush_stations.patch
++	22_hostapd_hs20.patch
++	23_hostapd_extend_time_limit_of_signal_terminate.patch
++	24_hostapd_radar_simulation.patch
++	25_hostapd_acs_allowed_channel_pair.patch
++	26_hostapd_fix_for_ap_sta_remove_in_other_bss_now.patch
++	27_hostapd_scan_timeout_increased_30_sec.patch
++	28_hostapd_fix_for_disable_11ac.patch
++	29_hostapd_extend_sounding_and_BF_steering_capabilities.patch
++	30_hostapd_get_free_aid_fix.patch
++	31_hostapd_add_sta_rssi.patch
++	32_hostapd_num_bss_adjust_vht_center_freq.patch
++	33_hostapd_assoc_cb_fix.patch
++	34_hostapd_ht_tx_bf.patch
++	35_hostapd_arp_proxy.patch
++	36_hostapd_2040_coex_action_frame_fix.patch
++	37_hostapd_rifs_config_support.patch
++	38_hostapd_mfp_del_sta_fix.patch
++	39_hostapd_eapol_sm_reset_on_assoc.patch
++	40_hostapd_remove_gmcs_from_rsne.patch
++	41_hostapd_opmode_notif.patch
++	42_hostapd_short_slot_time_and_beacon_capabilities.patch
++

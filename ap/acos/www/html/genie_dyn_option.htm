@@ -1,0 +1,175 @@
+<html>
+<head>
+<%11%>
+<title>NETGEAR   Genie</title>
+<%12%>
+<link rel="stylesheet" href="<%13%>">
+<script language="javascript" type="text/javascript">
+<!-- 
+
+function checkData()
+{
+	var cf = document.forms[0];
+	var msg = "";
+<%14%>	
+    if (cf.macActive.checked)
+    {
+    	if( checkMacStr(cf.Spoofmac) || MacStrallf(cf.Spoofmac) )
+    	    msg+= "<%0%>";
+        
+        cf.wan_hwaddr_sel.value = 2;
+        cf.wan_hwaddr2.value = cf.Spoofmac.value.toUpperCase;  
+    }
+    else
+        cf.wan_hwaddr_sel.value = 0;
+<%15%>	       
+
+	if (msg.length > 1)
+	{
+		alert(msg);
+		return false;
+	}
+	return true;
+}
+
+function disableMAC(){
+    var cf = document.forms[0];
+    if (cf.macActive.checked == false)
+        cf.Spoofmac.disabled = true;
+    else
+        cf.Spoofmac.disabled = false;    
+}
+
+function loadSettings()
+{
+	var cf = document.forms[0];
+<%14%>
+	var wan_hwaddr_sel = cf.wan_hwaddr_sel.value;
+
+    if (wan_hwaddr_sel == 2)
+    {
+        cf.Spoofmac.value = cf.wan_hwaddr2.value;
+        cf.macActive.checked = true;
+    }
+    else
+        cf.macActive.checked = false;
+<%15%>
+
+
+<%16%>
+	cf.option61.value = cf.dhcp_option61.value;
+<%17%>
+<%18%>
+	cf.option60.value = cf.dhcp_option60.value;
+<%19%>
+
+<%14%>    
+    disableMAC();
+<%15%>    
+}
+//-->
+</script>
+
+</head>
+
+<body bgcolor="#ffffff" onload="loadSettings();">
+<form name="formname" method="POST" action="geniedhcp.cgi"> 
+<table border="0" cellpadding="0" cellspacing="3" width="99%">
+<tr style="height:10px">
+	<td>&nbsp;</td><td colspan="2">&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="centerTd" colspan="2">
+		<h2>DHCP Internet Connection Detected</h2>
+        </td>
+	<td>&nbsp;</td>
+
+</tr>
+<tr>	
+	<td>&nbsp;</td>
+	<td class="textRow centerTd" colspan="2"><p><%20%> </p></td>
+	<td>&nbsp;</td>
+</tr>
+
+<tr style="height:10px">
+	<td>&nbsp;</td><td colspan="2">&nbsp;</td><td>&nbsp;</td>
+</tr>
+
+<%21%>
+<tr>
+	<td>&nbsp;</td>
+	<td NOWRAP class="inputRow" tabindex="-1" onFocus="this.blur()" style="height:40px;width:320px;padding-left:20px"><%22%> </td>
+	<td style="width:340px;background:url(roundedcornr_input.gif) no-repeat left;">
+	    <input type="text" name="option60" style="width:150px;position:relative;height:18px;margin-left:20px;" size="64" maxlength="64"></td>
+	<td>&nbsp;</td>
+</tr>
+<%23%>
+
+<%24%>
+<tr>
+	<td>&nbsp;</td>
+	<td NOWRAP class="inputRow" tabindex="-1" onFocus="this.blur()" style="height:40px;width:340px;padding-left:20px"><%25%> </td>
+	<td style="width:340px;background:url(roundedcornr_input.gif) no-repeat left;">
+	    <input type="text" name="option61" style="width:150px;position:relative;height:18px;margin-left:20px;" size="64" maxlength="64"></td>
+	<td>&nbsp;</td>
+</tr>
+<%26%>
+
+<%27%>
+<tr>
+  <td>&nbsp;</td><td nowrap style="height:40px;width:340px;padding-left:20px">
+  <input type="checkbox" name="IPTVActive" value="IPTVEnable" onclick="">
+  <%28%></td>
+  <td style="width:20px; left;">&nbsp;</td>
+  <td>&nbsp;</td>
+</tr>
+<%29%>
+
+<%30%>
+<tr>
+  <td>&nbsp;</td><td nowrap style="height:40px;width:340px;padding-left:20px">
+  <input type="checkbox" name="macActive" value="macEnable" onclick="disableMAC()"><%31%> (xx:xx:xx:xx:xx:xx)</td>
+  <td style="width:340px;background:url(roundedcornr_input.gif) no-repeat left;">
+  <input type="text" class="num" name="Spoofmac" style="width:150px;position:relative;height:18px;margin-left:20px;" size="17" maxlength="17"></td>
+  <td>&nbsp;</td>
+</tr>
+<%32%>
+<tr style="height:10px">
+  <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+  <td>&nbsp;</td><td class="centerTd"><%33%> <a href="log2.htm" target="_blank"><%34%></a> <%35%>  </td><td>&nbsp;</td>
+</tr>
+
+<tr style="height:10px">
+	<td>&nbsp;</td><td colspan="2">&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td NOWRAP class="inputRow centerTd" colspan="2" tabindex="-1" onFocus="this.blur()"><span style="display:-moz-inline-box;display:inline-block;width:340px;text-align:right;padding-bottom:5px"></span><button value="submit" class="purpleBtn"  name="Next" onClick="return checkData()" onFocus="this.blur()" type="submit"><span><%36%></span></button>
+	</td>
+	<td>&nbsp;</td>
+</tr>
+</table>
+<input type="hidden" name="runtest" value="<%37%>">
+
+<%24%>
+<INPUT name=dhcp_option61 type=hidden value= "<%38%>">
+<%26%>
+
+<%21%>
+<INPUT name=dhcp_option60 type=hidden value= "<%39%>">
+<%23%>
+
+<%30%>
+<INPUT name=wan_hwaddr2 type=hidden value= "<%40%>">
+<INPUT name=wan_hwaddr_sel type=hidden value= "<%41%>">
+<%32%>	
+
+<INPUT name=wan_iptv type=hidden value= "">
+</form>
+<p></p>
+</body>
+
+</html>

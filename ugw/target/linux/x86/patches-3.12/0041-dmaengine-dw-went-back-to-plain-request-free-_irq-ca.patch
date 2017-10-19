@@ -1,0 +1,66 @@
+From e424e093f1e29e266df5372bdcb09e1400279191 Mon Sep 17 00:00:00 2001
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Date: Wed, 7 May 2014 10:56:24 +0300
+Subject: [PATCH] dmaengine: dw: went back to plain {request,free}_irq() calls
+
+commit 97977f7576a89cb9436c000ae703c0d515e748ac upstream.
+
+The commit dbde5c29 "dw_dmac: use devm_* functions to simplify code" turns
+probe function to use devm_* helpers and simultaneously brings a regression. We
+need to ensure irq is disabled, followed by ensuring that don't schedule any
+more tasklets and then its safe to use tasklet_kill().
+
+The free_irq() will ensure that the irq is disabled and also wait till all
+scheduled interrupts are executed by invoking synchronize_irq(). So we need to
+only do tasklet_kill() after invoking free_irq().
+
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Signed-off-by: Vinod Koul <vinod.koul@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+(cherry picked from commit 8b9df249dd60380b2347585038e643677715f591)
+
+Signed-off-by: Brett T. Warden <brett.t.warden@intel.com>
+---
+ drivers/dma/dw/core.c |   11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/dma/dw/core.c b/drivers/dma/dw/core.c
+index f0937e3..34a6f0b 100644
+--- a/drivers/dma/dw/core.c
++++ b/drivers/dma/dw/core.c
+@@ -1568,11 +1568,6 @@ int dw_dma_probe(struct dw_dma_chip *chip, struct dw_dma_platform_data *pdata)
+ 	/* Disable BLOCK interrupts as well */
+ 	channel_clear_bit(dw, MASK.BLOCK, dw->all_chan_mask);
+ 
+-	err = devm_request_irq(chip->dev, chip->irq, dw_dma_interrupt,
+-			       IRQF_SHARED, "dw_dmac", dw);
+-	if (err)
+-		return err;
+-
+ 	/* Create a pool of consistent memory blocks for hardware descriptors */
+ 	dw->desc_pool = dmam_pool_create("dw_dmac_desc_pool", chip->dev,
+ 					 sizeof(struct dw_desc), 4, 0);
+@@ -1583,6 +1578,11 @@ int dw_dma_probe(struct dw_dma_chip *chip, struct dw_dma_platform_data *pdata)
+ 
+ 	tasklet_init(&dw->tasklet, dw_dma_tasklet, (unsigned long)dw);
+ 
++	err = request_irq(chip->irq, dw_dma_interrupt, IRQF_SHARED,
++			  "dw_dmac", dw);
++	if (err)
++		return err;
++
+ 	INIT_LIST_HEAD(&dw->dma.channels);
+ 	for (i = 0; i < nr_channels; i++) {
+ 		struct dw_dma_chan	*dwc = &dw->chan[i];
+@@ -1687,6 +1687,7 @@ int dw_dma_remove(struct dw_dma_chip *chip)
+ 	dw_dma_off(dw);
+ 	dma_async_device_unregister(&dw->dma);
+ 
++	free_irq(chip->irq, dw);
+ 	tasklet_kill(&dw->tasklet);
+ 
+ 	list_for_each_entry_safe(dwc, _dwc, &dw->dma.channels,
+-- 
+1.7.9.5
+

@@ -1,0 +1,35 @@
+diff --exclude 'msvc*' -Npur orig/hostapd/config_file.c patched/hostapd/config_file.c
+--- orig/hostapd/config_file.c	2015-11-06 13:35:08.000000000 +0200
++++ patched/hostapd/config_file.c	2015-11-06 14:46:54.000000000 +0200
+@@ -2716,6 +2716,8 @@ static int hostapd_config_fill(struct ho
+ 				   line);
+ 			return 1;
+ 		}
++	} else if (os_strcmp(buf, "ht_rifs") == 0) {
++		conf->ht_rifs = atoi(pos);
+ 	} else if (os_strcmp(buf, "require_ht") == 0) {
+ 		conf->require_ht = atoi(pos);
+ 	} else if (os_strcmp(buf, "obss_interval") == 0) {
+diff --exclude 'msvc*' -Npur orig/src/ap/ap_config.h patched/src/ap/ap_config.h
+--- orig/src/ap/ap_config.h	2015-11-06 13:35:08.000000000 +0200
++++ patched/src/ap/ap_config.h	2015-11-06 14:46:45.000000000 +0200
+@@ -582,6 +582,7 @@ struct hostapd_config {
+ 	u16 ht_capab;
+ 	int ieee80211n;
+ 	int secondary_channel;
++	int ht_rifs;
+ 	int require_ht;
+ 	int obss_interval;
+ 	u16 scan_passive_dwell;
+diff --exclude 'msvc*' -Npur orig/src/ap/ieee802_11_ht.c patched/src/ap/ieee802_11_ht.c
+--- orig/src/ap/ieee802_11_ht.c	2015-11-06 13:35:08.000000000 +0200
++++ patched/src/ap/ieee802_11_ht.c	2015-11-09 13:36:44.000000000 +0200
+@@ -101,6 +101,8 @@ u8 * hostapd_eid_ht_operation(struct hos
+ 	if (hapd->iconf->secondary_channel == -1)
+ 		oper->ht_param |= HT_INFO_HT_PARAM_SECONDARY_CHNL_BELOW |
+ 			HT_INFO_HT_PARAM_STA_CHNL_WIDTH;
++	if (hapd->iconf->ht_rifs)
++		oper->ht_param |= HT_INFO_HT_PARAM_RIFS_MODE;
+ 
+ 	pos += sizeof(*oper);
+ 

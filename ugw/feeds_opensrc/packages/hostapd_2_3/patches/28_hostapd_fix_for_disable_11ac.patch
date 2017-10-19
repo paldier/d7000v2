@@ -1,0 +1,27 @@
+diff --exclude 'msvc*' -Npur orig/src/ap/ap_config.c patched/src/ap/ap_config.c
+--- orig/src/ap/ap_config.c	2015-10-16 10:54:07.000000000 +0300
++++ patched/src/ap/ap_config.c	2015-10-16 12:06:57.000000000 +0300
+@@ -788,6 +788,7 @@ static int hostapd_config_check_bss(stru
+ 	if (full_config && conf->ieee80211n &&
+ 	    conf->hw_mode == HOSTAPD_MODE_IEEE80211B) {
+ 		bss->disable_11n = 1;
++		bss->disable_11ac = 1;
+ 		wpa_printf(MSG_ERROR, "HT (IEEE 802.11n) in 11b mode is not "
+ 			   "allowed, disabling HT capabilities");
+ 	}
+@@ -795,6 +796,7 @@ static int hostapd_config_check_bss(stru
+ 	if (full_config && conf->ieee80211n &&
+ 	    bss->ssid.security_policy == SECURITY_STATIC_WEP) {
+ 		bss->disable_11n = 1;
++		bss->disable_11ac = 1;
+ 		wpa_printf(MSG_ERROR, "HT (IEEE 802.11n) with WEP is not "
+ 			   "allowed, disabling HT capabilities");
+ 	}
+@@ -805,6 +807,7 @@ static int hostapd_config_check_bss(stru
+ 				   WPA_CIPHER_CCMP_256 | WPA_CIPHER_GCMP_256)))
+ 	{
+ 		bss->disable_11n = 1;
++		bss->disable_11ac = 1;
+ 		wpa_printf(MSG_ERROR, "HT (IEEE 802.11n) with WPA/WPA2 "
+ 			   "requires CCMP/GCMP to be enabled, disabling HT "
+ 			   "capabilities");

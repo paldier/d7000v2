@@ -1,0 +1,14 @@
+# HG changeset patch
+# Parent a55aaecd9cca75ef43b044aaaed8d13f8c2526c0
+diff --git a/hostapd/.config b/hostapd/.config
+--- a/hostapd/.config
++++ b/hostapd/.config
+@@ -319,7 +319,7 @@
+ # For more details refer to:
+ # http://wireless.kernel.org/en/users/Documentation/acs
+ #
+-#CONFIG_ACS=y
++CONFIG_ACS=y
+ 
+ # Change the hostapd output to differentiate between info, debug and error messages.
+ # If you are using an old parser to analyze log prints, don't enable this option.

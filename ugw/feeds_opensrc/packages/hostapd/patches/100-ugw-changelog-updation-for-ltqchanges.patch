@@ -1,0 +1,43 @@
+--- /dev/null
++++ b/ChangeLog
+@@ -0,0 +1,40 @@
++
++2015-07-15:
++	Enabled CONFIG_P2P_MANAGER
++
++2015-07-15:
++	Configuration options added for building hostapd
++
++2015-07-15:
++	Support added for loglevels
++
++2015-07-15:
++	Skipping some code if CONFIG_WPS2 defined
++
++2015-07-15:
++	Cflag changes for compilation
++
++2015-07-15:
++	10_hostapd_enable_background_task_console.patch added
++
++2013-06-09:
++	mtlk_deinit support added
++
++2013-05-19:
++	Added wrapers around ioctl 
++
++2013-04-24:
++	wpa_printf used instead of printf
++
++2013-04-24:
++	enaled CONFIG_IEEE80211W
++
++2013-04-24:
++	06_hostapd_probe_req_dbg_cleanup.patch added
++
++2013-04-23:
++	Increased essis.length by 1
++
++2013-04-23:
++	Support for communication between the driver and userspace apps using generic netlink library
++

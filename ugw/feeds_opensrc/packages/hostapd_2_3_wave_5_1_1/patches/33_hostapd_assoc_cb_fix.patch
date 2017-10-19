@@ -1,0 +1,17 @@
+diff --exclude 'msvc*' -Npur orig/src/ap/ieee802_11.c patched/src/ap/ieee802_11.c
+--- orig/src/ap/ieee802_11.c	2015-10-21 09:54:14.000000000 +0300
++++ patched/src/ap/ieee802_11.c	2015-11-03 09:04:27.000000000 +0200
+@@ -1956,6 +1956,13 @@ static void handle_assoc_cb(struct hosta
+ 		return;
+ 	}
+ 
++	if (!(sta->flags & WLAN_STA_ASSOC_REQ_OK)) {
++		hostapd_logger(hapd, sta->addr, HOSTAPD_MODULE_IEEE80211,
++		       HOSTAPD_LEVEL_INFO,
++		       "STA is not associated, ignoring assoc cb");
++		return;
++	}
++
+ 	if (!ok) {
+ 		hostapd_logger(hapd, mgmt->da, HOSTAPD_MODULE_IEEE80211,
+ 			       HOSTAPD_LEVEL_DEBUG,

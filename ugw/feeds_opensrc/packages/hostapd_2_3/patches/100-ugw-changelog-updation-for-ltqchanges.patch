@@ -1,0 +1,90 @@
+--- /dev/null
++++ b/ChangeLog
+@@ -0,0 +1,87 @@
++
++2016-01-27:
++	Jira:WLANSW-2110 - Merge hostapd patches from default_wave_5.1.0_Candidate.  35_hostapd_arp_proxy.patch added
++
++2015-12-22:
++	Fixed WLANSW-1777: Added hostapd patch: 38_hostapd_mfp_del_sta_fix.patch
++
++2015-11-23:
++	WLANSW-1476 done - Copy value of 'Transmit BF  capabilities' field from 'HT capabilities element' to UMI_STA_ADD. Add hostapd patch 34_hostapd_ht_tx_bf.patch
++
++2015-11-10:
++	20_hostapd_send_deauthentication_after_activate_ap.patch added
++
++2015-11-09:
++	WLANSW-1465 fixed - Beacon - GPB504- Beacon information is not according to the Spec. Add 37_hostapd_rifs_config_support.patch
++
++2015-11-05:
++	WLANSW-1640 fixed - Switch to 20-40 Mhz operation if coex is off
++
++2015-11-03:
++	WLANSW-1600 fixed - wave500-GPB505-CID-0000: MAC event: From upper : MAC fatal error: [GroupID: 9, FileID: 1, Line: 749]. Add hostapd patch 33_hostapd_assoc_cb_fix.patch
++
++2015-11-02:
++	WLANSW-1584 done - Interface wlan1 is not raised after burning. Add hostapd patch 32_hostapd_num_bss_adjust_vht_center_freq.patch
++
++2015-10-23:
++	WLANSW-1544 done - UMI_ADD_STA msg need RSSI. Add 31_hostapd_add_sta_rssi.patch
++
++2015-10-23:
++	WLANSW-1001 additional fix - Gen4 - during STA connection - MAC fatal error. Add 30_hostapd_get_free_aid_fix.patch
++
++2015-10-22:
++	WLANSW-1465 partial fix - Beacon - GPB504- Beacon information is not according to the Spec. Add 29_hostapd_extend_sounding_and_BF_steering_capabilities
++
++2015-10-18:
++	WLANSW-1154 fixed - Wave500- NM per VAP-WEB- when switching from AN with VAP configure to a+wep to ANAC wrong configuration displayed. Add 28_hostapd_fix_for_disable_11ac.patch
++
++2015-10-15:
++	WLANSW-1438 fixed - Resetting FW because of message timeout. Message ID is 0x40A. Add 27_hostapd_scan_timeout_increased_30_sec.patch
++
++2015-10-14:
++	WLANSW-1001 fixed - Gen4 - during STA connection - MAC fatal error. Add 26_hostapd_fix_for_ap_sta_remove_in_other_bss_now.patch
++
++2015-10-13:
++	WLANSW-1477 fixed - Regulatory domain: 5G: TAIWAN: cannot set DFS channel 56 with 40MHz. Add 25_hostapd_acs_allowed_channel_pair.patch
++
++2015-10-07:
++	WLANSW-1464 done - Add hostapd patch for Radar Simulation. Add 24_hostapd_radar_simulation.patch
++
++2015-10-07:
++	WLANSW-1463 fixed - Full recovery randomaly fails. Add 23_hostapd_extend_time_limit_of_signal_terminate.patch
++
++2015-10-07:
++	WLANSW-1458 done - Merge hotspot support from hotspot branch to 5.1.0 and default branch
++
++2015-10-01:
++	Add 21_hostapd_recovery_flush_stations.patch for Fast recovery and fix path in patch 20_hostapd_send_deauthentication_after_activate_ap.patch
++
++2015-09-17:
++	WLANSW-1267 - hostapd patch to change the netlink socket receiver buffer size
++
++2015-09-01:
++	17_hostapd_numbss.patch modified hostapd/Makefile
++
++2015-08-27:
++	Added hostapd2.3 patch for: WLANSW-946 MAC fatal error due to rekey
++
++2015-08-17:
++	The followin gpatches are merged from wave 5.1.0 branch.
++	16_hostapd_mask_out_ht_vht_mcs_bits.patch
++	15_hostapd_ap_free_sta-removed_teardown_check.patch
++	14_hostapd_regdomain_vendor_cmd.patch
++	13_hostapd_aid_fix.patch
++	12_hostapd_2040_coex.patch
++	11_hostapd_acs.patch
++	10_hostapd_vap_limits.patch
++	09_hostapd_fix_wds_ie_length.patch
++	08_hostapd_802.11ac.patch
++	07_hostapd_wds.patch
++	06_hostapd_fix_max_rts_and_frag_threshold.patch
++	05_hostapd_get_and_free_aid.patch
++	04_hostapd_ltq_bssm.patch
++	03_hostapd_probe_req_dbg_cleanup.patch
++	02_hostapd_debug_info.patch
++	01_hostapd_cflags_add_for_owrt_build.patch
++	00_hostapd_add_config_file.patch
++

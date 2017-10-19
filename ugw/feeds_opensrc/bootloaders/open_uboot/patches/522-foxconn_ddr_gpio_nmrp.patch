@@ -1,0 +1,2285 @@
+Index: u-boot-2010.06/arch/mips/lib/board.c
+===================================================================
+--- u-boot-2010.06.orig/arch/mips/lib/board.c	2017-01-09 13:50:45.962795706 +0800
++++ u-boot-2010.06/arch/mips/lib/board.c	2017-01-09 13:50:48.610976062 +0800
+@@ -50,6 +50,8 @@
+ extern ulong uboot_end_data;
+ extern ulong uboot_end;
+ 
++extern void gpio_control(int on_off); /* foxconn added */
++
+ ulong monitor_flash_len;
+ 
+ const char version_string[] =
+@@ -179,6 +181,11 @@
+ 
+ 	memset ((void *)gd, 0, sizeof (gd_t));
+ 
++    /* foxconn added start */
++    gpio_control(0);    
++    mdelay(1000);
++    /* foxconn added end */
++
+ 	for (init_fnc_ptr = init_sequence; *init_fnc_ptr; ++init_fnc_ptr) {
+ 		if ((*init_fnc_ptr)() != 0) {
+ 			hang ();
+Index: u-boot-2010.06/board/grx500/grx500.c
+===================================================================
+--- u-boot-2010.06.orig/board/grx500/grx500.c	2017-01-09 13:50:48.302955085 +0800
++++ u-boot-2010.06/board/grx500/grx500.c	2017-01-09 13:50:48.610976062 +0800
+@@ -127,6 +127,77 @@
+ {
+   return;
+ }
++/* foxconn added start */
++#define IFMUX_CFG (KSEG1 + 0x16080120) /* Foxconn added */
++
++static void _gpio_control(u32 pin, u32 func_num)
++{
++    u32 portmux_base = pin>31?GPIO_PAD_CTRL_PORTMUXC32:GPIO_PAD_CTRL_PORTMUXC0; 
++    u32 dir_base = pin>31?GPIO_FUNCTION_DIR_1:GPIO_FUNCTION_DIR_0;    
++    u32 od_base = pin>31?GPIO_PAD_CTRL_OD_1:GPIO_PAD_CTRL_OD_0;
++    u32 out_base = pin>31?GPIO_FUNCTION_OUT_1:GPIO_FUNCTION_OUT_0;
++    u32 rel_port_num = pin>31?(pin-32):pin;
++
++    REG32(portmux_base + (rel_port_num<<2)) = 0;    // set to out
++    REG32(dir_base)|= (1<<pin); 
++    REG32(od_base) |= (1<<pin);
++    if ( func_num == 1 )
++        REG32(out_base) |= (1<<pin);
++    else
++        REG32(out_base) &= ~(1<<pin);
++/*
++    u32 wr_one = (1 << (1));
++    REG32(GPIO_PAD_CTRL_PORTMUXC1) = 0x0;
++    REG32(GPIO_FUNCTION_DIR_0) |= wr_one;
++    REG32(GPIO_PAD_CTRL_OD_0) |= wr_one;
++    REG32(GPIO_FUNCTION_OUT_0) ^= wr_one; 
++    
++    wr_one = (1 << (34));
++    REG32(GPIO_PAD_CTRL_PORTMUXC34) = 0x0;
++    REG32(GPIO_FUNCTION_DIR_1) |= wr_one;
++    REG32(GPIO_PAD_CTRL_OD_1) |= wr_one;
++    REG32(GPIO_FUNCTION_OUT_1) ^= wr_one;     
++*/
++}
++
++
++void gpio_control(int on_off)
++{
++    
++    _gpio_control(1, on_off);
++    _gpio_control(4, on_off);
++    _gpio_control(6, on_off);
++    _gpio_control(9, on_off);
++    _gpio_control(10, on_off);
++    _gpio_control(11, on_off);
++    _gpio_control(15, on_off);
++    _gpio_control(21, on_off);
++    _gpio_control(28, on_off); 
++    _gpio_control(29, on_off);
++    _gpio_control(31, on_off);
++    _gpio_control(32, on_off);
++    _gpio_control(34, on_off);
++    _gpio_control(42, on_off);
++    _gpio_control(43, on_off);
++
++    REG32(IFMUX_CFG) &= 0xfffbffff;
++    _gpio_control(35, on_off);
++    _gpio_control(36, on_off);
++    _gpio_control(22, on_off);
++}
++
++void board_power_led(int on_off)
++{
++    //config_gpio(8, GPIO_OUTPUT, on_off); // PWR failed
++    _gpio_control(8, on_off);
++}
++
++void board_test_led(int on_off)
++{
++    //config_gpio(10, GPIO_OUTPUT, on_off); // Internet failed
++    _gpio_control(10, on_off);
++}
++/* foxconn added end */
+ 
+ int checkboard (void)
+ {
+@@ -142,6 +213,11 @@
+ 	config_led();
+ #endif
+ 
++    /* To control LED , Foxconn added start */
++    gpio_control(1);
++    config_gpio(8, GPIO_OUTPUT, 0); // PWR failed
++    /* Foxconn added end */
++
+     return 0;
+ }
+ 
+@@ -222,4 +298,110 @@
+    
+ 	return 0;
+ }
+-						 
++	
++/* foxconn added start */
++#include <nand.h>
++int write_string_table(char *buf, int offset, int buf_len)
++{
++	u64 end = offset + buf_len;
++	u64 amount_saved = 0;
++	u64 blocksize, len;
++
++	u_char *char_ptr;
++
++	blocksize = nand_info[0].erasesize;
++	len = (u64)min(blocksize, buf_len);
++
++	while (amount_saved < buf_len && offset < end) {
++		if (nand_block_isbad(&nand_info[0], offset)) {
++			offset += blocksize;
++			printf("skip bad block\n");
++		} else {
++			char_ptr = &buf[amount_saved];
++			if (nand_write(&nand_info[0], offset, &len, char_ptr))
++			{
++			    printf("nand_write ok\n");
++				return 1;
++			}
++			offset += blocksize;
++			amount_saved += len;
++		}
++	}
++	if (amount_saved != buf_len)
++	{
++	    printf("nand_write ok 2\n");
++		return 1;
++    }
++    
++    printf("nand_write ok 3\n");
++	return 0;
++}
++
++int write_board_data(char *buf, int buf_len)
++{
++    int offset = 0x7c0000;  //board_data offset
++	u64 end = offset + buf_len;
++	u64 amount_saved = 0;
++	u64 blocksize, len;
++
++	u_char *char_ptr;
++
++	blocksize = nand_info[0].erasesize;
++	len = (u64)min(blocksize, buf_len);
++
++	while (amount_saved < buf_len && offset < end) {
++		if (nand_block_isbad(&nand_info[0], offset)) {
++			offset += blocksize;
++			printf("skip bad block\n");
++		} else {
++			char_ptr = &buf[amount_saved];
++			if (nand_write(&nand_info[0], offset, &len, char_ptr))
++			{
++			    printf("nand_write ok\n");
++				return 1;
++			}
++			offset += blocksize;
++			amount_saved += len;
++		}
++	}
++	if (amount_saved != buf_len)
++	{
++	    printf("nand_write ok 2\n");
++		return 1;
++    }
++    
++    printf("nand_write ok 3\n");
++	return 0;
++}
++
++int read_board_data(char *buf, int buf_len)
++{
++    int offset = 0x7c0000;  //board_data offset
++	int ret = 0;
++	u64 end = offset + buf_len;
++	u64 amount_loaded = 0;
++	u64 blocksize, len;
++	u_char *char_ptr;
++
++	blocksize = nand_info[0].erasesize;
++	len = (u64)min(blocksize, buf_len);
++
++	while (amount_loaded < buf_len && offset < end) {
++		if (nand_block_isbad(&nand_info[0], offset)) {
++			offset += blocksize;
++		} else {
++			char_ptr = &buf[amount_loaded];
++			if (nand_read_skip_bad(&nand_info[0], 
++			            	offset, &len, char_ptr))
++				return 1;
++			offset += blocksize;
++			amount_loaded += len;
++		}
++	}
++	if (amount_loaded != buf_len)
++		return 1;
++
++	return 0;
++}			
++
++/* foxconn added end */
+Index: u-boot-2010.06/board/grx500/nand_spl_board.c
+===================================================================
+--- u-boot-2010.06.orig/board/grx500/nand_spl_board.c	2017-01-09 13:50:48.306955357 +0800
++++ u-boot-2010.06/board/grx500/nand_spl_board.c	2017-01-09 13:50:48.610976062 +0800
+@@ -231,7 +231,8 @@
+            goto wait; /* back to wait magic */
+            #else /* defined(CONFIG_MANUBOOT_OTP_SUPPORT) && !defined (CONFIG_GRX500_BOOT_4KEC_ONLY) */
+ 		   /* FMT settings */
+-           REG32(0xb49001d4) = CONFIG_FMT1_REG;
++           /*REG32(0xb49001d4) = CONFIG_FMT1_REG;*/
++		   REG32(0xb49001d4)=0xfe002e00;    /* Foxconn modified by Intel's suggestion */
+            nand_boot();
+            #endif /* defined(CONFIG_MANUBOOT_OTP_SUPPORT) && !defined (CONFIG_GRX500_BOOT_4KEC_ONLY) */
+            break;
+Index: u-boot-2010.06/common/Makefile
+===================================================================
+--- u-boot-2010.06.orig/common/Makefile	2017-01-09 13:50:46.778851283 +0800
++++ u-boot-2010.06/common/Makefile	2017-01-09 13:50:48.610976062 +0800
+@@ -172,6 +172,9 @@
+ COBJS-$(CONFIG_CMD_BOOT_TOS) += cmd_secboot.o
+ COBJS-$(CONFIG_MANUBOOT_OTP_SUPPORT) += otp.o
+ 
++### added by foxconn
++COBJS-y += cmd_foxconn.o
++
+ COBJS	:= $(sort $(COBJS-y))
+ SRCS	:= $(AOBJS:.o=.S) $(COBJS:.o=.c)
+ OBJS	:= $(addprefix $(obj),$(AOBJS) $(COBJS))
+Index: u-boot-2010.06/common/cmd_bootm.c
+===================================================================
+--- u-boot-2010.06.orig/common/cmd_bootm.c	2017-01-09 13:50:46.494831940 +0800
++++ u-boot-2010.06/common/cmd_bootm.c	2017-01-09 13:50:48.610976062 +0800
+@@ -731,6 +731,11 @@
+ 	if (!image_check_magic(hdr)) {
+ 		puts ("Bad Magic Number\n");
+ 		show_boot_progress (-1);
++    /* foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER 
++		StartTftpServerToRecoveFirmware();
++#endif
++    /* foxconn added end */
+ 		return NULL;
+ 	}
+ 	show_boot_progress (2);
+@@ -738,6 +743,11 @@
+ 	if (!image_check_hcrc (hdr)) {
+ 		puts ("Bad Header Checksum\n");
+ 		show_boot_progress (-2);
++    /* foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER 
++		StartTftpServerToRecoveFirmware();
++#endif
++    /* foxconn added end */
+ 		return NULL;
+ 	}
+ 
+@@ -749,6 +759,11 @@
+ 		if (!image_check_dcrc (hdr)) {
+ 			printf ("Bad Data CRC\n");
+ 			show_boot_progress (-3);
++    /* foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER 
++			StartTftpServerToRecoveFirmware();
++#endif
++    /* foxconn added end */
+ 			return NULL;
+ 		}
+ 		puts ("OK\n");
+@@ -971,6 +986,11 @@
+ #endif
+ 	default:
+ 		printf ("Wrong Image Format for %s command\n", cmdtp->name);
++    /* foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER 
++		StartTftpServerToRecoveFirmware();
++#endif
++    /* foxconn added end */
+ 		show_boot_progress (-108);
+ 		return NULL;
+ 	}
+Index: u-boot-2010.06/common/main.c
+===================================================================
+--- u-boot-2010.06.orig/common/main.c	2010-06-30 05:28:28.000000000 +0800
++++ u-boot-2010.06/common/main.c	2017-01-09 13:50:48.610976062 +0800
+@@ -369,6 +369,13 @@
+ 	update_tftp ();
+ #endif /* CONFIG_UPDATE_TFTP */
+ 
++    /* foxconn added start */
++    printf("LED done\n");
++    REG32(0xb6c80058) = 0;  /* to force GPIO 22 to be an GPIO pin again */ 
++    REG32(0xb6c80128) = 0;  /* to force GPIO 42 to be an GPIO pin again */ 
++    REG32(0xb6c8012c) = 0;  /* to force GPIO 43 to be an GPIO pin again */ 
++    /* foxconn added end */
++
+ #if defined(CONFIG_BOOTDELAY) && (CONFIG_BOOTDELAY >= 0)
+ 	s = getenv ("bootdelay");
+ 	bootdelay = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
+@@ -402,6 +409,12 @@
+ 		int prev = disable_ctrlc(1);	/* disable Control C checking */
+ # endif
+ 
++    /* foxconn added start */
++#ifdef CFG_NMRP
++	StartNmrpClient();
++#endif
++    /* foxconn added end */
++    
+ # ifndef CONFIG_SYS_HUSH_PARSER
+ 		run_command (s, 0);
+ # else
+Index: u-boot-2010.06/include/configs/grx500.h
+===================================================================
+--- u-boot-2010.06.orig/include/configs/grx500.h	2017-01-09 13:50:48.306955357 +0800
++++ u-boot-2010.06/include/configs/grx500.h	2017-01-09 13:50:48.614976335 +0800
+@@ -331,4 +331,57 @@
+ /* i2c definitions */
+ #define CONFIG_SYS_I2C_SPEED	100000
+ 
++/* foxconn added start */
++#define CONFIG_SYS_FLASH_SECTOR_SIZE 0x20000
++#define CFG_HZ			CPU_CLOCK_RATE/2
++#define CONFIG_GATEWAYIP 192.168.1.1
++#define CONFIG_NETMASK 255.255.255.0
++
++#define FIRMWARE_RECOVER_FROM_TFTP_SERVER 1
++#define CFG_NMRP 1
++#define CFG_SINGLE_FIRMWARE 1
++//#define BOARD_ID_SUPPORT    1   //D7000v2
++
++#define NVRAMLEN                (8*CFG_FLASH_SECTOR_SIZE)
++#define NV_OFFSET               (CFG_FLASH_SIZE - NVRAMLEN)
++
++#define BOARDLEN                (CFG_FLASH_SECTOR_SIZE)
++#define BD_OFFSET               (NV_OFFSET - BOARDLEN)
++
++
++////////////
++#define BD_SIZE             0x20000
++#define SN_MAX_LEN  32
++#define PIN_MAX_LEN 8
++#define BUNDLE_MAX_LEN 2 
++#define BOARD_ID_MAX_LEN    64
++
++#define BOARD_ID_OFFSET     0
++#define LAN_MAC_OFFSET      BOARD_ID_MAX_LEN
++#define WAN_MAC_OFFSET      (LAN_MAC_OFFSET + 6)
++#define SN_OFFSET           (WAN_MAC_OFFSET + 6)
++#define WCN_PIN_OFFSET      (SN_OFFSET      + SN_MAX_LEN)    
++#define RF_PARAM_OFFSET     0x100
++#define REGION_NUM_LEN      2
++#define REGION_NUM_OFFSET   (WCN_PIN_OFFSET + PIN_MAX_LEN)
++#define HWVER_LEN           32
++#define HWVER_OFFSET      (REGION_NUM_OFFSET + REGION_NUM_LEN)
++#define BUNDLE_OFFSET       (HWVER_OFFSET + HWVER_LEN)    
++
++#define SKU_LEN             8
++#define LANG_LEN            32
++#define WL_REGION_LEN       4
++#define TIMEZONE_LEN        8
++/////////////
++
++
++#define ST_SUPPORT_NUM                  7
++#define FLASH_MTD_ML_SIZE               0x80000
++#define CFG_STRING_TABLE_LEN            0x20000
++#define CFG_STRING_TABLE_NUMBER         (ST_SUPPORT_NUM - 1)
++
++#define CFG_STRING_TABLE_BASE_OFFSET    0xB40000
++/* foxconn added end */
++
++
+ #endif	/* __CONFIG_H */
+Index: u-boot-2010.06/include/image.h
+===================================================================
+--- u-boot-2010.06.orig/include/image.h	2017-01-09 13:50:45.650774455 +0800
++++ u-boot-2010.06/include/image.h	2017-01-09 13:50:48.614976335 +0800
+@@ -172,6 +172,31 @@
+ #define IH_MAGIC	0x27051956	/* Image Magic Number		*/
+ #define IH_NMLEN		32	/* Image Name Length		*/
+ 
++/* Foxconn added start */
++#define HEADER_REAL_LEN 0x3A
++#define HEADER_LEN  (HEADER_REAL_LEN + (HEADER_REAL_LEN % 4))
++
++#define swap32(val) \
++    ((unsigned int)( \
++        (((unsigned int)(val) & (unsigned int)0x000000ffUL) << 24) | \
++        (((unsigned int)(val) & (unsigned int)0x0000ff00UL) <<  8) | \
++        (((unsigned int)(val) & (unsigned int)0x00ff0000UL) >>  8) | \
++        (((unsigned int)(val) & (unsigned int)0xff000000UL) >> 24) ))
++
++struct acos_image_header
++{
++    unsigned long magic;            /* magic */
++    unsigned long header_len;       /* Length of header */
++    unsigned char reserved[8];
++    unsigned long kernel_chksum;    /* Kernel image chksum */
++    unsigned long rootfs_chksum;    /* rootfs image chksum */
++    unsigned long kernel_len;       /* Length of kernel */
++    unsigned long rootfs_len;       /* Length of rootfs */
++    unsigned long image_chksum;     /* checksum across length of image */
++    unsigned long header_chksum;    /* checksum across length of header */
++};
++/* Foxconn added end */
++
+ /*
+  * Legacy format image header,
+  * all data in network byte order (aka natural aka bigendian).
+Index: u-boot-2010.06/include/net.h
+===================================================================
+--- u-boot-2010.06.orig/include/net.h	2017-01-09 13:50:45.162741216 +0800
++++ u-boot-2010.06/include/net.h	2017-01-09 13:50:48.614976335 +0800
+@@ -182,6 +182,9 @@
+ #define PROT_RARP	0x8035		/* IP ARP protocol		*/
+ #define PROT_VLAN	0x8100		/* IEEE 802.1q protocol		*/
+ 
++/* Foxconn added start */
++#define PROT_NMRP       0x0912
++/* Foxconn added end */
+ #define IPPROTO_ICMP	 1	/* Internet Control Message Protocol	*/
+ #define IPPROTO_TCP  6   /*Transmission Control Protocol*/
+ #define IPPROTO_UDP	17	/* User Datagram Protocol		*/
+@@ -358,7 +361,42 @@
+ extern int		NetRestartWrap;		/* Tried all network devices	*/
+ #endif
+ 
+-typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP, HTTP } proto_t;
++/* Foxconn added start */
++extern uchar NetOurTftpIP[4];
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER
++extern int NetRunTftpServer;
++extern uchar TftpClientEther[6];    /* TFTP Client enet address      */
++extern IPaddr_t TftpClientIP;       /* Client IP addr (0 = unknown)  */
++extern void StartTftpServerToRecoveFirmware(void);
++#if defined(CFG_NMRP)
++extern void UpgradeFirmwareFromNmrpServer(void);
++#endif
++extern void ResetTftpServer(void);
++#endif
++
++#define IP_ADDR_LEN 4
++typedef struct{
++        ushort type;
++
++        ushort len;
++        uchar value;
++}NMRP_OPT;
++typedef struct {
++        ushort reserved;
++        uchar code;
++        uchar id;
++        ushort length;
++        NMRP_OPT opt;
++}nmrp_t;
++extern int NmrpState;
++extern IPaddr_t NmrpClientIP;
++extern uchar NmrpClientEther[6];
++extern uchar NmrpServerEther[6];
++#define NMRP_HDR_LEN (sizeof(nmrp_t) - sizeof(NMRP_OPT))
++#define MIN_ETHER_NMRP_LEN (sizeof(Ethernet_t) + NMRP_HDR_LEN)
++/* Foxconn added end */
++typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP, HTTP, NMRP } proto_t;  /* foxconn */
++//typedef enum { BOOTP, RARP, ARP, TFTP, DHCP, PING, DNS, NFS, CDP, NETCONS, SNTP, HTTP } proto_t;
+ 
+ /* from net/net.c */
+ extern char	BootFile[128];			/* Boot File name		*/
+Index: u-boot-2010.06/net/tftp.c
+===================================================================
+--- u-boot-2010.06.orig/net/tftp.c	2017-01-09 13:50:45.250747211 +0800
++++ u-boot-2010.06/net/tftp.c	2017-01-09 13:50:48.614976335 +0800
+@@ -10,6 +10,11 @@
+ #include "tftp.h"
+ #include "bootp.h"
+ 
++/* Foxconn added start */
++#ifdef CFG_NMRP
++#include "nmrp.h"
++#endif
++/* Foxconn added end */
+ #define WELL_KNOWN_PORT	69		/* Well known TFTP port #		*/
+ #define TIMEOUT		5000UL		/* Millisecs to timeout for lost pkt */
+ #ifndef	CONFIG_NET_RETRY_COUNT
+@@ -75,6 +80,22 @@
+ #define STATE_BAD_MAGIC	4
+ #define STATE_OACK	5
+ 
++    /* foxconn added start */
++#ifdef CFG_NMRP
++uchar TestNmrpIP[2] = {192,168};
++static int Nmrp_Waiting_TimeoutCount = 0;
++static int nmrpconfflag = 1;
++#endif
++    
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER
++#define STATE_WRQ 6
++#define STATE_BAD_IMAGE_TYPE 7
++#define STATE_BAD_IMAGE_CHKSUM 8
++static int TftpClientPort;
++static uchar ImageCheckSum = 0;
++#endif
++    /* foxconn added end */
++
+ #define TFTP_BLOCK_SIZE		512		    /* default TFTP block size	*/
+ #define TFTP_SEQUENCE_SIZE	((ulong)(1<<16))    /* sequence number is 16 bit */
+ 
+@@ -161,6 +182,20 @@
+ 	else
+ #endif /* CONFIG_SYS_DIRECT_FLASH_TFTP */
+ 	{
++	/* foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER
++		if(NetRunTftpServer)
++		{
++			uchar *dest=(uchar *)(load_addr + offset);
++			while(len--)
++			{
++				ImageCheckSum = (ImageCheckSum + (*src)) & 0xFF;
++				*dest++=*src++;
++			}
++		}
++		else
++#endif
++    /* foxconn added end */
+ 		(void)memcpy((void *)(load_addr + offset), src, len);
+ 	}
+ #ifdef CONFIG_MCAST_TFTP
+@@ -271,8 +306,50 @@
+ 		pkt += 18 /*strlen("File has bad magic")*/ + 1;
+ 		len = pkt - xp;
+ 		break;
++    /* foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER 
++		case STATE_BAD_IMAGE_TYPE:
++			xp = pkt;
++			s = (ushort *)pkt;
++			*s++=htons(TFTP_ERROR);
++			*s++=htons(2);
++			pkt = (uchar *)s;
++			strcpy ((char *)pkt, "No binary mode used");
++			pkt += 19/*strlen("No binary mode used")*/ + 1;
++			len = pkt - xp;
++			break;
++		case STATE_BAD_IMAGE_CHKSUM:
++			xp = pkt;
++			s=(ushort *)pkt;
++			*s++=htons(TFTP_ERROR);
++			*s++=htons(2);
++			pkt = (uchar *)s;
++			strcpy ((char *)pkt, "File has bad checksum");
++			pkt += 21 /*"File has bad checksum"*/ +1;
++			len = pkt -xp;
++			break;
++#endif
++    /* foxconn added end */
+ 	}
+-
++    /* foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER
++	if (NetRunTftpServer)
++	{
++		NetSendUDPPacket(TftpClientEther, TftpClientIP, TftpClientPort,TftpOurPort,len);
++		if (TftpState == STATE_BAD_IMAGE_TYPE)
++		{
++			puts("\nNo binary mode used!\n");
++			ResetTftpServer();
++		}
++		else if (TftpState == STATE_BAD_IMAGE_CHKSUM)
++		{
++			puts("File has bad checksum!\n");
++			ResetTftpServer();
++		}
++	}
++	else
++#endif
++    /* foxconn added end */
+ 	NetSendUDPPacket(NetServerEther, TftpServerIP, TftpServerPort, TftpOurPort, len);
+ }
+ 
+@@ -638,6 +715,229 @@
+ 	TftpSend ();
+ }
+ 
++/* Foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER
++
++static int TftpServerWaiting = 1;
++static uint TftpLedCount = 0;
++
++static void
++TftpServerTimeout (void)
++{
++	ulong timeout = TIMEOUT;
++
++	nmrp_work_around_2();
++	if(TftpServerWaiting)
++	{
++#ifdef CFG_NMRP
++		if(NmrpState == STATE_CONFIGING )
++		{
++			if(nmrpconfflag){
++				puts("\nwaiting nmrp server to upload firmware!\n");
++				nmrpconfflag = 0;
++			}
++			if( ++Nmrp_Waiting_TimeoutCount > NMRP_MAX_RETRY_TFTP_UL)
++			{
++				puts("\n retry tftp_upload count exceeded;\n");
++				Nmrp_Waiting_TimeoutCount = 0;
++				NmrpState = STATE_LISTENING;
++				NmrpSend();
++			}else{
++				puts("T");
++				NmrpSend();
++				NetSetTimeout((NMRP_TIMEOUT_REQ*CONFIG_SYS_HZ)/2,TftpServerTimeout);
++			}
++		}else{
++#endif
++		TftpLedCount++;
++		if ((TftpLedCount % 2)== 1)
++		{
++			printf("Upgrade Mode\b\b\b\b\b\b\b\b\b\b\b\b");
++			/*power LED (GREEN) 0.25 second on */
++			board_power_led(0); //on
++			NetSetTimeout ((CONFIG_SYS_HZ*1)/4, TftpServerTimeout);
++		}else{
++			/* power LED (GREEN) 0.75 second off */
++			board_power_led(1); //off
++			printf("            \b\b\b\b\b\b\b\b\b\b\b\b");
++			NetSetTimeout ((CONFIG_SYS_HZ*3)/4, TftpServerTimeout);
++		}
++#ifdef CFG_NMRP
++	}
++#endif
++	}
++	else{
++		if (++TftpTimeoutCount > TIMEOUT_COUNT) {
++			puts ("\nRetry to wait TFTP Client's Data count exceeded; starting again\n");
++			ResetTftpServer ();
++		} else {
++			puts ("T ");
++			NetSetTimeout (timeout, TftpServerTimeout);
++			TftpSend ();
++		}
++	}
++}
++
++static void
++TftpServerHandler (uchar * pkt, unsigned dest , unsigned src ,unsigned len )
++{
++	ushort  proto;
++	ushort *s;
++	ulong timeout = TIMEOUT;
++
++	nmrp_work_around_2();
++	if (dest != TftpOurPort) {
++		return;
++	}
++	if (TftpState != STATE_WRQ && src != TftpClientPort) {
++		return;
++	}
++
++	if (len < 2) {
++		return;
++	}
++	len -= 2;
++	/* warning: don't use increment (++) in ntohs() macros!! */
++	s = (ushort *)pkt;
++	proto = *s++;
++	pkt = (uchar *)s;
++	switch(ntohs(proto)){
++		case TFTP_RRQ:
++		case TFTP_ACK:
++		case TFTP_OACK:
++			break;
++
++		case TFTP_WRQ:
++			TftpClientPort = src;
++			TftpServerWaiting = 0;
++
++			pkt += strlen((char *)pkt) + 1;
++
++			if(strcmp(pkt, "octet"))
++			{
++				TftpState = STATE_BAD_IMAGE_TYPE;
++			}
++			else
++			{
++				TftpState = STATE_OACK;
++				puts ("\nRcv:\n\t");
++			}
++			TftpSend (); /* Send ACK */
++			break;
++
++		case TFTP_DATA:
++			if (len < 2)
++				return;
++			len -= 2;
++			TftpBlock = ntohs(*(ushort *)pkt);
++
++			if (TftpBlock == 0)
++			{
++				TftpBlockWrap++;
++				TftpBlockWrapOffset += TFTP_BLOCK_SIZE * TFTP_SEQUENCE_SIZE;
++				printf ("\n\t %lu MB reveived\n\t ", TftpBlockWrapOffset>>20);
++			}
++
++			else
++			{
++				if (((TftpBlock - 1) % 10) == 0)
++				{
++					putc ('.');
++				}
++				else if ((TftpBlock % (10 * HASHES_PER_LINE)) == 0)
++				{
++					puts ("\n\t");
++				}
++			}
++			if (TftpState == STATE_OACK)
++			{
++				/* first block received */
++				TftpState = STATE_DATA;
++				TftpLastBlock = 0;
++				TftpBlockWrap = 0;
++				TftpBlockWrapOffset = 0;
++
++				if (TftpBlock != 1)
++				{
++					/* Assertion */
++					printf ("\nTFTP error: "
++						"First block is not block 1 (%ld)\n"
++						"Starting again\n\n",
++						TftpBlock);
++					ResetTftpServer ();
++					break;
++				}
++			}
++
++			if (TftpBlock == TftpLastBlock)
++			{
++				break;
++			}
++
++			TftpLastBlock = TftpBlock;
++			NetSetTimeout (timeout, TftpServerTimeout);
++
++			store_block (TftpBlock - 1, pkt + 2, len);
++			if(len < TFTP_BLOCK_SIZE)
++			{
++				/*
++				ImageCheckSum = ~ImageCheckSum;
++				if (ImageCheckSum != 0x00)
++				{
++					TftpState = STATE_BAD_IMAGE_CHKSUM;
++				}*/
++			}
++			TftpSend ();
++			if (len < TFTP_BLOCK_SIZE && TftpState == STATE_DATA)
++			{
++				puts ("\nDone!\n");
++				NetState = NETLOOP_SUCCESS;
++			}
++
++			break;
++
++		case TFTP_ERROR:
++			printf ("\nTFTP error: '%s' (%d)\n", pkt + 2, ntohs(*(ushort *)pkt));
++			puts ("Starting again\n\n");
++			ResetTftpServer();
++			break;
++	}
++}
++
++void
++TftpServerStart(void)
++{
++#ifdef CFG_NMRP
++	if(NmrpState != STATE_CONFIGING)
++#endif
++	puts ("\nThe Router is in TFTP Server Firmware Recovery mode NOW!\n");
++
++	printf("Listening on Port : 69, IP Address: %pI4 ...\n", &NetOurIP);
++
++	/* Turn off  Test LED */
++	board_test_led(1); //off
++	
++	NetSetTimeout (CONFIG_SYS_HZ/10, TftpServerTimeout);
++	NetSetHandler (TftpServerHandler);
++
++	TftpOurPort  = WELL_KNOWN_PORT;
++	TftpTimeoutCount = 0;
++	TftpClientPort = 0;
++	TftpState = STATE_WRQ;
++	TftpBlock = 0;
++
++	TftpServerWaiting = 1;
++	TftpLedCount = 0;
++
++	ImageCheckSum = 0;
++
++	/* zero out client ether in case the client ip has changed */
++	memset(TftpClientEther, 0, 6);
++	TftpClientIP = 0;
++}
++#endif
++/* Foxconn added end */
++
+ #ifdef CONFIG_MCAST_TFTP
+ /* Credits: atftp project.
+  */
+Index: u-boot-2010.06/net/tftp.h
+===================================================================
+--- u-boot-2010.06.orig/net/tftp.h	2010-06-30 05:28:28.000000000 +0800
++++ u-boot-2010.06/net/tftp.h	2017-01-09 13:50:48.614976335 +0800
+@@ -15,6 +15,11 @@
+ 
+ /* tftp.c */
+ extern void	TftpStart (void);	/* Begin TFTP get */
++    /* foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER
++extern void     TftpServerStart (void);
++#endif
++    /* foxconn added end */
+ 
+ /**********************************************************************/
+ 
+Index: u-boot-2010.06/net/Makefile
+===================================================================
+--- u-boot-2010.06.orig/net/Makefile	2017-01-09 13:50:45.162741216 +0800
++++ u-boot-2010.06/net/Makefile	2017-01-09 13:50:48.614976335 +0800
+@@ -36,7 +36,9 @@
+ COBJS-$(CONFIG_CMD_SNTP) += sntp.o
+ COBJS-$(CONFIG_CMD_NET)  += tftp.o
+ COBJS-$(CONFIG_CMD_HTTPD)  += httpd.o tcp.o
+-
++#Foxconn added start
++COBJS-$(CONFIG_CMD_NET)  += nmrp.o
++#Foxconn added end
+ COBJS	:= $(COBJS-y)
+ SRCS	:= $(COBJS:.o=.c)
+ OBJS	:= $(addprefix $(obj),$(COBJS))
+Index: u-boot-2010.06/net/net.c
+===================================================================
+--- u-boot-2010.06.orig/net/net.c	2017-01-09 13:50:45.166741489 +0800
++++ u-boot-2010.06/net/net.c	2017-01-09 13:53:46.427328053 +0800
+@@ -86,6 +86,11 @@
+ #include <status_led.h>
+ #include <miiphy.h>
+ #endif
++/* foxconn added start */
++#ifdef CFG_NMRP
++#include "nmrp.h"
++#endif
++/* foxconn added end */
+ #if defined(CONFIG_CMD_SNTP)
+ #include "sntp.h"
+ #endif
+@@ -165,6 +170,14 @@
+ ushort		NetOurVLAN = 0xFFFF;		/* default is without VLAN	*/
+ ushort		NetOurNativeVLAN = 0xFFFF;	/* ditto			*/
+ 
++/* foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER
++uchar NetOurTftpIP[4] = { 192, 168, 1, 1 };
++int NetRunTftpServer = 0;
++uchar TftpClientEther[6] = { 0, 0, 0, 0, 0, 0};
++IPaddr_t TftpClientIP = 0;
++#endif
++/* foxconn added end */
+ char		BootFile[128];		/* Boot File name			*/
+ 
+ #if defined(CONFIG_CMD_PING)
+@@ -388,8 +401,31 @@
+ 		switch (protocol) {
+ 		case TFTP:
+ 			/* always use ARP to get server ethernet address */
++    /* Foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER
++			if(NetRunTftpServer)
++			{
++#ifdef CFG_NMRP
++				if (NmrpState != 0) {
++					NetServerIP = 1;
++					NetCopyIP(&NetOurIP, NetOurTftpIP);
++					NetOurGatewayIP = 0;
++				}
++#endif
++				TftpServerStart();
++			}
++			else
++#endif
++    /* Foxconn added end */
+ 			TftpStart();
+ 			break;
++		/* Foxconn added start */
++#ifdef CFG_NMRP
++		case NMRP:
++			NmrpStart();
++			break;
++#endif
++		/* Foxconn added end */
+ 
+ #if defined(CONFIG_CMD_DHCP)
+ 		case DHCP:
+@@ -471,6 +507,7 @@
+ 	 *	Main packet reception loop.  Loop receiving packets until
+ 	 *	someone sets `NetState' to a state that terminates.
+ 	 */
++skip_netloop:
+ 	for (;;) {
+ 		WATCHDOG_RESET();
+ #ifdef CONFIG_SHOW_ACTIVITY
+@@ -532,6 +569,10 @@
+ 			goto restart;
+ 
+ 		case NETLOOP_SUCCESS:
++#ifdef CFG_NMRP
++			if (NmrpState == STATE_CLOSING)
++				goto skip_netloop;
++#endif
+ 			if (NetBootFileXferSize > 0) {
+ 				char buf[20];
+ 				printf("Bytes transferred = %ld (%lx hex)\n",
+@@ -1407,6 +1448,16 @@
+ 
+ 	switch (x) {
+ 
++#ifdef CFG_NMRP
++		case PROT_NMRP:
++			if(len <= MIN_ETHER_NMRP_LEN){
++				printf("bad packet len@!\n");
++				return;
++			}
++			memcpy(NmrpServerEther,et->et_src,6);
++			(*packetHandler)((uchar *)ip,0,0,PROT_NMRP);
++			break;
++#endif
+ 	case PROT_ARP:
+ 		/*
+ 		 * We have to deal with two types of ARP packets:
+@@ -1504,6 +1555,14 @@
+ 
+ 	case PROT_RARP:
+ 		debug("Got RARP\n");
++
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER
++		if(NetRunTftpServer == 1 )
++		{
++			return;
++		}
++#endif
++
+ 		arp = (ARP_t *)ip;
+ 		if (len < ARP_HDR_SIZE) {
+ 			printf("bad length %d < %d\n", len, ARP_HDR_SIZE);
+@@ -1627,6 +1686,11 @@
+ 				return;
+ 			}
+ 		} else if (ip->ip_p == IPPROTO_UDP){
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER
++		/* Saved the Client IP address anyway for future use */
++		TftpClientIP = NetReadIP(&ip->ip_src);
++#endif
++
+ #ifdef CONFIG_UDP_CHECKSUM
+ 		if (ip->udp_xsum != 0) {
+ 			ulong   xsum;
+@@ -1945,3 +2009,415 @@
+ {
+ 	return (string_to_VLAN(getenv(var)));
+ }
++
++    /* foxconn added start */
++#ifdef FIRMWARE_RECOVER_FROM_TFTP_SERVER 
++static unsigned long calculate_checksum (int action, char *s, int size)
++{
++    static unsigned long c0, c1;
++    unsigned long checksum, b;
++    int i;
++    switch (action)
++    {
++        case 0:
++            c0 = c1 = 0;
++            break;
++
++        case 1:
++            for (i = 0; i < size; i++)
++            {
++                c0 += s[i] & 0xff;
++                c1 += c0;
++            }
++            break;
++        case 2:
++            b = (c0 & 65535) + ((c0 >> 16) & 65535);
++            c0 = ((b >> 16) + b) & 65535;
++
++            b = (c1 & 65535) + ((c1 >> 16) & 65535);
++            c1 = ((b >> 16) + b) & 65535;
++
++            checksum = ((c1 << 16) | c0);
++
++            return checksum;
++    }
++    return 0;
++}
++
++#define CFG_FLASH_SIZE  32*1024*1024
++int verify_checksum(char *buf, unsigned long buf_len, unsigned long chksum)
++{
++	unsigned long cal_chksum = 0;
++
++	if(buf_len > CFG_FLASH_SIZE) {
++		printf("Checksum buffer length (%d) overflow!\n", buf_len);
++		return -1;
++	}
++
++	calculate_checksum (0, NULL, 0);
++	calculate_checksum (1, buf, buf_len);
++	cal_chksum = calculate_checksum (2, NULL, 0);
++	if (cal_chksum != chksum) {
++		printf("Checksum mismatch:\n");
++		printf("Image chksum: 0x%08X\n", chksum);
++		printf("Calc  chksum: 0x%08X\n", cal_chksum);
++		return -1;
++	}
++
++	return 0;	
++}
++
++
++
++void ResetTftpServer(void)
++{
++	timeHandler = 0;
++#ifdef CFG_NMRP
++	if(NmrpState != 0)
++	{
++		NmrpState = STATE_CONFIGING;
++		NmrpSend();
++	}
++	else
++#endif
++	NetState = NETLOOP_RESTART;
++}
++
++#ifdef CFG_NMRP
++/* Check if Alive-timer expires? */
++void CheckNmrpAliveTimerExpire(void)
++{
++	ulong passed;
++
++	passed = get_timer(NmrpAliveTimerStart);
++	if ((passed / CONFIG_SYS_HZ) + NmrpAliveTimerBase > NMRP_TIMEOUT_ACTIVE) {
++		printf("Active-timer expires\n");
++		NmrpSend();
++		NmrpAliveTimerBase = NMRP_TIMEOUT_ACTIVE / 4;
++		NmrpAliveTimerStart = get_timer(0);
++	} else {
++		printf("Alive-timer %u\n", (passed / CONFIG_SYS_HZ) + NmrpAliveTimerBase);
++		/* If passed 1/4 NMRP_TIMEOUT_ACTIVE,
++		 * add 1/4 NMRP_TIMEOUT_ACTIVE to NmrpAliveTimerBase.
++		 * This is for avoiding "passed" overflow.
++		 */
++		if ((passed / CONFIG_SYS_HZ) >= (NMRP_TIMEOUT_ACTIVE / 4)) {
++		    NmrpAliveTimerBase += NMRP_TIMEOUT_ACTIVE / 4;
++		    NmrpAliveTimerStart = get_timer(0);
++		    printf("NmrpAliveTimerBase %u\n", NmrpAliveTimerBase);
++		}
++	}
++}
++#endif
++
++int update_firmware(ulong saddr, int firmware_size)
++{
++    char *s;
++    char cmd[256]="";
++
++    s = getenv ("ubi_init");    // run ubi_init;
++    run_command(s, 0);    
++    
++    s = getenv ("switchbankB");    // run switchbankB;
++    run_command(s, 0);
++    
++    //http_upgrade(addr, firmware_size);    
++    sprintf(cmd, "upgrade 0x%x 0x%x", saddr, firmware_size); //tftpboot $(loadaddr) $(tftppath)$(fullimage);
++    run_command(cmd, 0); 
++    printf(cmd);
++    printf("switchbankB update done\n");
++
++    s = getenv ("switchbankA");    // run switchbankA;
++    run_command(s, 0);
++    
++    //udelay(1000);
++    
++    run_command("set update_chk 0;", 0);    //set update_chk 0;
++
++    sprintf(cmd, "upgrade 0x%x 0x%x", saddr, firmware_size); //tftpboot $(loadaddr) $(tftppath)$(fullimage);
++    run_command(cmd, 0);  
++    printf(cmd);
++    printf("switchbankA update done\n");
++    
++	printf ("Done\n");
++	return 0;
++}
++
++#if 1//defined(BOARD_ID_SUPPORT)
++/*
++ * item_name_want could be "device" to get Model Id, "version" to get Version
++ * or "hd_id" to get Hardware ID.
++ */
++void board_get_image_info(ulong fw_image_addr, char *buf)
++{
++	struct acos_image_header *header;
++	unsigned long header_len;
++	unsigned long board_id_len;
++
++	header = (struct acos_image_header *)fw_image_addr;
++	header_len = (header->header_len);
++
++	board_id_len = header_len - sizeof(struct acos_image_header);
++	if (board_id_len <= 0 || (board_id_len > BOARD_ID_MAX_LEN)) {
++		printf("Invalid len (%d)!\n", board_id_len);
++		return;
++	}
++
++	memcpy(buf, fw_image_addr + sizeof(struct acos_image_header), board_id_len);
++
++	return;
++}
++
++int board_match_image_hw_id (ulong fw_image_addr)
++{
++	char board_hw_id[BOARD_ID_MAX_LEN];
++	char image_hw_id[BOARD_ID_MAX_LEN];
++
++	/* get hardward id from board */
++	memset(board_hw_id, 0, sizeof(board_hw_id));
++	foxconn_get_board_id(board_hw_id, BOARD_ID_MAX_LEN);
++	printf("Board ID on board: (%s)\n", board_hw_id);
++
++	/* get hardward id from image */
++	memset(image_hw_id, 0, sizeof(image_hw_id));
++	board_get_image_info(fw_image_addr, (char*)image_hw_id);
++	printf("Board ID  in image: (%s)\n", image_hw_id);
++
++	return 1;
++}
++#endif
++
++void StartTftpServerToRecoveFirmware (void)
++{
++	NetRunTftpServer = 1;
++	load_addr = 0x80800000;    /* defined in u-boot env from Intel's default. */
++	ulong addr;
++	unsigned int file_size;
++	struct acos_image_header *header;
++	unsigned long image_len;
++	unsigned long image_chksum;
++	unsigned long header_len;
++    unsigned long header_len_pad;
++    
++
++tftpstart:
++	addr = load_addr;
++	file_size = NetLoop (TFTP);
++	if (file_size < 1)
++	{
++		printf ("\nFirmware recovering from TFTP server failed! \n");
++		NetRunTftpServer = 0;
++		return;
++	}
++
++//#ifdef BOARD_ID_SUPPORT
++	if (!board_match_image_hw_id(addr)) 
++//	{
++		printf("Board ID mismatch!\n");
++//		ResetTftpServer();
++//		goto tftpstart;
++//	}
++//#endif
++
++	header = (struct acos_image_header *)addr;
++	//header_len = swap32(header->header_len);
++	//image_len = swap32(header->kernel_len) + swap32(header->rootfs_len);
++	//image_chksum = swap32(header->image_chksum);
++	header_len = (header->header_len);
++	image_len = (header->kernel_len) + (header->rootfs_len);
++    image_chksum = (header->image_chksum);
++
++printf("header_len=%d image_len=%d image_chksum=%d\n", header->header_len, header->kernel_len+header->rootfs_len, header->image_chksum);
++	if (file_size != header_len + image_len) {
++		printf("Received firmware size incorrect (%lu) != (%lu)!\n",
++			file_size, header_len + image_len);
++		ResetTftpServer();
++		goto tftpstart;
++	}
++
++	if (verify_checksum((char *)addr + header_len, image_len, image_chksum)) {
++		printf ("verify_checksum failed...\n");
++		do_reset(NULL,0,0,NULL);
++	}
++
++    header_len_pad = (header_len + (header_len % 4));
++
++	if (update_firmware(addr+header_len, file_size - header_len)) {
++		printf ("update_firmware successfully ...\n");
++		do_reset(NULL,0,0,NULL);
++	}
++
++	/*
++	 *	It indicates that tftp server would leave running state when
++	 *	this function returns.
++	 */
++	NetRunTftpServer = 0;
++}
++
++int do_fw_recovery (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
++{
++	StartTftpServerToRecoveFirmware();
++	return 0;
++}
++
++U_BOOT_CMD(
++	do_fw_recovery,	1,	0,	do_fw_recovery,
++	"do_fw_recovery - netgear tftp firmware recovery.\n",
++	"- netgear tftp firmware recovery.\n"
++);
++
++#if defined(CFG_NMRP)
++void UpgradeFirmwareFromNmrpServer(void)
++{
++	NetRunTftpServer = 1;
++	load_addr = 0x80800000;  /* defined in u-boot env from Intel's default. */
++	ulong addr;
++	unsigned int file_size;
++	struct acos_image_header *header;
++	unsigned long image_len;
++	unsigned long image_chksum;
++	unsigned long header_len;
++    unsigned long header_len_pad;
++
++	addr = load_addr;
++	file_size = NetLoop (TFTP);
++	if (file_size < 1)
++	{
++		printf ("\nUpgrade firmware from NMRP failed! :( \n");
++		NetRunTftpServer = 0;
++		return;
++	}
++
++	NmrpState = STATE_TFTPUPLOADING;
++	NetSetHandler(NmrpHandler);
++	NmrpSend();
++
++    header = (struct acos_image_header *)addr;
++	header_len = (header->header_len);
++	image_len = (header->kernel_len) + swap32(header->rootfs_len);
++    image_chksum = (header->image_chksum);
++
++printf("header_len=%d image_len=%d image_chksum=%d\n", header->header_len, header->kernel_len+header->rootfs_len, header->image_chksum);
++
++	update_firmware(addr + header_len, file_size - header_len);
++	nmrp_work_around_1();
++	NmrpFwUPOption = 0;
++	if (NmrpSTUPOption == 1) {
++		NmrpState = STATE_CONFIGING;
++	} else {
++		NmrpState = STATE_CLOSING;
++	}
++	NetSetHandler(NmrpHandler);
++	NmrpSend();
++	NetRunTftpServer = 0;
++}
++
++void update_string_table(unsigned char *load_addr, int table_number, unsigned int file_size)
++{
++#if 0   /* no need to do this way */
++	int offset;
++
++	if (table_number > CFG_STRING_TABLE_NUMBER) {
++		printf("String table num over limit (%d > %d)!\n",
++			table_number, CFG_STRING_TABLE_NUMBER);
++		return;
++	}
++
++	if (file_size > CFG_STRING_TABLE_LEN) {
++		printf("String table size over limit (%d > %d)!\n",
++			file_size, CFG_STRING_TABLE_LEN);
++		return;
++	}
++
++	printf ("Flashing string table (%d)...\n", table_number);
++	offset = CFG_STRING_TABLE_BASE_OFFSET + (table_number - 1) * FLASH_MTD_ML_SIZE;
++	write_string_table(load_addr, offset, file_size);
++#endif
++}
++
++void UpgradeStringTableFromNmrpServer(int table_num)
++{
++	NetRunTftpServer = 1;
++	load_addr = 0x80800000;
++	ulong addr;
++
++	int file_size;
++	struct string_table_header *sthdr;
++	unsigned long st_len;
++	unsigned long st_chksum;
++
++	addr = load_addr;
++	file_size = NetLoop (TFTP);
++	if (file_size < 1)
++	{
++		printf("NMRP String Table (%d) recovery fail!\n", table_num);
++		NetRunTftpServer = 0;
++		return;
++	}
++
++	/* TFTP Uploading done */
++	NmrpState = STATE_TFTPUPLOADING;
++	NetSetHandler(NmrpHandler);
++	NmrpSend();
++
++	/* Read whole string table partition from Flash to RAM(load_addr+64k) */
++	sthdr = (struct string_table_header *)addr;
++	st_len = sthdr->size;
++	st_chksum = sthdr->chksum;
++	if (file_size != sizeof(struct string_table_header) + st_len) {
++		printf("Received string table size incorrect (%lu) != (%lu)!\n",
++			file_size, sizeof(struct string_table_header) + st_len);
++	}
++	/* Write String Table to flash */
++	update_string_table((uchar *)addr, table_num, file_size);
++
++	/* upgrade string table done, check if more files */
++	nmrp_work_around_1();
++	NmrpStringTableUpdateIndex++;
++
++	/* upgrade string table done, check if more files */
++	if (NmrpStringTableUpdateIndex == NmrpStringTableUpdateCount)
++		NmrpSTUPOption = 0;
++	if (NmrpFwUPOption == 0 && NmrpSTUPOption == 0) {
++		printf("Upgrading all done\n");
++		NmrpState = STATE_CLOSING;
++		NetSetHandler(NmrpHandler);
++		NmrpSend();
++	} else {
++		printf("More files to be upgrading\n");
++		NmrpState = STATE_CONFIGING;
++		NetSetHandler(NmrpHandler);
++		NmrpSend();
++	}
++	NetRunTftpServer = 0;
++}
++
++void StartNmrpClient(void)
++{
++    if( NetLoop(NMRP) < 1)
++    {
++        printf("\n nmrp server is stopped or failed !\n");
++        return;
++    }
++}
++
++void ResetBootup_usual(void)
++{
++    timeHandler = 0;
++    NetState = NETLOOP_SUCCESS;
++}
++
++int do_nmrp (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
++{
++	StartNmrpClient();
++	return 0;
++}
++
++U_BOOT_CMD(
++	nmrp,	1,	0,	do_nmrp,
++	"nmrp - start nmrp mechanism to upgrade firmware-image or string-table.\n",
++	"- start nmrp mechanism to upgrade firmware-image or string-table.\n"
++);
++#endif
++#endif
++    /* foxconn added end */
+Index: u-boot-2010.06/common/cmd_foxconn.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2010.06/common/cmd_foxconn.c	2017-01-09 13:52:50.115748300 +0800
+@@ -0,0 +1,121 @@
++#include <common.h>
++#include <command.h>
++
++void foxconn_get_board_id(char *boardid, int len)
++{
++    char buf[BD_SIZE];
++
++    read_board_data(buf, BD_SIZE);
++
++	memset(boardid, 0, sizeof(boardid));
++    memcpy(boardid, &buf[BOARD_ID_OFFSET], BOARD_ID_MAX_LEN - 1);
++    boardid[BOARD_ID_MAX_LEN-1] = '\0';
++}
++
++int do_show_board_id(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
++{
++	char boardid[BOARD_ID_MAX_LEN];
++
++    foxconn_get_board_id(boardid, BOARD_ID_MAX_LEN);
++
++	printf("<BoardID>: (%s)\n", boardid);
++	return 0;
++}
++
++U_BOOT_CMD(
++	show_board_id, 1, 0, do_show_board_id,
++	"Show board id",
++	"\n"
++);
++
++int do_show_sn(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
++{
++    char buf[BD_SIZE];
++	char sn[SN_MAX_LEN];
++
++    read_board_data(buf, BD_SIZE);
++
++	memset(sn, 0, sizeof(sn));
++    memcpy(sn, &buf[SN_OFFSET], SN_MAX_LEN - 1);
++    sn[SN_MAX_LEN-1] = '\0';
++
++	printf("<SerialNumber>: (%s)\n", sn);
++	return 0;
++}
++
++U_BOOT_CMD(
++	show_sn, 1, 0, do_show_sn,
++	"Show serial number",
++	"\n"
++);
++
++
++int bd_write_sku_info(unsigned short region_num)
++{
++#if 0   /* do not need to do this action */
++    char buf[BD_SIZE];
++    unsigned short region_num_buf[2];
++ 
++    read_board_data(buf, BD_SIZE);
++    memcpy(region_num_buf, &buf[REGION_NUM_OFFSET], 4);
++    region_num_buf[0] = region_num;
++   
++    memcpy(&buf[REGION_NUM_OFFSET], region_num_buf, 4);
++    write_board_data(buf, BD_SIZE);
++
++    printf("Burn region number (%x) done\n", region_num);
++#endif
++    return 0;
++}
++
++int do_skuset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
++{
++	char *strtol_endptr = NULL;
++	uint16_t region = 0;
++
++	int i = 0;
++
++	if (2 != argc) {
++		printf("%s\n",cmdtp->usage);
++		return 1;
++	}
++
++	region = (uint16_t)simple_strtoul(argv[1], &strtol_endptr, 10);
++	if (*strtol_endptr != '\0') {
++		printf("\"%s\" is not a number!!\n", argv[1]);
++		return 1;
++	}
++
++	printf("write 0x%04x to board region\n", region);
++
++	return bd_write_sku_info(region);
++
++}
++
++U_BOOT_CMD(
++	skuset, 2, 0, do_skuset,
++	"burn sku",
++	"<region>\n"
++	"\n"
++	"Examples:\n"
++	"    skuset 0xa  # set region number to 10"
++);
++
++
++int do_show_sku(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
++{
++    char buf[BD_SIZE];
++    unsigned short region_num[2];
++
++    read_board_data(buf, BD_SIZE);
++    memcpy(region_num, &buf[REGION_NUM_OFFSET], 4);
++
++	printf("<SkuNumber>: (0x%x) (0x%x)\n", region_num[0], region_num[1]);
++	return 0;
++}
++
++U_BOOT_CMD(
++	show_sku, 1, 0, do_show_sku,
++	"Show sku number",
++	"\n"
++);
+Index: u-boot-2010.06/net/nmrp.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2010.06/net/nmrp.c	2017-01-09 13:50:48.614976335 +0800
+@@ -0,0 +1,553 @@
++/*
++ *     Copyright (C) 2008 Delta Networks Inc.
++ */
++#include <common.h>
++#include <command.h>
++#include <net.h>
++#include "tftp.h"
++#include "bootp.h"
++#include "nmrp.h"
++
++typedef void nmrp_thand_f(void);
++ulong NmrpOuripaddr;
++ulong NmrpOuripSubnetMask;
++ulong NmrpFwOption;
++int NmrpFwUPOption = 0;
++int NmrpSTUPOption = 0;
++int NmrpStringTableUpdateCount = 0;
++int NmrpStringTableUpdateIndex = 0;
++int NmrpState = 0;
++ulong Nmrp_active_start=0;
++static ulong NmrpBlock;
++static ulong NmrpLastBlock = 0;
++int Nmrp_Listen_TimeoutCount = 0;
++int Nmrp_REQ_TimeoutCount = 0;
++static ulong NmrptimeStart;
++static ulong NmrptimeDelta;
++static nmrp_thand_f *NmrptimeHandler;
++static uchar Nmrpproto;
++static int Nmrp_Closing_TimeoutCount = 0;
++IPaddr_t NmrpClientIP = 0;
++uchar NmrpClientEther[6] = { 0, 0, 0, 0, 0, 0 };
++uchar NmrpServerEther[6] = { 0, 0, 0, 0, 0, 0 };
++static u16 NmrpDevRegionOption = 0;
++static uchar NmrpFirmwareFilename[FIRMWARE_FILENAME_LEN] = FIRMWARE_FILENAME;
++static u32 NmrpStringTableBitmask = 0;
++static uchar NmrpStringTableFilename[STRING_TABLE_FILENAME_LEN] = {0};
++static int NmrpStringTableUpdateList[STRING_TABLE_NUMBER_MAX] = {0};
++ulong NmrpAliveTimerStart = 0;
++ulong NmrpAliveTimerBase = 0;
++int NmrpAliveTimerTimeout = NMRP_TIMEOUT_ACTIVE;
++int NmrpAliveWaitACK = 0;
++int overflow_count = 0;
++
++static void Nmrp_Listen_Timeout(void);
++void NmrpSend(void);
++
++void NmrpStart(void);
++
++void NmrpSetTimeout(unchar, ulong, nmrp_thand_f *);
++
++void Nmrp_Led_Flashing_Timeout(void);
++
++static int MyNetSetEther(volatile uchar * xet, uchar * addr, uint prot)
++{
++	Ethernet_t *et = (Ethernet_t *) xet;
++#ifdef CONFIG_NET_VLAN
++	ushort myvlanid;
++	myvlanid = ntohs(NetOurVLAN);
++	if (myvlanid == (ushort) - 1)
++		myvlanid = VLAN_NONE;
++#endif
++	memcpy(et->et_dest, addr, 6);
++	memcpy(et->et_src, NetOurEther, 6);
++
++#ifdef CONFIG_NET_VLAN
++	if ((myvlanid & VLAN_IDMASK) == VLAN_NONE) {
++		et->et_protlen = htons(prot);
++		return ETHER_HDR_SIZE;
++	} else {
++		VLAN_Ethernet_t *vet = (VLAN_Ethernet_t *) xet;
++		vet->vet_vlan_type = htons(PROT_VLAN);
++		vet->vet_tag = htons((0 << 5) | (myvlanid & VLAN_IDMASK));
++		vet->vet_type = htons(prot);
++		return VLAN_ETHER_HDR_SIZE;
++	}
++#else
++    et->et_protlen = htons(prot);
++#endif
++	return ETHER_HDR_SIZE;
++}
++
++static void Nmrp_Conf_Timeout(void)
++{
++	if (++Nmrp_REQ_TimeoutCount > NMRP_MAX_RETRY_CONF) {
++		puts("\n retry conf count exceeded;\n");
++		Nmrp_REQ_TimeoutCount = 0;
++		NmrpStart();
++	} else {
++		puts("T");
++		NmrpSetTimeout(NMRP_CODE_CONF_ACK,
++			       (NMRP_TIMEOUT_REQ * CONFIG_SYS_HZ) / 2,
++			       Nmrp_Conf_Timeout);
++		NmrpSend();
++	}
++}
++
++void Nmrp_Closing_Timeout(void)
++{
++	if (++Nmrp_Closing_TimeoutCount > NMRP_MAX_RETRY_CLOSE) {
++		puts("\n close retry count exceed;stay idle and blink\n");
++		Nmrp_Closing_TimeoutCount = 0;
++
++		//reset_default(); //D7000v2
++    
++		puts("\npress ctrl+C to continue.....\n");
++
++		Nmrp_Led_Flashing_Timeout();
++
++		ctrlc();
++		console_assign(stdout, "nulldev");
++		console_assign(stderr, "nulldev");
++		NmrpState = STATE_CLOSED;
++		NetState = NETLOOP_SUCCESS;
++	} else {
++		puts("T2");
++		NmrpSetTimeout(NMRP_CODE_CLOSE_ACK,
++			       (CONFIG_SYS_HZ * NMRP_TIMEOUT_REQ) / 2,
++			       Nmrp_Closing_Timeout);
++		NmrpSend();
++	}
++}
++
++void Nmrp_Led_Flashing_Timeout(void)
++{
++	static int NmrpLedCount = 0;
++	while (1) {
++
++		if (ctrlc())
++			break;
++
++		NmrpLedCount++;
++		if ((NmrpLedCount % 2) == 1) {
++			board_power_led(0); //on
++			udelay(500000);
++		} else {
++			board_power_led(1); //off
++			udelay(500000);
++		}
++	}
++	/*press ctl+c, turn on test led,then normally boot*/
++	board_test_led(0); //on
++}
++
++extern void NmrpSend(void)
++{
++	volatile u8 *pkt;
++	volatile u8 *xp;
++	int len = 0;
++	int eth_len = 0;
++	pkt = (u8 *) NetTxPacket;
++	pkt += MyNetSetEther(pkt, NmrpServerEther, PROT_NMRP);
++	eth_len = pkt - NetTxPacket;
++
++	switch (NmrpState) {
++	case STATE_LISTENING:
++		xp = pkt;
++		*((u16 *) pkt) = 0;
++		pkt += 2;
++		*((u8 *) pkt) = (NMRP_CODE_CONF_REQ);
++		pkt++;
++		*((u8 *) pkt) = 0;
++		pkt++;
++		*((u16 *) pkt) = htons(6);
++		pkt += 2;
++
++		len = pkt - xp;
++		(void)NetSendPacket((u8 *) NetTxPacket, eth_len + len);
++		NetSetTimeout((NMRP_TIMEOUT_REQ * CONFIG_SYS_HZ) / 2,
++			      Nmrp_Conf_Timeout);
++		NmrpSetTimeout(NMRP_CODE_CONF_ACK,
++			       (NMRP_TIMEOUT_REQ * CONFIG_SYS_HZ) / 2,
++			       Nmrp_Conf_Timeout);
++		break;
++	case STATE_CONFIGING:
++		xp = pkt;
++		*((u16 *) pkt) = 0;
++		pkt += 2;
++		*((u8 *) pkt) = (NMRP_CODE_TFTP_UL_REQ);
++		pkt++;
++		*((u8 *) pkt) = 0;
++		pkt++;
++		/* Recv ST-UP option, upgrade string table.
++		 * add FILE-NAME option to TFTP-UL-REQ
++		 * value of FILE-NAME would like "string table 01"*/
++		if (NmrpSTUPOption == 1) {
++			int i;
++			/* Append the total length to packet
++			 * NMRP_HEADER_LEN for the length of "Reserved", "Code", "Identifier", "Length"
++			 * STRING_TABLE_FILENAME_OPT_LEN for the length of "Options". */
++			*((u16 *) pkt) = htons((NMRP_HEADER_LEN + STRING_TABLE_FILENAME_OPT_LEN));
++			pkt += 2;
++
++			/* Append NMRP option type FILE-NAME */
++			*((u16 *) pkt) = htons(NMRP_OPT_FILE_NAME);
++			pkt += 2;
++
++			/* Append the total length of NMRP option FILE-NAME */
++			*((u16 *) pkt) = htons(STRING_TABLE_FILENAME_OPT_LEN);
++			pkt += 2;
++
++			/* Append the string table filename to FILE-NAME option value */
++			sprintf(NmrpStringTableFilename, "%s%02d", STRING_TABLE_FILENAME_PREFIX,\
++				NmrpStringTableUpdateList[NmrpStringTableUpdateIndex]);
++			for (i = 0; i < STRING_TABLE_FILENAME_LEN; i++) {
++				*((u8 *) pkt) = NmrpStringTableFilename[i];
++				pkt++;
++			}
++			printf("\nReq %s\n", NmrpStringTableFilename);
++		/* No string table updates, or all string table updates finished.
++		 * And received FW-UP option, upgrading firmware,
++		 * add FILE-NAME option to TFTP-UL-REQ */
++		} else {
++			int i;
++			/* Append the total length to packet
++			 * NMRP_HEADER_LEN for the length of "Reserved", "Code", "Identifier", "Length"
++			 * STRING_TABLE_FILENAME_OPT_LEN for the length of "Options". */
++			*((u16 *) pkt) = htons((NMRP_HEADER_LEN + FIRMWARE_FILENAME_OPT_LEN));
++			pkt += 2;
++
++			/* Append NMRP option type FILE-NAME */
++			*((u16 *) pkt) = htons(NMRP_OPT_FILE_NAME);
++			pkt += 2;
++
++			/* Append the total length of NMRP option FILE-NAME for firmware*/
++			*((u16 *) pkt) = htons(FIRMWARE_FILENAME_OPT_LEN);
++			pkt += 2;
++
++			/* Append the firmware filename to FILE-NAME option value */
++			sprintf(NmrpFirmwareFilename, "%s\n", FIRMWARE_FILENAME);
++			for (i = 0; i < FIRMWARE_FILENAME_LEN; i++) {
++				*((u8 *) pkt) = NmrpFirmwareFilename[i];
++				pkt++;
++			}
++		}
++
++		len = pkt - xp;
++		(void)NetSendPacket((u8 *) NetTxPacket, eth_len + len);
++		if (NmrpSTUPOption == 1)
++			UpgradeStringTableFromNmrpServer(NmrpStringTableUpdateList[NmrpStringTableUpdateIndex]);
++		else
++			UpgradeFirmwareFromNmrpServer();
++		break;
++	case STATE_TFTPUPLOADING:
++		printf("TFTP upload done\n");
++		NmrpAliveTimerStart = get_timer(0);
++		NmrpAliveTimerBase = NMRP_TIMEOUT_ACTIVE / 4;
++		NmrpState = STATE_KEEP_ALIVE;
++		break;
++	case STATE_KEEP_ALIVE:
++		printf("NMRP Send Keep alive REQ\n");
++		xp = pkt;
++		*((u16 *) pkt) = 0;
++		pkt += 2;
++		*((u8 *) pkt) = (NMRP_CODE_KEEP_ALIVE_REQ);
++		pkt++;
++		*((u8 *) pkt) = 0;
++		pkt++;
++		*((u16 *) pkt) = htons(6);
++		pkt += 2;
++		len = pkt - xp;
++		(void)NetSendPacket((u8 *) NetTxPacket, eth_len + len);
++		NmrpAliveWaitACK = 1;
++		break;
++	case STATE_CLOSING:
++		printf("NMRP Send Closing REQ\n");
++		nmrp_work_around_1();
++		xp = pkt;
++		*((u16 *) pkt) = 0;
++		pkt += 2;
++		*((u8 *) pkt) = (NMRP_CODE_CLOSE_REQ);
++		pkt++;
++		*((u8 *) pkt) = 0;
++		pkt++;
++		*((u16 *) pkt) = htons(6);
++		pkt += 2;
++		len = pkt - xp;
++		NmrpSetTimeout(NMRP_CODE_CLOSE_ACK, (1 * CONFIG_SYS_HZ),
++			       Nmrp_Closing_Timeout);
++		(void)NetSendPacket((u8 *) NetTxPacket, eth_len + len);
++		break;
++
++	case STATE_CLOSED:
++		//reset_default(); //D7000v2
++		NmrptimeHandler=NULL;
++		puts("\npress ctrl+C to continue.....\n");
++
++		Nmrp_Led_Flashing_Timeout();
++
++		ctrlc();
++		console_assign(stdout, "nulldev");
++		console_assign(stderr, "nulldev");
++		NetState = NETLOOP_SUCCESS;
++		break;
++	default:
++		break;
++
++	}
++
++}
++
++static void Nmrp_Listen_Timeout(void)
++{
++	if (++Nmrp_Listen_TimeoutCount > NMRP_TIMEOUT_LISTEN) {
++		puts("\nRetry count exceeded; boot the image as usual\n");
++		Nmrp_Listen_TimeoutCount = 0;
++		ResetBootup_usual();
++	} else {
++		puts("T3");
++		NetSetTimeout(CONFIG_SYS_HZ, Nmrp_Listen_Timeout);
++	}
++}
++
++static NMRP_PARSED_OPT *Nmrp_Parse(uchar * pkt, ushort optType)
++{
++	NMRP_PARSED_MSG *msg = (NMRP_PARSED_MSG *) pkt;
++	NMRP_PARSED_OPT *opt, *optEnd;
++	optEnd = &msg->options[msg->numOptions];
++	for (opt = msg->options; opt != optEnd; opt++)
++		if (opt->type == ntohs(optType))
++			break;
++	return msg->numOptions == 0 ? NULL : (opt == optEnd ? NULL : opt);
++}
++
++void NmrpSetTimeout(unchar proto, ulong iv, nmrp_thand_f * f)
++{
++	if (iv == 0) {
++		NmrptimeHandler = (nmrp_thand_f *) 0;
++		Nmrpproto = 0;
++	} else {
++
++		NmrptimeHandler = f;
++		NmrptimeStart = get_timer(0);
++		NmrptimeDelta = iv;
++		Nmrpproto = proto;
++	}
++}
++/*
++  Function to parse the NMRP options inside packet.
++  If all options are parsed correctly, it returns 0.
++ */
++static int Nmrp_Parse_Opts(uchar *pkt, NMRP_PARSED_MSG *nmrp_parsed)
++{
++	nmrp_t *nmrphdr= (nmrp_t*) pkt;
++	NMRP_OPT *nmrp_opt;
++	int remain_len, opt_index = 0;
++
++	nmrp_parsed->reserved = nmrphdr->reserved;
++	nmrp_parsed->code     = nmrphdr->code;
++	nmrp_parsed->id       = nmrphdr->id;
++	nmrp_parsed->length   = nmrphdr->length;
++
++	remain_len = ntohs(nmrphdr->length) - NMRP_HDR_LEN;
++
++	nmrp_opt = &nmrphdr->opt;
++	while (remain_len > 0){
++		memcpy(&nmrp_parsed->options[opt_index], nmrp_opt, ntohs(nmrp_opt->len));
++		remain_len -= ntohs(nmrp_opt->len);
++		nmrp_opt = ((uchar *)nmrp_opt) + ntohs(nmrp_opt->len);
++		opt_index++;
++	}
++	nmrp_parsed->numOptions=opt_index;
++	return remain_len;
++}
++
++void string_table_bitmask_check(void)
++{
++	int update_bit;
++
++	/* find string tables need to be update, begin with smallest bit */
++	for (update_bit = 0; update_bit < STRING_TABLE_BITMASK_LEN; update_bit++) {
++		if ((NmrpStringTableBitmask & (1 << update_bit)) != 0) {
++			//if bit 0 is set, update ST 1, ... etc
++			NmrpStringTableUpdateList[NmrpStringTableUpdateCount] = update_bit + 1;
++			NmrpStringTableUpdateCount++;
++		}
++	}
++}
++
++void NmrpHandler(uchar * pkt, unsigned dest, unsigned src, unsigned type)
++{
++	nmrp_t *nmrphdr= (nmrp_t*) pkt;
++	uchar proto;
++	unchar *xp = pkt;
++	int fwUpgrade;
++	NMRP_PARSED_MSG nmrp_parsed;
++	NMRP_PARSED_OPT *opt;
++	proto = nmrphdr->code;
++
++	if (type!=PROT_NMRP)
++		return;
++
++	/* check for timeout,and run the timeout handler
++	   if we have one
++	 */
++	if (NmrptimeHandler && ((get_timer(0) - NmrptimeStart) > NmrptimeDelta)
++	    && (proto != Nmrpproto)) {
++		nmrp_thand_f *x;
++		x = NmrptimeHandler;
++		NmrptimeHandler = (nmrp_thand_f *) 0;
++		(*x) ();
++	}
++
++	/*
++	   Check if Reserved field is zero. Per the specification, the reserved
++	   must be all zero in a valid NMRP packet.
++	 */
++	if (nmrphdr->reserved != 0){
++		return;
++	}
++	memset(&nmrp_parsed, 0, sizeof(NMRP_PARSED_MSG));
++
++	/*
++	   Parse the options inside the packet and save it into nmrp_parsed for
++	   future reference.
++	 */
++	if (Nmrp_Parse_Opts(pkt, &nmrp_parsed) != 0){
++		/* Some wrong inside the packet, just discard it */
++		return;
++	}
++
++	NmrpBlock = proto;
++
++	// ignore same packet
++	if (NmrpBlock == NmrpLastBlock)
++		return;
++	NmrpLastBlock = NmrpBlock;
++
++	switch (proto) {
++	case NMRP_CODE_ADVERTISE:	/*listening state * */
++		if (NmrpState == 0) {
++			/*
++			   Check if we get the MAGIC-NO option and the content is match
++			   with the MAGICNO.
++			 */
++			if ((opt = Nmrp_Parse(&nmrp_parsed, NMRP_OPT_MAGIC_NO)) != NULL){
++				int opt_hdr_len = sizeof(opt->type) + sizeof(opt->len);
++				if (memcmp(opt->value.magicno, MAGICNO, ntohs(opt->len) - opt_hdr_len) == 0){
++					NmrpState = STATE_LISTENING;
++					board_test_led(0); //on
++					printf("\nNMRP CONFIGING");
++					NmrpSend();
++				}
++			}
++		}
++		break;
++	case NMRP_CODE_CONF_ACK:
++		if (NmrpState == STATE_LISTENING) {
++			/*
++			   If there is no DEV-IP option inside the packet, it must be
++			   something wrong in the packet, so just ignore this packet
++			   without any action taken.
++			 */
++			if ((opt = Nmrp_Parse(&nmrp_parsed, NMRP_OPT_DEV_IP)) != NULL){
++				memcpy(NetOurTftpIP, opt->value.ip.addr,IP_ADDR_LEN);
++				/* Do we need the subnet mask? */
++				memcpy(&NmrpOuripSubnetMask, opt->value.ip.mask,IP_ADDR_LEN);
++				/*
++				   FW-UP option is optional for CONF-ACK and it has no effect no
++				   matter what is the content of this option, so we just skip the
++				   process of this option for now, and will add it back when
++				   this option is defined as mandatory.
++				   The process for FW-UP would be similar as the action taken for
++				   DEV-IP and MAGIC-NO.
++				 */
++
++#if defined(CFG_SINGLE_FIRMWARE)
++				/*When NMRP Client get CONF-ACK with DEV-REGION option*/
++				if ((opt = Nmrp_Parse(&nmrp_parsed, NMRP_OPT_DEV_REGION)) != NULL) {
++					/* Save DEV-REGION value to board */
++					printf("Get DEV-REGION option, value:0x%04x\n", opt->value.region);
++					NmrpDevRegionOption = ntohs(opt->value.region);
++					printf("Write Region Number 0x%04x to board\n", NmrpDevRegionOption);
++					bd_write_sku_info(NmrpDevRegionOption); 
++				}
++				/*Check if NMRP Client get CONF-ACK with FW-UP option*/
++				if ((opt = Nmrp_Parse(&nmrp_parsed, NMRP_OPT_FW_UP)) != NULL) {
++					printf("\nRecv FW-UP option\n");
++					NmrpFwUPOption = 1;
++				} else {
++					printf("\nNo FW-UP option\n");
++					NmrpFwUPOption = 0;
++				}
++
++				/*When NMRP Client get CONF-ACK with ST-UP option*/
++				if ((opt = Nmrp_Parse(&nmrp_parsed, NMRP_OPT_ST_UP)) != NULL) {
++					printf("\nRecv ST-UP option\n");
++					NmrpSTUPOption = 1;
++					/* Reset string tables' update related variables. */
++					NmrpStringTableUpdateCount = 0;
++					NmrpStringTableUpdateIndex = 0;
++					memset(NmrpStringTableUpdateList, 0,\
++						sizeof(NmrpStringTableUpdateList));
++
++					/* Save from network byte-order to host byte-order. */
++					NmrpStringTableBitmask = ntohl(opt->value.string_table_bitmask);
++
++					string_table_bitmask_check();
++					printf("\nTotal %d String Table need updating\n",\
++						NmrpStringTableUpdateCount);
++				} else {
++					printf("\nNo ST-UP option\n");
++					NmrpSTUPOption = 0;
++				}
++				if (NmrpFwUPOption == 0 && NmrpSTUPOption == 0) {
++					NmrpState = STATE_CLOSING;
++					printf("\nNo firmware update, nor string table update\n");
++					NmrpSend();
++				} else {
++					NmrpState = STATE_CONFIGING;
++					printf("\nNMRP WAITING FOR UPLOAD FIRMWARE or STRING TABLES!\n");
++					NmrpSend();
++				}
++#else
++				NmrpState = STATE_CONFIGING;
++				printf("\nNMRP WAITING FOR UPLOAD FIRMWARE!\n");
++				NmrpSend();
++#endif
++			}else
++				break;
++		}
++		break;
++	case NMRP_CODE_KEEP_ALIVE_ACK:
++		if (NmrpState == STATE_KEEP_ALIVE) {
++			if (NmrpAliveWaitACK == 1) {
++				NmrpAliveTimerBase += NMRP_TIMEOUT_ACTIVE / 4;
++				NmrpAliveWaitACK = 0;
++			}
++		}
++		break;
++	case NMRP_CODE_CLOSE_ACK:
++		if (NmrpState == STATE_CLOSING) {
++			NmrpState = STATE_CLOSED;
++			printf("\nNMRP CLOSED\n");
++			NmrpSend();
++		}
++		break;
++	default:
++		break;
++	}
++}
++
++void NmrpStart(void)
++{
++	printf("\n[Listening] for ADVERTISE...\n");
++
++	NetSetTimeout(CONFIG_SYS_HZ / 10, Nmrp_Listen_Timeout);
++	NetSetHandler(NmrpHandler);
++
++	NmrpState = 0;
++	Nmrp_Listen_TimeoutCount = 0;
++	memset(NmrpClientEther, 0, 6);
++	NmrpClientIP = 0;
++}
+Index: u-boot-2010.06/net/nmrp.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2010.06/net/nmrp.h	2017-01-09 13:50:48.614976335 +0800
+@@ -0,0 +1,139 @@
++/*
++ *     Copyright (C) 2008 Delta Networks Inc.
++ */
++
++extern void NmrpConfig(void);
++
++extern void NmrpHandler(uchar * pkt, unsigned dest, unsigned src, unsigned type);
++extern int NmrpState;
++#if defined(CFG_SINGLE_FIRMWARE)
++extern int NmrpFwUPOption;
++extern int NmrpSTUPOption;
++extern int NmrpStringTableUpdateCount;
++extern int NmrpStringTableUpdateIndex;
++extern ulong NmrpAliveTimerStart;
++extern ulong NmrpAliveTimerBase;
++extern int NmrpAliveTimerTimeout;
++extern int overflow_count;
++#endif
++extern ulong Nmrp_active_start;
++/* NMRP codes */
++enum _nmrp_codes_ {
++	NMRP_CODE_ADVERTISE = 0x01,
++	NMRP_CODE_CONF_REQ = 0x02,
++	NMRP_CODE_CONF_ACK = 0x03,
++	NMRP_CODE_CLOSE_REQ = 0x04,
++	NMRP_CODE_CLOSE_ACK = 0x05,
++	NMRP_CODE_KEEP_ALIVE_REQ = 0x06,
++	NMRP_CODE_KEEP_ALIVE_ACK = 0x07,
++	NMRP_CODE_TFTP_UL_REQ = 0x10
++};
++
++/* NMRP option types */
++enum _nmrp_option_types_ {
++	NMRP_OPT_MAGIC_NO = 0x0001,
++	NMRP_OPT_DEV_IP = 0x0002,
++	NMRP_OPT_DEV_REGION = 0x0004,
++	NMRP_OPT_FW_UP = 0x0101,
++	NMRP_OPT_ST_UP = 0x0102,
++	NMRP_OPT_FILE_NAME = 0x0181
++};
++
++/* NMRP Region value */
++enum _nmrp_region_values_ {
++	NMRP_REGION_NA = 0x0001,
++	NMRP_REGION_WW = 0x0002,
++	NMRP_REGION_GR = 0x0003,
++	NMRP_REGION_PR = 0x0004,
++	NMRP_REGION_RU = 0x0005,
++	NMRP_REGION_BZ = 0x0006,
++	NMRP_REGION_IN = 0x0007,
++	NMRP_REGION_KO = 0x0008,
++	NMRP_REGION_JP = 0x0009
++};
++
++/*  NMRP REQ max retries */
++enum _nmrp_req_max_retries_ {
++	NMRP_MAX_RETRY_CONF = 5,
++	NMRP_MAX_RETRY_CLOSE = 2,
++	NMRP_MAX_RETRY_TFTP_UL = 4
++};
++
++/* NMRP timeouts */
++enum _nmrp_timeouts_ {
++	NMRP_TIMEOUT_REQ = 1,	/* 0.5 sec */
++	NMRP_TIMEOUT_LISTEN = 3,	/* 3 sec */
++	NMRP_TIMEOUT_ACTIVE = 60,	/* 1 minute */
++	NMRP_TIMEOUT_CLOSE = 6,	/* 6 sec */
++	NMRP_TIMEOUT_ADVERTISE = 1	/* 0.5 sec */
++};
++
++#define STATE_LISTENING 1
++#define STATE_CONFIGING 2
++#define STATE_TFTPWAITING 3
++#define STATE_TFTPUPLOADING 4
++#define STATE_CLOSING 5
++#define STATE_CLOSED 6
++#define STATE_KEEP_ALIVE 7
++#define NMRP_HEADER_LEN 6
++#define NMRP_OPT_HEADER_LEN 4
++#define MAGICNO "NTGR"
++#define IP_LEN 4
++#define MAGIC_NO_LEN 4
++#define DEV_REGION_LEN 2
++#define FIRMWARE_FILENAME "firmware"
++#define FIRMWARE_FILENAME_LEN 8
++#define FIRMWARE_FILENAME_OPT_LEN (NMRP_OPT_HEADER_LEN + FIRMWARE_FILENAME_LEN)
++#define STRING_TABLE_BITMASK_LEN 32
++#define STRING_TABLE_NUMBER_MAX STRING_TABLE_BITMASK_LEN
++#define STRING_TABLE_FILENAME_PREFIX "string table "
++#define STRING_TABLE_FILENAME_PREFIX_LEN 13
++#define STRING_TABLE_FILENAME_EXAMPLE "string table 01"
++#define STRING_TABLE_FILENAME_LEN (STRING_TABLE_FILENAME_PREFIX_LEN + 2)
++#define STRING_TABLE_FILENAME_OPT_LEN (NMRP_OPT_HEADER_LEN + STRING_TABLE_FILENAME_LEN)
++
++#define NMRP_MAX_OPT_PER_MSG 6
++typedef struct {
++	ushort type;
++	ushort len;
++	union {
++		uchar magicno[MAGIC_NO_LEN];
++		struct{
++			uchar addr[IP_LEN];
++			uchar mask[IP_LEN];
++		}ip;
++#if defined(CFG_SINGLE_FIRMWARE)
++		u16 region;
++		u32 string_table_bitmask;
++#endif
++	} value;
++}__attribute__ ((packed)) NMRP_PARSED_OPT;
++
++typedef struct {
++	ushort reserved;
++	uchar code;
++	uchar id;
++	ushort length;
++	int numOptions;
++	NMRP_PARSED_OPT options[NMRP_MAX_OPT_PER_MSG];
++}__attribute__ ((packed)) NMRP_PARSED_MSG;
++
++
++struct string_table_header
++{
++    unsigned long size;
++    unsigned long chksum;
++    unsigned char version[4];
++    unsigned char reserv[4];
++};
++#define nmrp_work_around_1()  do {  \
++    DECLARE_GLOBAL_DATA_PTR;  \
++    eth_halt();  \
++    eth_init(gd->bd);  \
++} while (0)
++
++
++#define nmrp_work_around_2()  do {  \
++    timeout = 1000UL;  \
++} while (0)
++
+Index: u-boot-2010.06/common/cmd_mem.c
+===================================================================
+--- u-boot-2010.06.orig/common/cmd_mem.c	2010-06-30 05:28:28.000000000 +0800
++++ u-boot-2010.06/common/cmd_mem.c	2017-01-09 13:53:17.116611102 +0800
+@@ -40,9 +40,11 @@
+ #ifdef	CMD_MEM_DEBUG
+ #define	PRINTF(fmt,args...)	printf (fmt ,##args)
+ #else
+-#define PRINTF(fmt,args...)
++#define PRINTF(fmt,args...) printf (fmt ,##args)
+ #endif
+ 
++#define CONFIG_SYS_ALT_MEMTEST   /* foxconn added */
++
+ static int mod_mem(cmd_tbl_t *, int, int, int, char *[]);
+ 
+ /* Display values from last command.
+@@ -673,7 +675,8 @@
+ 	if (argc > 2)
+ 		end = (ulong *)simple_strtoul(argv[2], NULL, 16);
+ 	else
+-		end = (ulong *)(CONFIG_SYS_MEMTEST_END);
++	    end = (ulong *)(0x8C000000);    /* foxconn modified */
++		//end = (ulong *)(CONFIG_SYS_MEMTEST_END);
+ 
+ 	if (argc > 3)
+ 		pattern = (ulong)simple_strtoul(argv[3], NULL, 16);
+@@ -683,7 +686,7 @@
+ 	if (argc > 4)
+ 		iteration_limit = (ulong)simple_strtoul(argv[4], NULL, 16);
+ 	else
+-		iteration_limit = 0;
++		iteration_limit = 1000;
+ 
+ #if defined(CONFIG_SYS_ALT_MEMTEST)
+ 	printf ("Testing %08x ... %08x:\n", (uint)start, (uint)end);
+@@ -916,6 +919,7 @@
+ 
+ #else /* The original, quickie test */
+ 	incr = 1;
++	printf ("Testing %08x ... %08x:\n", (uint)start, (uint)end);
+ 	for (;;) {
+ 		if (ctrlc()) {
+ 			putc ('\n');

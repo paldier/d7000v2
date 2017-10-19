@@ -1,0 +1,222 @@
+From 3e9bc8a3b8c3c8fe88a21fb6ec86a2d26ea8bc9e Mon Sep 17 00:00:00 2001
+From: yairweis <yair.weiss@intel.com>
+Date: Thu, 18 Feb 2016 15:12:12 +0200
+Subject: [PATCH 2/3] synopsys: export mdio operations
+
+---
+ drivers/net/ethernet/synopsys/DWC_ETH_QOS_dev.c    |   94 +++++++++-----------
+ drivers/net/ethernet/synopsys/DWC_ETH_QOS_mdio.c   |   25 ++++++
+ drivers/net/ethernet/synopsys/DWC_ETH_QOS_pci.c    |    2 +
+ .../net/ethernet/synopsys/DWC_ETH_QOS_yheader.h    |    2 +
+ 4 files changed, 73 insertions(+), 50 deletions(-)
+
+--- a/drivers/net/ethernet/synopsys/DWC_ETH_QOS_dev.c
++++ b/drivers/net/ethernet/synopsys/DWC_ETH_QOS_dev.c
+@@ -3098,55 +3098,39 @@ static INT write_phy_regs(INT phy_id, IN
+ 	volatile ULONG varMAC_GMIIAR;
+ 
+ 	/* wait for any previous MII read/write operation to complete */
+-
+ 	/*Poll Until Poll Condition */
+ 	vy_count = 0;
+ 	while (1) {
++		MAC_GMIIAR_RgRd(varMAC_GMIIAR);
++		if (GET_VALUE(varMAC_GMIIAR, MAC_GMIIAR_GB_LPOS, MAC_GMIIAR_GB_HPOS) == 0) {
++			break;
++		}
++
+ 		if (vy_count > retryCount) {
+ 			return -Y_FAILURE;
+ 		} else {
+ 			vy_count++;
+-			mdelay(1);
+-		}
+-		MAC_GMIIAR_RgRd(varMAC_GMIIAR);
+-		if (GET_VALUE(varMAC_GMIIAR, MAC_GMIIAR_GB_LPOS, MAC_GMIIAR_GB_HPOS) == 0) {
+-			break;
++			//mdelay(1);
++			/* Retry count is 1000, this gives maximum busy wait of 10ms with good granularity */
++			udelay(10);
+ 		}
+ 	}
+ 	/* write the data */
+ 	MAC_GMIIDR_GD_UdfWr(phy_reg_data);
+-	/* initiate the MII write operation by updating desired */
+-	/* phy address/id (0 - 31) */
+-	/* phy register offset */
+-	/* CSR Clock Range (20 - 35MHz) */
+-	/* Select write operation */
+-	/* set busy bit */
++
++    /* initiate the MII write operation by updating desired */
++    /* Bit 21 - phy address/id (0 - 31)                     */
++	/* Bit 16 - phy register offset                         */
++	/* Bit  8 - CSR Clock Range (250 - 300MHz)              */
++	/* Bit  2 - Select write operation                      */
++	/* Bit  0 - set busy bit                                */
+ 	MAC_GMIIAR_RgRd(varMAC_GMIIAR);
+ 	varMAC_GMIIAR = varMAC_GMIIAR & (ULONG) (0x12);
+ 	varMAC_GMIIAR =
+-	    varMAC_GMIIAR | ((phy_id) << 21) | ((phy_reg) << 16) | ((0x2) << 8)
++	    varMAC_GMIIAR | ((phy_id) << 21) | ((phy_reg) << 16) | ((0x5) << 8)
+ 	    | ((0x1) << 2) | ((0x1) << 0);
+ 	MAC_GMIIAR_RgWr(varMAC_GMIIAR);
+ 
+-	/*DELAY IMPLEMENTATION USING udelay() */
+-	udelay(10);
+-	/* wait for MII write operation to complete */
+-
+-	/*Poll Until Poll Condition */
+-	vy_count = 0;
+-	while (1) {
+-		if (vy_count > retryCount) {
+-			return -Y_FAILURE;
+-		} else {
+-			vy_count++;
+-			mdelay(1);
+-		}
+-		MAC_GMIIAR_RgRd(varMAC_GMIIAR);
+-		if (GET_VALUE(varMAC_GMIIAR, MAC_GMIIAR_GB_LPOS, MAC_GMIIAR_GB_HPOS) == 0) {
+-			break;
+-		}
+-	}
+-
+ 	return Y_SUCCESS;
+ }
+ 
+@@ -3172,27 +3156,33 @@ static INT read_phy_regs(INT phy_id, INT
+ 	/*Poll Until Poll Condition */
+ 	vy_count = 0;
+ 	while (1) {
++		MAC_GMIIAR_RgRd(varMAC_GMIIAR);
++		if (GET_VALUE(varMAC_GMIIAR, MAC_GMIIAR_GB_LPOS, MAC_GMIIAR_GB_HPOS) == 0) {
++			break;
++		}
++
+ 		if (vy_count > retryCount) {
+ 			return -Y_FAILURE;
+ 		} else {
+ 			vy_count++;
+-			mdelay(1);
+-		}
+-		MAC_GMIIAR_RgRd(varMAC_GMIIAR);
+-		if (GET_VALUE(varMAC_GMIIAR, MAC_GMIIAR_GB_LPOS, MAC_GMIIAR_GB_HPOS) == 0) {
+-			break;
++			//mdelay(1);
++			/* Retry count is 1000, this gives maximum busy wait of 10ms with good granularity */
++			udelay(10);
+ 		}
+ 	}
+-	/* initiate the MII read operation by updating desired */
+-	/* phy address/id (0 - 31) */
+-	/* phy register offset */
+-	/* CSR Clock Range (20 - 35MHz) */
+-	/* Select read operation */
+-	/* set busy bit */
+-	MAC_GMIIAR_RgRd(varMAC_GMIIAR);
++
++    /* initiate the MII read operation by updating desired  */
++	/* Bit 21 - phy address/id (0 - 31)                     */
++	/* Bit 16 - phy register offset                         */
++	/* Bit  8 - CSR Clock Range (250 - 300MHz)              */
++	/* Bit  2 - Select read operation                       */
++	/* Bit  0 - set busy bit                                */
++
++    MAC_GMIIAR_RgRd(varMAC_GMIIAR);
++
+ 	varMAC_GMIIAR = varMAC_GMIIAR & (ULONG) (0x12);
+ 	varMAC_GMIIAR =
+-	    varMAC_GMIIAR | ((phy_id) << 21) | ((phy_reg) << 16) | ((0x2) << 8)
++	    varMAC_GMIIAR | ((phy_id) << 21) | ((phy_reg) << 16) | ((0x5) << 8)
+ 	    | ((0x3) << 2) | ((0x1) << 0);
+ 	MAC_GMIIAR_RgWr(varMAC_GMIIAR);
+ 
+@@ -3202,16 +3192,20 @@ static INT read_phy_regs(INT phy_id, INT
+ 
+ 	/*Poll Until Poll Condition */
+ 	vy_count = 0;
++
+ 	while (1) {
++		MAC_GMIIAR_RgRd(varMAC_GMIIAR);
++		if (GET_VALUE(varMAC_GMIIAR, MAC_GMIIAR_GB_LPOS, MAC_GMIIAR_GB_HPOS) == 0) {
++			break;
++		}
++
+ 		if (vy_count > retryCount) {
+ 			return -Y_FAILURE;
+ 		} else {
+ 			vy_count++;
+-			mdelay(1);
+-		}
+-		MAC_GMIIAR_RgRd(varMAC_GMIIAR);
+-		if (GET_VALUE(varMAC_GMIIAR, MAC_GMIIAR_GB_LPOS, MAC_GMIIAR_GB_HPOS) == 0) {
+-			break;
++			//mdelay(1);
++			/* Retry count is 1000, this gives maximum busy wait of 10ms with good granularity */
++			udelay(10);
+ 		}
+ 	}
+ 	/* read the data */
+--- a/drivers/net/ethernet/synopsys/DWC_ETH_QOS_mdio.c
++++ b/drivers/net/ethernet/synopsys/DWC_ETH_QOS_mdio.c
+@@ -34,6 +34,31 @@
+  */
+ #include "DWC_ETH_QOS_yheader.h"
+ 
++extern struct DWC_ETH_QOS_prv_data *pdata_p;
++
++#define MDIO_ADDR_LANTIQ 31
++
++INT DWC_ETH_QOS_mdio_read_ext(int regaddr, int *phydata)
++{
++	if (!pdata_p){
++		printk(KERN_ALERT "%s:%d: pdata is null\n", __func__, __LINE__);
++		return 0;
++	}
++	return DWC_ETH_QOS_mdio_read_direct(pdata_p, MDIO_ADDR_LANTIQ,
++					   (regaddr & 0x1F), phydata);
++}
++EXPORT_SYMBOL(DWC_ETH_QOS_mdio_read_ext);
++
++INT DWC_ETH_QOS_mdio_write_ext(int regaddr, int phydata)
++{
++	if (!pdata_p) {
++		printk(KERN_ALERT "%s:%d: pdata is null\n", __func__, __LINE__);
++		return 0;
++	}
++	return DWC_ETH_QOS_mdio_write_direct(pdata_p, MDIO_ADDR_LANTIQ,
++					    (regaddr & 0x1F), phydata);
++}
++EXPORT_SYMBOL(DWC_ETH_QOS_mdio_write_ext);
+ /*!
+ * \brief read MII PHY register, function called by the driver alone
+ *
+--- a/drivers/net/ethernet/synopsys/DWC_ETH_QOS_pci.c
++++ b/drivers/net/ethernet/synopsys/DWC_ETH_QOS_pci.c
+@@ -268,6 +268,7 @@ void DWC_ETH_QOS_init_all_fptrs(struct D
+ 	DWC_ETH_QOS_init_function_ptrs_desc(&pdata->desc_if);
+ }
+ 
++struct DWC_ETH_QOS_prv_data *pdata_p;
+ /*!
+ * \brief API to initialize the device.
+ *
+@@ -367,6 +368,7 @@ int DWC_ETH_QOS_probe(struct pci_dev *pd
+ 	dev->base_addr = dwc_eth_qos_pci_base_addr;
+ 	SET_NETDEV_DEV(dev, &pdev->dev);
+ 	pdata = netdev_priv(dev);
++	pdata_p = pdata;
+ 	DWC_ETH_QOS_init_all_fptrs(pdata);
+ 	hw_if = &(pdata->hw_if);
+ 	desc_if = &(pdata->desc_if);
+--- a/drivers/net/ethernet/synopsys/DWC_ETH_QOS_yheader.h
++++ b/drivers/net/ethernet/synopsys/DWC_ETH_QOS_yheader.h
+@@ -1385,6 +1385,8 @@ INT DWC_ETH_QOS_mdio_read_direct(struct 
+ 				 int phyaddr, int phyreg, int *phydata);
+ INT DWC_ETH_QOS_mdio_write_direct(struct DWC_ETH_QOS_prv_data *pdata,
+ 				  int phyaddr, int phyreg, int phydata);
++INT DWC_ETH_QOS_mdio_read_ext(int regaddr, int *phydata);
++INT DWC_ETH_QOS_mdio_write_ext(int regaddr, int phydata);
+ void dbgpr_regs(void);
+ void dump_phy_registers(struct DWC_ETH_QOS_prv_data *);
+ void dump_tx_desc(struct DWC_ETH_QOS_prv_data *pdata, int first_desc_idx,

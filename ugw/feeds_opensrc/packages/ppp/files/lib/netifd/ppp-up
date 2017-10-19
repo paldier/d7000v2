@@ -1,0 +1,12 @@
+#!/bin/sh
+PPP_IPPARAM="$6"
+
+. /lib/netifd/foxconn.sh
+
+[ -n "$PPP_IPPARAM" ] && {
+	[ -n "$IPLOCAL" ] && foxconn_send_update "$IFNAME"
+	[ -n "$LLLOCAL" ] && foxconn_send_updatev6 "$IFNAME"
+}
+
+
+

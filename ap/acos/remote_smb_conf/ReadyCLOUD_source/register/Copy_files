@@ -1,0 +1,14 @@
+Copy files from archive to /tmp/mnt/usb0/part1/broken
+
+To register device run:
+
+cat register.txt | PATH_INFO=/api/services/readycloud REQUEST_METHOD=PUT ./readycloud_control.cgi
+
+To unregister device change "state":"1" in 123.txt to "state":"0" and run command again.
+
+To check if device registered to readycloud services run:
+ nvram show | grep readycloud_registration_owner
+
+ If device is not registered it will output nothing or "readycloud_registration_owner="
+ Else it will output "readycloud_registration_owner=device_owner"
+

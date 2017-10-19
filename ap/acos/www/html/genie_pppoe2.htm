@@ -1,0 +1,334 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<%11%>
+<title>NETGEAR   Genie</title>
+<%12%>
+<link rel="stylesheet" href="<%13%>">
+
+
+<script language="javascript" type="text/javascript">
+var DisableFixedIP = false;
+var DisableFixedDNS = false;
+
+function goBasic()
+{
+     var ret;
+     ret = confirm("<%2454%>");
+     if(ret==1){
+         top.location.href="genie_basic.htm";
+     }else{
+         return false;
+     }
+
+}
+
+
+function loadcheck()
+{
+	var cf = document.forms[0];
+	if(isIE()){
+		cf.pppoe_username.size="24";
+		cf.pppoe_passwd.size="24";
+	}	
+	setIP();
+	setDNS();
+}
+function setIP()
+{
+	var cf = document.forms[0];
+	var dflag = cf.WANAssign[0].checked;
+	setDisabled(dflag,cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4);
+	DisableFixedIP = dflag;
+}
+function setDNS()
+{
+	var cf = document.forms[0];
+	var dflag = cf.DNSAssign[0].checked;
+	setDisabled(dflag,cf.DAddr1,cf.DAddr2,cf.DAddr3,cf.DAddr4,cf.PDAddr1,cf.PDAddr2,cf.PDAddr3,cf.PDAddr4);
+	DisableFixedDNS = dflag;
+}
+
+
+function checkData()
+{
+	var cf = document.forms[0];
+	var msg = "";
+	
+	msg+= checkBlank(cf.pppoe_username, "<%508%>");
+	if(cf.pppoe_idletime.value.length<=0)
+		msg+= "<%505%>";
+	else if(!_isNumeric(cf.pppoe_idletime.value))
+		msg+= "<%506%>";
+
+	if(cf.WANAssign[1].checked)
+	{
+		if(checkIP(cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4,254)||(parseInt(cf.WPethr4.value,10)==0))
+			msg+= "<%510%>";
+		else
+		{
+			cf.WPethr1.value = parseInt(cf.WPethr1.value,10);
+			cf.WPethr2.value = parseInt(cf.WPethr2.value,10);
+			cf.WPethr3.value = parseInt(cf.WPethr3.value,10);
+			cf.WPethr4.value = parseInt(cf.WPethr4.value,10);
+		}
+		cf.pppoe_localip.value = cf.WPethr1.value+'.'+cf.WPethr2.value+'.'+cf.WPethr3.value+'.'+cf.WPethr4.value;
+	}
+	else    
+		cf.pppoe_localip.value = "0.0.0.0";
+
+	if(cf.DNSAssign[1].checked)
+	{
+		if(checkIP(cf.DAddr1,cf.DAddr2,cf.DAddr3,cf.DAddr4,254)||(parseInt(cf.DAddr4.value,10)==0))
+			msg+= "<%407%>";
+		else
+		{
+			cf.DAddr1.value = parseInt(cf.DAddr1.value,10);
+			cf.DAddr2.value = parseInt(cf.DAddr2.value,10);
+			cf.DAddr3.value = parseInt(cf.DAddr3.value,10);
+			cf.DAddr4.value = parseInt(cf.DAddr4.value,10);
+		}
+		if(cf.PDAddr1.value.length>0 || cf.PDAddr2.value.length>0 || cf.PDAddr3.value.length>0 || cf.PDAddr4.value.length>0)
+		{
+			if(checkIP(cf.PDAddr1,cf.PDAddr2,cf.PDAddr3,cf.PDAddr4,254)||(parseInt(cf.PDAddr4.value,10)==0))
+				msg+= "<%408%>";
+			else
+			{
+				cf.PDAddr1.value = parseInt(cf.PDAddr1.value,10);
+				cf.PDAddr2.value = parseInt(cf.PDAddr2.value,10);
+				cf.PDAddr3.value = parseInt(cf.PDAddr3.value,10);
+				cf.PDAddr4.value = parseInt(cf.PDAddr4.value,10);
+			}
+		}
+	}
+	if (msg.length > 1)
+	{
+		alert(msg);
+		return false;
+	}
+	
+	cf.wan_dns1_pri.value = cf.DAddr1.value+'.'+cf.DAddr2.value+'.'+cf.DAddr3.value+'.'+cf.DAddr4.value;
+	cf.wan_dns1_sec.value = cf.PDAddr1.value+'.'+cf.PDAddr2.value+'.'+cf.PDAddr3.value+'.'+cf.PDAddr4.value;
+
+<%512%>
+        cf.pppoe_temp.value = "4";
+<%513%>
+	return true;
+}
+
+function loadSettings()
+{
+	var cf = document.forms[0];
+	var pppoe_localip = cf.pppoe_localip.value.split(".");
+	var wan_dns_sel = cf.wan_dns_sel.value;
+	var wan_dns1_pri = cf.wan_dns1_pri.value.split(".");
+	var wan_dns1_sec = cf.wan_dns1_sec.value.split(".");
+
+	cf.pppoe_idletime.value = <%1395%> / 60;
+
+	if (cf.pppoe_localip.value == "0.0.0.0")
+		cf.WANAssign[0].checked = true;
+	else
+		cf.WANAssign[1].checked = true;
+	cf.WPethr1.value = pppoe_localip[0];
+	cf.WPethr2.value = pppoe_localip[1];
+	cf.WPethr3.value = pppoe_localip[2];
+	cf.WPethr4.value = pppoe_localip[3];
+
+	cf.DNSAssign[wan_dns_sel].checked = true;
+	if (cf.wan_dns1_pri.value != "")
+	{
+		cf.DAddr1.value = wan_dns1_pri[0];
+		cf.DAddr2.value = wan_dns1_pri[1];
+		cf.DAddr3.value = wan_dns1_pri[2];
+		cf.DAddr4.value = wan_dns1_pri[3];
+	}
+	if (cf.wan_dns1_sec.value != "")
+	{
+		cf.PDAddr1.value = wan_dns1_sec[0];
+		cf.PDAddr2.value = wan_dns1_sec[1];
+		cf.PDAddr3.value = wan_dns1_sec[2];
+		cf.PDAddr4.value = wan_dns1_sec[3];
+	}
+}
+
+<%512%>
+function setSession()
+{
+	var cf = document.forms[0];
+	var stype = cf.session_type.selectedIndex;
+
+	if(cf.WANAssign[1].checked)
+	{
+		if(checkIP(cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4,254)||(parseInt(cf.WPethr4.value)==0))
+			msg+= "<%10%>";
+		cf.pppoe_localip.value = cf.WPethr1.value+'.'+cf.WPethr2.value+'.'+cf.WPethr3.value+'.'+cf.WPethr4.value;
+	}
+	else    
+		cf.pppoe_localip.value = "0.0.0.0";
+
+    if (stype==1)
+        cf.pppoe_temp.value = "1";
+    else if(stype==2) //NTT West
+        cf.pppoe_temp.value = "2";
+    else if(stype==3) //Other
+        cf.pppoe_temp.value = "3";
+    else
+        cf.pppoe_temp.value = "0";
+
+    cf.submit();
+}
+<%513%>
+</script>
+
+</head>
+
+<body bgcolor="#ffffff" onload="loadSettings(); loadcheck();">
+<form name="formname" method="POST" action="geniepppoe.cgi"> 
+<table border="0" cellpadding="0" cellspacing="3" width="99%">
+<tr style="height:10px">
+	<td>&nbsp;</td><td colspan="2">&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td colspan="2" class="centerTd">
+		<h2 style="color:#ff0000;"><%2573%></h2>
+        </td>
+	<td>&nbsp;</td>
+
+</tr>
+<tr>	
+	<td>&nbsp;</td>
+	<td colspan="2" class="textRow centerTd"><p><%2574%></p></td>
+	<td>&nbsp;</td>
+</tr>
+<tr style="height:10px">
+	<td>&nbsp;</td><td colspan="2">&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td NOWRAP class="inputRow" tabindex="-1" onFocus="this.blur()" style="height:40px;width:260px;padding-left:20px"><%2491%></td><td style="width:340px;background:url(roundedcornr_input.gif) no-repeat left;"><input type="text" name="pppoe_username" style="width:150px;position:relative; margin-left:20px;height:18px" size="32" maxlength="60" value=""></td>
+	<td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td NOWRAP class="inputRow" tabindex="-1" onFocus="this.blur()" style="height:40px;width:260px;padding-left:20px"><%2492%></td><td style="width:340px;background:url(roundedcornr_input.gif) no-repeat left;"><input type="password" name="pppoe_passwd" style="width:150px;position:relative;height:18px;margin-left:20px;" size="32" maxlength="50" value=""></td>
+	<td>&nbsp;</td>
+</tr>
+<tr style="height:10px">
+	<td>&nbsp;</td><td colspan="2">&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td><td colspan="2" class="centerTd"><%33%> <a href="log2.htm" target="_blank"><%34%></a> <%35%>  </td><td>&nbsp;</td>
+</tr>
+<tr style="height:10px">
+	<td colspan="2">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr style="height:10px">
+	<td colspan="2">&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td colspan="2" class="textRow centerTd2">
+		<button class="purpleBtn" name="Next" onClick="goBasic();" type="button"><span><%2575%></span></button>
+		<span style="display:-moz-inline-box;display:inline-block;width:20px;"></span>
+	        <button value="submit" width=150px class="purpleBtn"  name="Next" onClick="return checkData()" type="submit"><span><%2561%></span></button>
+	</td>
+	<td>&nbsp;</td>
+</tr>
+</table>
+<table>
+<tr style="visibility:hidden">
+	<td nowrap><%520%></a> &nbsp;</td>
+	<td align="right"><input type="text" name="pppoe_servicename" maxlength="50" size="15" value="<%2505%>"></td>
+</tr>
+
+<tr style="visibility:hidden">
+	<td nowrap><%526%></a></td>
+	<td align="right"><input type="text" class="num" name="pppoe_idletime" size="3" maxlength="3" value="5"></td>
+</tr>
+<tr style="visibility:hidden"> 
+  <td colspan="2" height="12"> &nbsp;</td>
+</tr>
+<tr style="visibility:hidden">
+	<td colspan="2"><b><%441%></b></a></td>
+</tr>
+<tr style="visibility:hidden">
+	<td colspan="2"><input type="radio" name="WANAssign" value="Dynamic" onClick="setIP()"><%442%></td>
+</tr>
+<tr style="visibility:hidden">
+	<td nowrap><input type="radio" name="WANAssign" value="Fixed" onClick="setIP()"><%443%></td>
+	<td align="right" class="num">
+	<input type="text" name="WPethr1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()">.
+	<input type="text" name="WPethr2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()">.
+	<input type="text" name="WPethr3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()">.
+	<input type="text" name="WPethr4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()"></td>
+</tr>
+<tr style="visibility:hidden"> <!-- RULE -->
+	<td colspan="2" height="12"> &nbsp;</td>
+</tr>
+
+
+<tr style="visibility:hidden">
+	<td colspan="2"><b><%448%> </b></a></td>
+</tr>
+
+<tr style="visibility:hidden">
+	<td colspan="2"><input type="radio" name="DNSAssign" value="0" onClick="setDNS()"> <%449%></td>
+</tr>
+
+<tr style="visibility:hidden">
+	<td colspan="2"><input type="radio" name="DNSAssign" value="1" onClick="setDNS()"> <%450%></td>
+</tr>
+
+<tr style="visibility:hidden">
+	<td><img src="spacer.gif" width="20" height="12" border="0"><%451%></td>
+	<td align="right" class="num">
+	<input type="text" name="DAddr1" class="num" size="4" maxlength="3">.
+	<input type="text" name="DAddr2" class="num" size="4" maxlength="3">.
+	<input type="text" name="DAddr3" class="num" size="4" maxlength="3">.
+	<input type="text" name="DAddr4" class="num" size="4" maxlength="3"></td>
+</tr>
+<tr style="visibility:hidden">
+	<td><img src="spacer.gif" width="20" height="12" border="0"><%452%></td>
+	<td align="right" class="num">
+	<input type="text" name="PDAddr1" class="num" size="4" maxlength="3">.
+	<input type="text" name="PDAddr2" class="num" size="4" maxlength="3">.
+	<input type="text" name="PDAddr3" class="num" size="4" maxlength="3">.
+	<input type="text" name="PDAddr4" class="num" size="4" maxlength="3"></td>
+</tr>
+<%1346%>
+<tr style="visibility:hidden">
+	<td colspan="2" background="liteblue.gif" height="12"> &nbsp;</td>
+</tr>
+<tr>
+ <td width="50%" style="visibility:hidden"><b><%2323%></b></td>
+ <td width="50%" style="visibility:hidden" align="right"><select name="session_type" onChange="setSession()">
+        <option selected value=0><%1058%></option>
+        <OPTION value=1><%2325%></OPTION>
+        <option value=2><%2327%></option>
+        <OPTION value=3><%553%></OPTION>
+      </select></td>
+</tr>
+<%1348%>
+<tr style="visibility:hidden"> <!-- RULE -->
+ <td colspan="2" height="12"> &nbsp;</td>
+</tr>
+
+
+
+
+
+</table>
+<INPUT name=pppoe_localip type=hidden value= "<%1401%>">
+<%1346%>
+<INPUT name=pppoe_temp type=hidden value= "4">
+<%1348%>
+  <INPUT name=wan_dns_sel type=hidden value= "<%1402%>">
+  <INPUT name=wan_dns1_pri type=hidden value= "<%1392%>">
+  <INPUT name=wan_dns1_sec type=hidden value= "<%1393%>">
+</form>
+<p></p>
+</body>
+
+</html>

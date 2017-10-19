@@ -1,0 +1,96 @@
+Version 1.33-BETA2 (June 22, 2015)
+---------------------------------------
+* Implement log rate limiting
+! Misc. tweaks & fixes
+
+Version 1.33-BETA1 (September 18, 2014)
+---------------------------------------
+* Implement new cache fallback threshold setting/logic
+
+Version 1.32 (January 25, 2013)
+-------------------------------
+* Show a warning in case host resolving fails instead of having iptables fail
+* Only try to resolve a host once per session to speed things up in case netwerk/dns fails
+
+Version 1.31-BETA (November 5, 2012)
+------------------------------------
+- Remove DYNDNS_SESSION_FAILED_DNS_SKIP option since it never worked the
+  it supposed to anyway
+
+Version 1.30-BETA (October 23, 2012)
+------------------------------------
+* Refactor/cleanup helper script. No need to preinit cache anymore since we
+  can fallback on our "old"-cache anyway
+* Use the host-cache file provided by the main script (environment). This
+  makes it easier for plugins to use and allows the main script to clean
+  up
+! Host resolving was broken (regression)
+* Improve performance by reorganising the loops
+* Always execute iptables command even with an empty host_ip to make clear
+  to the user it failed
+! Sanity check didn't check for DYNDNS_HOST_MISC
+! Fixed typos
+
+Version 1.24 (August 14, 2011)
+----------------------------
+* Changed to support parse_rule() in dyndns-host-open-helper
+
+Version 1.23 (July 14, 2011)
+----------------------------
+* Add proper locking for our helper script (like we already did for the traffic
+  accounting plugin)
+  
+Version 1.22 (July 14, 2011)
+----------------------------
+! We should call the helper script on a restart(), if required
+
+Version 1.21 (May 13, 2011)
+---------------------------
+* Change default DYNDNS_HOST_CACHE filename to be more consistent
+
+Version 1.2BETA (October 19, 2010)
+----------------------------------
+* Added plugin_restart() function support for AIF 2.0.0
+
+Version 1.1BETA (January 21, 2010)
+----------------------------------
++ Adding proper caches + additional (tweak) settings for the config file
++ Improved sanity check
+* Pre-resolve all hostnames first before updating the rules in our helper script
+* Numerous tweaks + fixes
+
+Version 1.0 (March 7, 2009)
+---------------------------
+* Tell gethostbyname() which nameserver to use (ns.dyndns.org)
++ Use OUR gethostbyname() to resolve the hostnames for iptables
+
+Version 0.25BETA (January 7, 2009)
+----------------------------------
+! Fixes in the helper script
+
+Version 0.24BETA (November 24, 2008)
+------------------------------------
+! Fixed missing IFS for ICMP rules
+
+Version 0.24BETA (November 17, 2008)
+------------------------------------
+* Minor tweaks
+
+Version 0.23BETA (October 10, 2008)
+-----------------------------------
+* Cron update internal set to 15min. + made it user configurable
+* Misc. changs
+* Renamed helper script
+
+Version 0.22BETA (September 16, 2008)
+------------------------------------
+! Small cosmetic fix
+
+Version 0.21BETA (September 8, 2008)
+------------------------------------
+* Small tweaks
+
+Version 0.20BETA (September 5, 2008)
+------------------------------------
+* It now automatically creates & removes the cron job
+* Minor cosmetic changes in the cron helper shell script

@@ -1,0 +1,46 @@
+# HG changeset patch
+# Parent dc45a3347ffd5850b99d459e95689566f85f974b
+# handling of PPA add with PP to avoid conflict in session learning
+
+diff --git a/net/core/dev.c b/net/core/dev.c
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -2803,6 +2803,18 @@ static void skb_update_prio(struct sk_bu
+ static DEFINE_PER_CPU(int, xmit_recursion);
+ #define RECURSION_LIMIT 10
+ 
++#ifdef CONFIG_PPA_PUMA7
++extern void ppa_update_pp_del(struct nf_conn *ct);
++void ppa_update_pp_del_fn(struct nf_conn *ct)
++{
++	ppa_update_pp_del(ct);
++	return;
++}
++EXPORT_SYMBOL(ppa_update_pp_del_fn);
++
++#endif
++
++
+ /**
+  *	dev_loopback_xmit - loop back @skb
+  *	@skb: buffer to transmit
+@@ -2820,6 +2832,7 @@ int dev_loopback_xmit(struct sk_buff *sk
+ }
+ EXPORT_SYMBOL(dev_loopback_xmit);
+ 
++extern void ppa_update_pp_add_fn(struct sk_buff *skb);
+ /**
+  *	dev_queue_xmit - transmit a buffer
+  *	@skb: buffer to transmit
+@@ -2868,6 +2881,11 @@ int dev_queue_xmit(struct sk_buff *skb)
+     if (ti_docsis_egress_hook_handler(dev, skb) < 0)
+        return rc;
+ #endif /* CONFIG_TI_DOCSIS_EGRESS_HOOK */
++
++#ifdef CONFIG_PPA_PUMA7
++	ppa_update_pp_add_fn(skb);
++#endif
++
+ 	skb_reset_mac_header(skb);
+ 
+ 	/* Disable soft irqs for various locks below. Also

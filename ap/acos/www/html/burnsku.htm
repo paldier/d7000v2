@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR Router <%55%></title>
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<%12%>
+<script language="javascript" type="text/javascript">
+<!--
+function checkData()
+{
+	var cf = document.forms[0];
+
+    var sku_number = parseInt(cf.sku_number.value,10);
+    if ((!_isNumeric(cf.sku_number.value)) || isNaN(sku_number) || sku_number > 33 || sku_number < 1) 
+    {
+        alert("Incorrect sku number");
+        return false;
+    }
+	
+	//if (msg.length > 1)
+	//{
+	//	alert(msg);
+	//	return false;
+	//}
+	
+	return true;
+}
+//-->
+</script> 
+</head>
+<body bgcolor="#ffffff" onload="">
+<form method="POST" action="burnsku.cgi">
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr>
+<td colspan="2">
+<h1>Burn Sku</h1> 
+</td>
+</tr>
+<tr><td colspan="2" background="liteblue.gif" height="12"> &nbsp;</td></tr>
+
+<TR>
+  <td nowrap width="50%">sku number &nbsp; (1-32)</td>
+  <td nowrap width="50%" align="left" ><input type="text" name="sku_number" size="2" maxlength="2" value="0"></td>
+</tr>
+
+<tr>
+	<td colspan="2" align="center"><INPUT TYPE="submit" name="Apply" value="Apply" onClick="checkData();"></td>
+</tr>
+<tr><td colspan="2" background="liteblue.gif" height="12"> &nbsp;</td></tr>
+<tr></tr>
+</table>
+</form>
+<p>
+</p>
+</body>
+</html>

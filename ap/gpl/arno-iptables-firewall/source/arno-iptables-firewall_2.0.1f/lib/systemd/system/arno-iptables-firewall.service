@@ -1,0 +1,16 @@
+[Unit]
+Description=Arno's Iptables Firewall
+DefaultDependencies=no
+Wants=network-pre.target
+Before=network-pre.target shutdown.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/arno-iptables-firewall start
+ExecStop=/usr/local/sbin/arno-iptables-firewall stop
+ExecReload=/usr/local/sbin/arno-iptables-firewall force-reload
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

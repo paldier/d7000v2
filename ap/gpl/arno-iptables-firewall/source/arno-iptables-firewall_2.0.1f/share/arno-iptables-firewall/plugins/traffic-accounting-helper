@@ -1,0 +1,389 @@
+#!/bin/bash
+
+# The plugin configuration file
+###############################
+PLUGIN_CONF_FILE="traffic-accounting.conf"
+
+# Location of the main configuration file for the firewall
+##########################################################
+CONFIG_FILE=/etc/arno-iptables-firewall/firewall.conf
+
+# Check if the main config file exists and if so load it
+########################################################
+if [ -e "$CONFIG_FILE" ]; then
+  . $CONFIG_FILE
+else
+  echo "** ERROR: Could not read configuration file $CONFIG_FILE!" >&2
+  echo "**        Please, check the file's location and (root) rights." >&2
+  exit 2
+fi
+
+# Check if the environment file exists and if so, load it
+#########################################################
+if [ -n "$ENV_FILE" ]; then
+  . "$ENV_FILE"
+else
+  if [ -f /usr/local/share/arno-iptables-firewall/environment ]; then
+    . /usr/local/share/arno-iptables-firewall/environment
+  else
+    if [ -f /usr/share/arno-iptables-firewall/environment ]; then
+      . /usr/share/arno-iptables-firewall/environment
+    else
+      echo "** ERROR: The environment file (ENV_FILE) has not been specified" >&2
+      echo "**        in the configuration file. Try upgrading your config-file!" >&2
+      exit 2
+    fi
+  fi
+fi
+
+# Define some global variables
+INDENT='   '
+VERBOSE=0
+
+if [ "$1" = "-v" -o "$1" = "--verbose" ]; then
+  VERBOSE=1
+fi
+
+# Check sanity of eg. environment
+sanity_check()
+{
+  if [ -z "$TRAFFIC_ACCOUNTING_CRON" ]; then
+    printf "** ERROR: The plugin config file is not properly set! **" >&2
+    return 1
+  fi
+
+  # Check whether chains exists
+  if ! ip4tables -nL ACCOUNTING_INPUT_CHAIN >/dev/null 2>&1; then
+    echo "** ERROR: ACCOUNTING_INPUT_CHAIN does not exist! **" >&2
+    return 1
+  fi
+
+  if ! ip4tables -nL ACCOUNTING_OUTPUT_CHAIN >/dev/null 2>&1; then
+    echo "** ERROR: ACCOUNTING_OUTPUT_CHAIN does not exist! **" >&2
+    return 1
+  fi
+
+  # Check if chains inserted in the main chains
+  if ! ip4tables -nL INPUT |grep -q '^ACCOUNTING_INPUT_CHAIN '; then
+    echo "** ERROR: ACCOUNTING_INPUT_CHAIN is not inserted in the INPUT chain! **" >&2
+    return 1
+  fi
+
+  if ! ip4tables -nL OUTPUT |grep -q '^ACCOUNTING_OUTPUT_CHAIN '; then
+    echo "** ERROR: ACCOUNTING_OUTPUT_CHAIN is not inserted in the OUTPUT chain! **" >&2
+    return 1
+  fi
+
+  if ! check_command dig nslookup; then
+    echo "** ERROR: Required command dig (or nslookup) is not available!" >&2
+    return 1
+  fi
+
+  return 0
+}
+
+
+# Parse/get hostname. Try to use host cache if applicable
+# Resolve hostname to an IP and store in our (new) cache
+# Arguments : $1 = hostname to resolve
+# Returns   : Resolved host's IP in "$host_ip"
+traffic_accounting_get_host()
+{
+  host_ip=""      # Reset result
+  local host="$1"
+  local retval=0
+
+  printf "${INDENT}Resolving \"$host\" -> "
+
+  if is_numeric_ip "$host"; then
+    echo "$host"
+    host_ip="$host"
+    return 0
+  fi
+
+  # First try to get host from host-cache
+  if [ "$TRAFFIC_ACCOUNTING_USE_HOST_CACHE" != "0" ]; then
+    host_ip=`get_host_from_cache "$host"`
+    local retval=$?
+
+    # TODO: Detect NO-IP condition
+    if [ $retval -eq 0 -o $retval -eq 2 ]; then
+      if [ -n "$host_ip" ]; then
+        echo "$host_ip (cached)"
+      else
+        echo "NO-IP (cached)"
+      fi
+      return 0
+    fi
+  fi
+
+  # Perform normal lookup
+  DNS_FAST_FAIL_ONCE="$DNS_FAST_FAIL"
+  host_ip=`gethostbyname "$host"`
+  retval=$?
+
+  if [ -z "$host_ip" -o $retval -ne 0 ]; then
+    printf "\033[40m\033[1;31mFAILED!\n\033[0m"
+    echo "** ERROR($retval): Unresolvable host \"$host\"! **" >&2
+  else
+    echo "$host_ip"
+  fi
+
+  return $retval
+}
+
+
+traffic_accounting_setup_rules()
+{
+  # Touch the log file (just in case they doesn't exist yet):
+  touch /var/log/traffic-accounting.log
+
+  # Truncate file
+  printf "" >/tmp/traffic-accounting.new
+
+  # Process the input chain
+  if [ "$VERBOSE" = "1" ]; then
+    echo "Traffic Accounting Hosts:"
+    echo "-------------------------"
+  fi
+
+  # Also include default unicast route addresses, (0.0.0.0/0 and ::/0)
+  DEFAULT_ADDR="0.0.0.0/0"
+  if [ "$IPV6_SUPPORT" = "1" ]; then
+    DEFAULT_ADDR="$DEFAULT_ADDR ::/0"
+  fi
+
+  IFS=' ,'
+  for host in $TRAFFIC_ACCOUNTING_HOSTS $DEFAULT_ADDR; do
+    if [ "$VERBOSE" = "1" ]; then
+      printf "Host=$host "
+    fi
+
+    old_entry="$(grep "^$host " /var/log/traffic-accounting.log)"
+    old_ip="$(echo "$old_entry" |cut -s -d' ' -f2)"
+    old_in_value="$(echo "$old_entry" |cut -s -d' ' -f3)"
+    old_out_value="$(echo "$old_entry" |cut -s -d' ' -f4)"
+
+    # If value is non-existant make it zero
+    if [ -z "$old_in_value" ]; then
+      old_in_value=0
+    fi
+
+    # If value is non-existant make it zero
+    if [ -z "$old_out_value" ]; then
+      old_out_value=0
+    fi
+
+    # Get host_ip, if it fails, skip rule
+    if ! traffic_accounting_get_host "$host"; then
+      echo "** WARNING: Skipping rule for \"$host\"! **" >&2
+      continue;
+    fi
+
+    echo "${INDENT}Monitoring host \"$host\""
+
+    if [ "$VERBOSE" = "1" ]; then
+      printf "old_ip=$old_ip host_ip=$host_ip "
+    fi
+
+    # Process input chain
+    OLDFOUND=0
+    if [ -n "$old_ip" ]; then
+      get_numeric_ip_version "$host_ip"
+      case $? in
+      4)
+        LCOUNT=0
+        IFS=$EOL
+        for LINE in `ip4tables -xnvL ACCOUNTING_INPUT_CHAIN |sed -e "1,2d"`; do
+          ipt_ip="$(echo "$LINE" |awk '{ print $8 }')"
+
+          LCOUNT=$(($LCOUNT + 1))
+          if [ "$ipt_ip" = "$old_ip" ]; then
+            ip4tables -R ACCOUNTING_INPUT_CHAIN $LCOUNT -s $host_ip -j RETURN
+            if [ "$VERBOSE" = "1" ]; then
+              printf "in_action=update "
+            fi
+            OLDFOUND=1
+            ipt_in_value="$(echo "$LINE" |awk '{ print $2 }')"
+
+            break
+          fi
+        done
+        ;;
+      6)
+        if [ "$IPV6_SUPPORT" = "1" ]; then
+          LCOUNT=0
+          IFS=$EOL
+          for LINE in `ip6tables -xnvL ACCOUNTING_INPUT_CHAIN |sed -e "1,2d"`; do
+            ipt_ip="$(echo "$LINE" |awk '{ print $7 }')"
+
+            LCOUNT=$(($LCOUNT + 1))
+            if [ "$ipt_ip" = "$old_ip" ]; then
+              ip6tables -R ACCOUNTING_INPUT_CHAIN $LCOUNT -s $host_ip -j RETURN
+              if [ "$VERBOSE" = "1" ]; then
+                printf "in_action=update "
+              fi
+              OLDFOUND=1
+              ipt_in_value="$(echo "$LINE" |awk '{ print $2 }')"
+
+              break
+            fi
+          done
+        fi
+        ;;
+      esac
+    fi
+
+    if [ $OLDFOUND -eq 0 ]; then
+      if [ "$VERBOSE" = "1" ]; then
+        printf "in_action=add "
+      fi
+
+      if [ "$host_ip" = "0.0.0.0/0" -o "$host_ip" = "::/0" ]; then
+        iptables -A ACCOUNTING_INPUT_CHAIN -s $host_ip -j RETURN
+      else
+        iptables -I ACCOUNTING_INPUT_CHAIN 1 -s $host_ip -j RETURN
+      fi
+
+      # Preset values to zero as none exist yet
+      ipt_in_value=0
+    fi
+
+    # Process output chain
+    OLDFOUND=0
+    if [ -n "$old_ip" ]; then
+      get_numeric_ip_version "$host_ip"
+      case $? in
+      4)
+        LCOUNT=0
+        IFS=$EOL
+        for LINE in `ip4tables -xnvL ACCOUNTING_OUTPUT_CHAIN |sed -e "1,2d"`; do
+          ipt_ip="$(echo "$LINE" |awk '{ print $9 }')"
+
+          LCOUNT=$(($LCOUNT + 1))
+          if [ "$ipt_ip" = "$old_ip" ]; then
+            ip4tables -R ACCOUNTING_OUTPUT_CHAIN $LCOUNT -d $host_ip -j RETURN
+            if [ "$VERBOSE" = "1" ]; then
+              printf "out_action=update "
+            fi
+            OLDFOUND=1
+            ipt_out_value="$(echo "$LINE" |awk '{ print $2 }')"
+
+            break
+          fi
+        done
+        ;;
+      6)
+        if [ "$IPV6_SUPPORT" = "1" ]; then
+          LCOUNT=0
+          IFS=$EOL
+          for LINE in `ip6tables -xnvL ACCOUNTING_OUTPUT_CHAIN |sed -e "1,2d"`; do
+            ipt_ip="$(echo "$LINE" |awk '{ print $8 }')"
+
+            LCOUNT=$(($LCOUNT + 1))
+            if [ "$ipt_ip" = "$old_ip" ]; then
+              ip6tables -R ACCOUNTING_OUTPUT_CHAIN $LCOUNT -d $host_ip -j RETURN
+              if [ "$VERBOSE" = "1" ]; then
+                printf "out_action=update "
+              fi
+              OLDFOUND=1
+              ipt_out_value="$(echo "$LINE" |awk '{ print $2 }')"
+
+              break
+            fi
+          done
+        fi
+        ;;
+      esac
+    fi
+
+    if [ $OLDFOUND -eq 0 ]; then
+      if [ "$VERBOSE" = "1" ]; then
+        printf "out_action=add "
+      fi
+
+      if [ "$host_ip" = "0.0.0.0/0" -o "$host_ip" = "::/0" ]; then
+        iptables -A ACCOUNTING_OUTPUT_CHAIN -d $host_ip -j RETURN
+      else
+        iptables -I ACCOUNTING_OUTPUT_CHAIN 1 -d $host_ip -j RETURN
+      fi
+
+      # Preset values to zero as none exist yet
+      ipt_out_value=0
+    fi
+
+    # Calculate new in value
+    new_in_value=$(($old_in_value + $ipt_in_value))
+
+    # Calculate new out value
+    new_out_value=$(($old_out_value + $ipt_out_value))
+    if [ "$VERBOSE" = "1" ]; then
+      printf "old_in_val=$old_in_value ipt_in_val=$ipt_in_value new_in_val=$new_in_value old_out_val=$old_out_value ipt_out_val=$ipt_out_value new_out_val=$new_out_value"
+    fi
+
+    # Create entry in accounting file
+    echo "$host $host_ip $new_in_value $new_out_value" >>/tmp/traffic-accounting.new
+
+    if [ "$VERBOSE" = "1" ]; then
+      printf "\n\n"
+    fi
+  done
+
+  # FIXME: Don't use old-file
+  if [ -e /var/log/traffic-accounting.log ]; then
+    if [ -e /var/log/traffic-accounting.log.old ]; then
+      rm -f /var/log/traffic-accounting.log.old
+    fi
+
+    mv /var/log/traffic-accounting.log /var/log/traffic-accounting.log.old
+  fi
+  mv /tmp/traffic-accounting.new /var/log/traffic-accounting.log
+}
+
+
+############
+# Mainline #
+############
+
+# Check where to find the config file
+CONF_FILE=""
+if [ -n "$PLUGIN_CONF_PATH" ]; then
+  CONF_FILE="$PLUGIN_CONF_PATH/$PLUGIN_CONF_FILE"
+fi
+
+# Check if the config file exists
+if [ ! -e "$CONF_FILE" ]; then
+  echo "** ERROR: Config file \"$CONF_FILE\" not found! **" >&2
+  exit 1
+else
+  # Source the plugin config file
+  . "$CONF_FILE"
+
+  if [ "$ENABLED" = "1" ]; then
+    # Only proceed if environment ok
+    if sanity_check; then
+      # This is a critical section so we use a lockfile
+      lockfile="/var/tmp/aif_traffic_accounting_helper.lock"
+      if ( set -o noclobber; echo "$$" > "$lockfile") 2> /dev/null; then
+        # Setup int handler
+        trap 'rm -f "$lockfile"; exit $?' INT TERM EXIT
+
+        # Create actual rules
+        traffic_accounting_setup_rules;
+
+        # Remove lockfile
+        rm -f "$lockfile"
+
+        # Disable int handler
+        trap - INT TERM EXIT
+
+        exit 0
+      else
+        echo "Failed to acquire lockfile: $lockfile." >&2
+        echo "Held by $(cat $lockfile)" >&2
+      fi
+    fi
+  fi
+fi
+
+exit 1

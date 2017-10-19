@@ -1,0 +1,23 @@
+Index: busybox-1.17.1/networking/telnetd.c
+===================================================================
+--- busybox-1.17.1.orig/networking/telnetd.c	2016-10-22 13:34:25.890954686 +0800
++++ busybox-1.17.1/networking/telnetd.c	2016-10-22 13:37:20.885627710 +0800
+@@ -66,11 +66,17 @@
+ 	int maxfd;
+ } FIX_ALIASING;
+ #define G (*(struct globals*)&bb_common_bufsiz1)
++/*
+ #define INIT_G() do { \
+ 	G.loginpath = "/bin/login"; \
+ 	G.issuefile = "/etc/issue.net"; \
+ } while (0)
+-
++*/
++/* foxconn modified */
++#define INIT_G() do { \
++	G.loginpath = "/bin/ash"; \
++	G.issuefile = "/etc/issue.net"; \
++} while (0)
+ 
+ /*
+    Remove all IAC's from buf1 (received IACs are ignored and must be removed

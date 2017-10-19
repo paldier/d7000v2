@@ -1,0 +1,59 @@
+From 37fce5d3d8363376be41a1feb3fe1151879d3b7f Mon Sep 17 00:00:00 2001
+From: "Brett T. Warden" <brett.t.warden@intel.com>
+Date: Fri, 15 May 2015 09:11:56 -0700
+Subject: [PATCH] sdhci-pci: Add Cougar Mountain device IDs
+
+Adding Cougar Mountain device IDs for 2 eMMC and 1 SD controller.
+Copying Baytrail configuration options.
+---
+ drivers/mmc/host/sdhci-pci.c |   27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/drivers/mmc/host/sdhci-pci.c b/drivers/mmc/host/sdhci-pci.c
+index c1400ad..43672a5 100644
+--- a/drivers/mmc/host/sdhci-pci.c
++++ b/drivers/mmc/host/sdhci-pci.c
+@@ -39,6 +39,9 @@
+ #define PCI_DEVICE_ID_INTEL_BYT_SDIO	0x0f15
+ #define PCI_DEVICE_ID_INTEL_BYT_SD	0x0f16
+ #define PCI_DEVICE_ID_INTEL_BYT_EMMC2	0x0f50
++#define PCI_DEVICE_ID_INTEL_CGM_EMMC	0x2B94
++#define PCI_DEVICE_ID_INTEL_CGM_EMMC2	0x2B95
++#define PCI_DEVICE_ID_INTEL_CGM_SD	    0x2B96
+ 
+ /*
+  * PCI registers
+@@ -945,6 +948,30 @@ static const struct pci_device_id pci_ids[] = {
+ 	},
+ 
+ 	{
++		.vendor		= PCI_VENDOR_ID_INTEL,
++		.device		= PCI_DEVICE_ID_INTEL_CGM_EMMC,
++		.subvendor	= PCI_ANY_ID,
++		.subdevice	= PCI_ANY_ID,
++		.driver_data	= (kernel_ulong_t)&sdhci_intel_byt_emmc,
++	},
++
++	{
++		.vendor		= PCI_VENDOR_ID_INTEL,
++		.device		= PCI_DEVICE_ID_INTEL_CGM_EMMC2,
++		.subvendor	= PCI_ANY_ID,
++		.subdevice	= PCI_ANY_ID,
++		.driver_data	= (kernel_ulong_t)&sdhci_intel_byt_emmc,
++	},
++
++	{
++		.vendor		= PCI_VENDOR_ID_INTEL,
++		.device		= PCI_DEVICE_ID_INTEL_CGM_SD,
++		.subvendor	= PCI_ANY_ID,
++		.subdevice	= PCI_ANY_ID,
++		.driver_data	= (kernel_ulong_t)&sdhci_intel_byt_sd,
++	},
++
++	{
+ 		.vendor		= PCI_VENDOR_ID_O2,
+ 		.device		= PCI_DEVICE_ID_O2_8120,
+ 		.subvendor	= PCI_ANY_ID,
+-- 
+1.7.9.5
+

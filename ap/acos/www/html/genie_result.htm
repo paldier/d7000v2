@@ -1,0 +1,368 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<%11%>
+<title>NETGEAR   Genie</title>
+<link rel="stylesheet" href="<%13%>">
+
+<script language="javascript" type="text/javascript" src="utility.js"></script>
+<script language="javascript" type="text/javascript">
+ 
+function checkData(){
+    var cf = document.forms[0];
+    var msg = "";
+
+ if (document.formname.WANDetc[0].checked == true){
+//     window.location.href="genie_detwan.htm";     
+     //window.location.href="genie_select_country.htm";     
+     //return false;
+     document.forms[0].submit();	
+     
+ }else if (document.formname.WANDetc[1].checked == true){
+     var ret;
+     ret = confirm("<%2454%>");
+     if(ret==1){
+         top.location.href="genie_basic.htm";
+         return true;
+     }else{
+         return false;
+     }
+ }else
+     window.location.href="genie_restore.htm";
+     return false;
+}
+
+var ISP_ALL = 
+    new Array (
+    <%412%>
+        );
+var curr_country = "<%413%>";
+function setisp()
+{
+    var cf = document.forms[0];
+    var isp_list = cf.isp;
+    var index = cf.country.selectedIndex;
+    var curr_isp = "<%414%>";
+    var len=0, i=0;
+
+    isp_list.options.length = 100;
+    if (ISP_ALL[index].length > 0)
+    {
+        for (i=0; i<ISP_ALL[index].length; i+=2)
+        {
+            isp_list.options[len].text = ISP_ALL[index][i+1];
+            isp_list.options[len].value = ISP_ALL[index][i];
+            len++;
+        }
+        if (curr_country != cf.country.value)
+            curr_isp = ISP_ALL[index][0];
+    }
+
+    isp_list.options.length = len;
+
+    for (i=0; i<isp_list.options.length; i++)
+    {
+        if (isp_list.options[i].value == curr_isp)
+        {
+            isp_list[i].selected = true;
+            break;
+        }
+    }
+}
+
+function disable_advanced_setting()
+{
+    var cf = document.forms[0];
+    if (cf.enable_adv.checked == false)
+    {
+        document.getElementById("advanced_setting").style.display = "none";
+        cf.enable_adv.value="disable";
+    }
+    else
+    {
+        document.getElementById("advanced_setting").style.display = "block";    
+        cf.enable_adv.value="enable";
+    }
+}
+	
+function loadSettings()
+{
+    var cf = document.forms[0];
+    if (cf.enable_adv.checked == false)
+    {
+        document.getElementById("advanced_setting").style.display = "none";
+        cf.enable_adv.value="disable";
+    }
+    else
+    {
+        document.getElementById("advanced_setting").style.display = "block";    
+        cf.enable_adv.value="enable";
+    }
+    setisp();
+}
+
+</script>
+<style>
+html, body 
+{
+	margin: 0;
+	padding: 0;
+	font-family:Arial; 	
+}
+
+h1{
+	padding-left:5%;
+	font-size:12px;
+	font-family:Arial;
+        font-weight:bold;
+        color:#F32A31;
+                
+}
+
+h2{
+	padding-left:0%;
+	font-size:20px;
+	font-family:Arial;
+        font-weight:bold;
+        color:#9d98ff;                
+}
+
+.topframe{
+	background-color:#2b2b2b;
+	color:#ffffff;
+	font-size:12px;
+	font-family:Arial;
+	margin:0;
+	padding: 0;	
+}
+
+
+.WNRTitle{
+	font-family:Arial;
+	padding-top:0px;
+        padding-bottom:40px;
+	margin-top: 0px;
+	padding-left:20px;
+        height: 50px;
+	line-height:80%;
+	font-weight:bold;
+	font-size:14px;
+}
+
+button 
+{
+	position: relative;
+	border: 0; 
+	padding: 0;
+	cursor: pointer;
+	overflow: visible; /* removes extra side padding in IE */
+}
+
+button::-moz-focus-inner 
+{
+	border: none;  /* overrides extra padding in Firefox */
+}
+
+button span 
+{ 
+	position: relative;
+	display: block; 
+	white-space: nowrap;	
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0) 
+{
+	/* Safari and Google Chrome only - fix margins */
+	button span 
+	{
+		margin-top: -1px;
+	}
+}
+
+
+/* OPTIONAL BUTTON STYLES for applying custom look and feel: */		
+button.purpleBtn 
+{
+        font-family:Arial; 
+	margin-left:0px;
+	padding: 0 15px 0 0; 
+	margin-right:5px; 
+	font-size:12px; 
+	font-weight:bold;
+	text-align: center; 
+	background: transparent url(button_sprite.gif) no-repeat right -45px;
+}
+	
+button.purpleBtn span 
+{
+        font-family:Arial;
+	padding: 4px 0 0 17px; 
+	height:25px; 
+	background: transparent url(button_sprite.gif) no-repeat left top; 
+	color:#fff; 
+}
+	
+
+
+button.greenBtn 
+{ 
+
+        font-family:Arial;
+	padding: 0 15px 0 0; 
+	margin-right:5px; 
+	margin-left:30px;
+	font-size:12px; 
+	text-align: center;
+	font-weight:bold;	      
+	background: transparent url(g_button_sprite.gif) no-repeat right -45px;        
+}
+	
+button.greenBtn span 
+{
+        font-family:Arial;
+	padding: 4px 0 0 20px; 
+	height:25px; 
+	background: transparent url(g_button_sprite.gif) no-repeat left top; 
+	color:#fff;
+}
+	
+.inputRow
+{
+	font-family:Arial;     		 
+	font-size:16px;
+	color:#404040; 
+}
+
+.centerTd
+{
+	font-family:Arial;  
+	font-size:14px;
+	height:15px;
+        color:#404040;    
+	width:600px;
+	padding-left:20px;
+}
+
+.centerTd2
+{
+	font-family:Arial;  
+	font-size:10px;
+	height:15px;
+        color:#404040;    
+	width:600px;
+	text-align:center;
+}
+
+.centerTd3
+{
+	font-family:Arial;  
+	font-size:14px;
+	height:15px;
+	color:#404040;    
+}
+
+.textRow
+{
+	font-family:Arial;  
+	font-size:14px;
+	height:15px;
+        color:#404040;              
+}
+</style>
+</head>
+
+<body bgcolor="#ffffff" onload="loadSettings();">
+<form name="formname" method="POST" action="changlang.cgi"> 
+    <input type="hidden" name="DectS" value="genie">
+	<table border="0" cellpadding="0" cellspacing="3" width="99%">
+	<tr style="height:10px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+
+	<tr>
+		<td>&nbsp;</td><td class="centerTd"><h2><%2455%></h2></td><td>&nbsp;</td>
+	</tr>
+    <tr>
+		<td>&nbsp;</td><td class="centerTd"><%2456%></td><td>&nbsp;</td>
+	</tr>
+	<tr><td>&nbsp;</td><td colspan="2" style="font-size:12px"><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td><td>&nbsp;</td></tr>
+	<tr>
+	<td>&nbsp;</td>
+	<td class="centerTd"><b><%423%></b></td>
+	<td>&nbsp;</td>
+    </tr>
+    
+    <tr>
+    <td>&nbsp;</td><td class="centerTd"><span style="float:left"><%1367%> : </span>
+        <!--<select name="country" size="1" style="float:right;margin-right:240px;width:120px" onchange="setisp()">-->
+        <select name="country" size="1" style="float:right;margin-right:140px;width:220px" onchange="setisp()">
+        <%424%>
+        </select></td><td>&nbsp;</td>
+    </tr>
+	<tr>
+	<td>&nbsp;</td>
+	<td class="centerTd"><b><%425%></b></td>
+	<td>&nbsp;</td>
+    </tr>
+
+    <tr>
+    <td>&nbsp;</td><td class="centerTd"><span style="float:left"><%551%> : </span>
+    <!--<select name="isp" size=1 style="float:right;margin-right:240px;width:120px"><option selected>Adam</option><option>Clubtelco</option><option>Dodo</option><option>Exetel</option></select>-->
+    <select name="isp" size=1 style="float:right;margin-right:140px;width:220px"><option selected>Adam</option><option>Clubtelco</option><option>Dodo</option><option>Exetel</option></select>
+        </td><td>&nbsp;</td>
+    </tr>
+    <tr style="line-height:10px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td><td class="centerTd"><input type="checkbox" name="enable_adv" value="disable" onClick="disable_advanced_setting()"><%2457%></td><td>&nbsp;</td>
+	</tr>
+		<tr>
+		<td>&nbsp;</td>
+		<td colspan="2">
+			<div id="advanced_setting" style="display: none;">
+			<table border="0"  cellpadding="0" cellspacing="3" width="620px">
+		<tr>
+			<td class="centerTd3" width="10%" style="padding-left:30px"><input type="radio" checked name="adv_sel" value="adsl">ADSL</td>
+		</tr>
+		<tr>
+			<td class="centerTd3" width="10%" style="padding-left:30px"><input type="radio" name="adv_sel" value="vdsl">VDSL</td>
+		</tr>
+			</table>
+			</div>
+		</td>
+		<td>&nbsp;</td>
+	</tr>		
+         <tr><td>&nbsp;</td><td colspan="2" style="font-size:12px"><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td><td>&nbsp;</td></tr>
+	<tr>
+		<tr>
+		<td>&nbsp;</td><td class="centerTd"><%2458%></td><td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>
+		<td class="centerTd"><input type="radio"  checked name="WANDetc" value="AutoDetc"><span style="padding-left:10px;"><%2459%></span></td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>		
+		<td class="centerTd"><input type="radio" name="WANDetc" value="MyDetc"><span style="padding-left:10px;"><%2460%></span></td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>	
+		<td class="centerTd"><input type="radio" name="WANDetc" value="Restore"><span style="padding-left:10px;"><%2461%></span></td>
+		<td>&nbsp;</td>	
+	</tr>
+	<tr style="line-height:10px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td>	
+		<td class="centerTd2"><button type="submit" style="width:100px" value="submit" class="purpleBtn2" name="next" onClick="return checkData();" ><span><%36%>&nbsp;&nbsp;&nbsp;</span></button></td>
+		<td>&nbsp;</td>	
+	</tr>
+	</table>
+</form>
+</body>
+
+</html>

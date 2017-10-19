@@ -1,0 +1,15 @@
+# HG changeset patch
+# Parent b73f0d8f20f8ff25990a0ca1ab7ed6d5c3313dfe
+
+diff --git a/hostapd/.config b/hostapd/.config
+--- a/hostapd/.config
++++ b/hostapd/.config
+@@ -158,7 +158,7 @@
+ #CONFIG_WNM=y
+ 
+ # IEEE 802.11ac (Very High Throughput) support
+-#CONFIG_IEEE80211AC=y
++CONFIG_IEEE80211AC=y
+ 
+ # Remove debugging code that is printing out debug messages to stdout.
+ # This can be used to reduce the size of the hostapd considerably if debugging

@@ -1,0 +1,356 @@
+<!DOCTYPE HTML>
+<html><head>
+<%11%>
+<title>NETGEAR Router <%55%></title> 
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<style type="text/javascript">
+    classes.num.all.fontFamily = "Courier";
+    classes.num.all.fontSize = "10pt" ;
+</style>
+<%12%>
+<script language="javascript" type="text/javascript">
+<!--
+
+
+    $(document).ready(function()
+    {	
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+
+function checkData()
+{
+    var cf = document.forms[0];
+    var isAllAdmin;
+	var msg = "";
+	var r, re, fail;
+	var usb_folder_string = cf.usb_folder.value;
+	fail = 1;
+	<%2089%>
+	if(fail == 1)
+        msg+= "<%2090%>\n";
+	
+	if (cf.usb_folder.value == "")
+		 msg+= "<%2091%>\n";
+	if ( (cf.usb_folder.value.match( /[\x2E-\x2E]/ )) )
+	   {
+			alert("<%2090%>\n");
+			return false;
+	   }
+	if (cf.share_name.value == "")
+		msg+= "<%2092%>\n";
+	
+    if (   (cf.share_name.value.match( /[\x22-\x22]/ ))
+        || (cf.share_name.value.match( /[\x3A-\x3A]/ ))
+        || (cf.share_name.value.match( /[\x3C-\x3C]/ ))
+        || (cf.share_name.value.match( /[\x3E-\x3E]/ ))
+        || (cf.share_name.value.match( /[\x27-\x27]/ ))
+        || (cf.share_name.value.match( /[\x7C-\x7C]/ ))
+        || (cf.share_name.value.match( /[\x2F-\x2F]/ ))
+        || (cf.share_name.value.match( /[\x5D-\x5D]/ ))
+		|| (cf.share_name.value.match( /[\x3E-\x3E]/ ))
+		|| (cf.share_name.value.match( /[\x5C-\x5C]/ ))
+       )
+	{
+		cf.share_name.focus();
+		msg+= "<%2093%>.\n";
+	}	
+	<%2094%>
+    if (msg.length > 1)
+	{
+		alert(msg);
+		return false;
+	}
+	
+<%2095%>
+	
+    //There exist folder is "admin" privilege but no "All - no password" privilege. 
+    isAllAdmin = cf.isAllAdminFolder.value;
+    if ( cf.no_dlna.value != 1 ) 
+    {
+       if((isAllAdmin >= 0) && (cf.readAllNoPwdChecked.value == 0) && (cf.writeAllNoPwdChecked.value == 0) )
+           alert("<%2039%>");
+    }
+
+<%2096%>	
+<%2097%>
+	if( (cf.read_access.selectedIndex == 1) && (cf.write_access.selectedIndex == 0) )
+	    cf.write_access.selectedIndex = 1;
+	
+    //There exist folder is "admin" privilege but no "All - no password" privilege. 
+    isAllAdmin = cf.isAllAdminFolder.value;    
+    if ( cf.no_dlna.value != 1 ) {
+       if(isAllAdmin > 0 && (cf.read_access.selectedIndex == 1) && (cf.write_access.selectedIndex == 1) )
+           alert("<%2039%>");
+    }
+<%2098%>
+
+    pageRefresh();
+    return true;
+}
+<%2095%>	
+function enDisableBox(userNum, type)
+{
+	var i;
+	var num = parseInt(userNum);
+	var readMan = "#ReadMultiUser";
+	var writeMan = "#WriteMultiUser";
+	for(i=1; i<num; i++)
+	{
+		$(readMan.concat(i)).attr('disabled', type);
+		$(writeMan.concat(i)).attr('disabled', type);
+	}
+
+}
+
+
+
+function readUser(Rname, Wname, userNum)
+{
+    var  cf = document.forms[0];
+	
+    if((Rname != "") && (Wname != ""))
+    {
+        var str1 = "#";
+	var	readName = str1.concat(Rname); 
+	var	writeName = str1.concat(Wname); 
+	var isChecked = $(readName).attr('checked');
+	if(isChecked)
+	{
+	    $(readName).attr('checked', 'checked');
+	    $(writeName).attr('checked', 'checked');
+			
+	    if(Rname == "RnoPasswd")
+            {
+                cf.readAllNoPwdChecked.value = 1;
+                cf.writeAllNoPwdChecked.value = 1;
+		enDisableBox(userNum, "disabled");
+            }
+	}
+	else
+	{
+			
+	    $(readName).attr('checked', '');
+	    $(writeName).attr('checked', '');
+	    if(Rname == "RnoPasswd")
+        {
+        	cf.readAllNoPwdChecked.value = 0;
+            cf.writeAllNoPwdChecked.value = 0;
+			enDisableBox(userNum, "");
+	    }
+			
+        }
+    }
+	
+	
+
+	
+}
+
+function writeUser(Rname, Wname, userNum)
+{
+    var  cf = document.forms[0];
+	
+    if((Rname != "") && (Wname != ""))
+    {
+	var str1 = "#";
+	var	readName = str1.concat(Rname); 
+	var	writeName = str1.concat(Wname); 
+	var isChecked = $(writeName).attr('checked');
+	
+	if(isChecked)
+	{
+	    $(writeName).attr('checked', 'checked');
+	    $(readName).attr('checked', 'checked');
+					
+	    if(Wname == "WnoPasswd")
+            {
+                cf.writeAllNoPwdChecked.value = 1;
+                cf.readAllNoPwdChecked.value = 1;
+	        enDisableBox(userNum, "disabled");
+            }		
+	}
+	else
+	{		
+	    $(writeName).attr('checked', '');
+	    $(readName).attr('checked', '');			
+	    if(Wname == "WnoPasswd")
+            {
+        	cf.writeAllNoPwdChecked.value = 0;
+                cf.readAllNoPwdChecked.value = 0;
+	        enDisableBox(userNum, "");
+	    }
+        
+        }
+    }
+}
+<%2096%>	
+function loadSettings()
+{
+    var cf = document.forms[0];
+    var partition = cf.selectp.value;
+    if (partition != "-1")
+        cf.usb_device[partition].selected = true;
+    
+    var NotExistFolder = "<%2099%>";
+    if (NotExistFolder == "1")
+    {
+        opener.document.location.href = "USB_adv_tab.htm";
+        window.close();
+    }
+    else if (NotExistFolder == "2")
+        alert("<%2090%>\n");
+}
+
+function pageRefresh()
+{
+    document.forms[0].submit();
+    //window.close();
+    //opener.document.location.href = "USB_adv.htm";
+}
+
+function Browse_folder()
+{
+    document.forms[0].mode.value = "browse";
+    document.forms[0].submit();
+    window.open('USB_folderBrowse.htm','browse','resizable=0,scrollbars=yes,width=400,height=400,left=400,top=300').focus();
+}
+
+<%2097%>
+function chgRd()
+{
+    var cf = document.forms[0];
+    if (cf.read_access.selectedIndex == 1)
+	    cf.write_access.selectedIndex = 1;
+}
+function chgWt()
+{
+    var cf = document.forms[0];
+    if (cf.write_access.selectedIndex == 0)
+	    cf.read_access.selectedIndex = 0;
+}
+<%2098%>
+//-->
+</script></head>
+<body onload="loadSettings();"  style="margin:0px;background-color:#e5e5e5">
+<form id="target"  name="frmService" method="post" action="usb_device.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+    <table border="0"   width="100%">
+
+    <tr>
+        <td><h1><%2081%></h1></td>
+    </tr>
+<tr>
+ <td>
+ <img src="liteblue.gif" height="12" width="100%">
+ </td>
+</tr>
+
+<table border="1" cellpadding="2" cellspacing="0" width="100%">
+<tr>
+<td align="center" nowrap="nowrap" width="40%">
+<p align="left"><span class="thead"><%2100%></span></td>
+<td align="center" nowrap="nowrap" width="60%">
+<p align="left"><select name="usb_device" size="1" >
+        <%2101%>
+    </select></td>
+</tr>
+<tr>
+<td align="center" nowrap="nowrap" width="40%">
+<p align="left"><span class="thead"><%2102%></span></td>
+<td align="center" nowrap="nowrap" width="60%"> 
+<input name="usb_folder" style="float: left" value="<%2103%>">
+&nbsp;&nbsp;&nbsp;<button type="button" value="<%370%>" name="Browse" class="button-rule" onClick="buttonClick(this,'<%370%>');Browse_folder();"><span class="roundleft_button">&nbsp;&nbsp; <%370%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button></td>
+</tr>
+<tr>
+<td align="center" nowrap="nowrap" width="40%">
+<p align="left"><span class="thead"><%2026%></span></td>
+<td align="center" nowrap="nowrap" width="60%"> 
+<input name="share_name" value="<%2104%>" size="21" maxlength="20" style="float: left"></td>
+</tr>
+<tr>
+<td align="center" nowrap="nowrap" width="40%">
+<p align="left"><span class="thead"><%2105%></span></td>
+<td align="center" nowrap="nowrap" width="60%">
+
+<%2106%>
+<table border="0" align="left">
+   <%2107%>
+</table>
+<%2108%>
+    <%2109%>
+	<p align="left">
+    <select name="read_access" size="1" onchange="chgRd()">
+        <option value=0><%2110%></option>
+        <option value=1 <%2111%> ><%2112%></option>
+    </select>
+    <%2113%>
+    
+</td>
+</tr>
+<td align="center" nowrap="nowrap" width="40%">
+<p align="left"><span class="thead"><%2114%></span></td>
+<td align="center" nowrap="nowrap" width="60%">
+
+<%2115%>
+<table border="0" align="left">
+	<%2116%>
+</table>
+<%2117%>
+        <%2118%>
+		<p align="left">
+        <select name="write_access" size="1" onchange="chgWt()">
+        <option value=0><%2110%></option>
+        <option value=1 <%2119%> ><%2112%></option>
+        </select>
+        <%2120%>
+    </td>
+</tr>
+</table>
+ 
+ <table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr><td>&nbsp;&nbsp;</td></tr>
+ </table>
+ 
+ <table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr><td>&nbsp;&nbsp;&nbsp;<button type="button" value="<%61%>" name="Apply" class="button-rule" onclick="buttonClick(this,'<%61%>');return checkData();"><span class="roundleft_button">&nbsp;&nbsp; <%61%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+</td>
+</tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr>
+ <td>
+ <img src="liteblue.gif" height="12" width="100%">
+ </td>
+</tr>
+</table> 
+ <table border="0" cellpadding="0" cellspacing="3" width="100%">
+<tr><td>&nbsp;&nbsp;&nbsp;<button type="button" value="<%386%>" name="Close" class="button-rule" onclick="buttonClick(this,'<%386%>');window.close();"><span class="roundleft_button">&nbsp;&nbsp; <%386%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button></td>
+</tr>
+</table>
+</table>
+<INPUT name=mode type=hidden value="add">
+<INPUT name=fromPage type=hidden value="1">
+<INPUT name=selectp type=hidden value="<%2121%>">
+<INPUT name=isAllAdminFolder type=hidden value="<%2122%>">
+<input name="no_dlna" type="hidden" value="<%2087%>">
+
+<input name="ReadMultiUser0" type="hidden" value="0">
+<input name="readAllNoPwdChecked" type="hidden" value="null">
+<input name="writeAllNoPwdChecked" type="hidden" value="null">
+<input name="fromGUI" type="hidden" value="fromGUI">
+</form>
+</body></html>

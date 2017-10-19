@@ -1,0 +1,239 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR Router <%55%></title> 
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style>
+
+
+<script language="javascript" type="text/javascript">
+<!--
+
+
+  
+    $(document).ready(function()
+    {	
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            imgSrc.src="img/helparrowdown-icon.gif";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.gif";
+            setTimeout(setHelpIframeVisible,500);
+        }
+             change_size();
+
+    }
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+    function loadhelp(fname,anchname)
+    {
+                var pane = window.frames["helpframe"].$('#content');
+                var imgSrc=document.getElementById('help-button');
+                if(imgSrc.src.search("up")<0)
+                {
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+
+                        if ((loadhelp.arguments.length == 1 ) || (anchname == "" ))
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm";
+                                $(".help-frame-div").show();
+                        }
+                        else
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm#" + anchname;
+                                $(".help-frame-div").show();
+                        }
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+                }
+    }
+/*
+function checkAdd(Form)
+{
+	Form.userSelectLength.value = Form.userSelect.length;
+	return true;
+}
+*/	
+function loadding()
+{
+	document.getElementById("upMaxNum").style.display="none";
+	document.getElementById("noSelEdit").style.display="none";
+	document.getElementById("noSelDelete").style.display="none";
+
+}
+function seluser(name, pwd)
+{
+	var cf = document.forms[0];
+	document.getElementById("upMaxNum").style.display="none";
+	document.getElementById("noSelEdit").style.display="none";
+	document.getElementById("noSelDelete").style.display="none";
+	cf.username.value = name;
+	cf.passwd.value = pwd;
+	return true;
+}
+
+function checkData(type)
+{
+	var cf = document.forms[0];
+	if(type == 1)
+	{	
+		if(parseInt(cf.userSelect.length) == 5)
+		{
+			document.getElementById("upMaxNum").style.display="block";
+			document.getElementById("noSelEdit").style.display="none";
+			document.getElementById("noSelDelete").style.display="none";
+			return false;
+		}
+	}
+	else 
+	{	
+		if(cf.username.value == "")
+		{
+			if(type == 2)
+			{
+				document.getElementById("upMaxNum").style.display="none";
+				document.getElementById("noSelEdit").style.display="block";
+				document.getElementById("noSelDelete").style.display="none";
+			}
+			else
+			{
+				document.getElementById("upMaxNum").style.display="none";
+				document.getElementById("noSelEdit").style.display="none";
+				document.getElementById("noSelDelete").style.display="block";
+			}
+			return false;
+		}
+	}
+	
+	return true;
+}	
+//-->
+</SCRIPT>
+
+</HEAD>
+<BODY  leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" onload="change_size(); loadding();" class="page-body"  onResize="change_size();" >
+<img class="cover-image" src="<%57%>">
+<img class="body-image" src="<%58%>">
+<div id="full-page-container">
+
+<form id="target"  action="user_setup.cgi" method="post" name="formname">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+  <img class="subtop-image" src="<%59%>">
+<div class="subhead2"> <%2774%></div>
+<table border="0"    style="height:370px"  class="subhead2-table">
+
+<tr align="left" valign="middle">
+<td  style="padding-top:10px;padding-bottom:10px" align="center" colspan="2" class="table-seperate-border">
+&nbsp;&nbsp;&nbsp;<button value="<%63%>" onClick="buttonClick(this,'<%63%>');location.href='User_setup.htm'" type="button" name="cancel" class="button-rule" ><span class="roundleft_button"><span class ="cancel-icon">&nbsp;&nbsp;&nbsp;&nbsp;<%64%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+&nbsp;&nbsp;&nbsp;<button value="<%61%>"  onclick="buttonClick(this,'<%61%>');"  type="button" name="apply" class="button-apply" > <span class="roundleft_apply" ><%62%>&nbsp;<span class="apply-icon">&nbsp;&nbsp;&nbsp;&nbsp;</span></span><span class="roundright_apply">&nbsp;&nbsp;&nbsp;</span></button>
+
+</td>
+</tr>
+
+
+<tr><td class="scrollpane-table-seperate-border" colspan="2"><div class="scroll-pane" style="height:365px;width:620px;overflow:auto;scrolling:auto">
+<table style="border-collapse:collapse;width:97%">
+  <tr valign="middle">
+  <td align="left" >
+<%2775%>
+</td>
+<td align="right">
+<%2776%>
+</td>
+</tr>
+    <tr>
+      <td align="center" colspan="2" >
+        
+        <table border="1" cellpadding="0" cellspacing="0" width="100%">
+        <tr style="background-color:#767676; color:#ffffff; font-weight: Bold;">
+            <td nowrap width="10%" align="center">&nbsp;</td>
+			<td nowrap width="20%" align="center">#</td>
+            <td nowrap width="45%" align="center"><%2777%></td>
+            <td nowrap width="45%" align="center"><%2778%></td>
+		</tr>
+		
+          <%2779%>
+		
+		</table>
+        </td>
+	</tr>
+    <TR>
+      <TD nowrap align=center colspan="2" >
+        &nbsp;&nbsp;&nbsp;<button type="submit" value="<%613%>" name="add" class="button-rule" onclick="buttonClick(this,'<%613%>'); return checkData(1);"><span class="roundleft_button"><span class="add-icon">&nbsp;&nbsp;&nbsp;&nbsp;<%613%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button> 
+        &nbsp;&nbsp;&nbsp;<button type="submit" value="<%614%>" name="edit" class="button-rule" onclick="buttonClick(this,'<%614%>'); return checkData(2);"><span class="roundleft_button"><span class="edit-icon">&nbsp;&nbsp;&nbsp;&nbsp; <%614%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button> 
+        &nbsp;&nbsp;&nbsp;<button type="submit" value="<%615%>" name="delete" class="button-rule" onclick="buttonClick(this,'<%615%>');return checkData(3);"><span class="roundleft_button"><span class="cancel-icon">&nbsp;&nbsp;&nbsp;&nbsp;  <%615%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button></td></tr> 
+    <tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+	<tr> &nbsp;
+		<td id="upMaxNum" style="display: none; color:#FF0000; font-weight: Bold;"><%2780%></td>
+		<td id="noSelEdit" style="display: none; color:#FF0000; font-weight: Bold;"><%2781%></td>
+		<td id="noSelDelete" style="display: none; color:#FF0000; font-weight: Bold;"><%2782%></td>
+	</tr>
+
+	<tr><td colspan="2" height="12">&nbsp;</td></tr>
+
+ </table></div></td></tr>
+
+
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div class="help-frame-div" > <iframe id="helpframe"  src="" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <img class="subfooter-image" src="img/subhead2-bottom.gif">
+  <div class="subhead2-bottom" >
+      </div>
+<div>	  
+<img src="img/helparrowdown-icon.gif" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" >
+</div>
+
+
+
+  <input type="hidden" name="username" value="">
+  <input type="hidden" name="passwd" value="">
+  <input type="hidden" name="mail" value="LocalUser">
+<a name="helpframe-anchor"></a>
+</form>
+</div>
+</BODY>
+</HTML>

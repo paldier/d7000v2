@@ -1,0 +1,40 @@
+diff --exclude 'msvc*' -Npur 00-hostapd-regdomain.orig/src/common/ltq-vendor.h 00-hostapd-regdomain.dev/src/common/ltq-vendor.h
+--- 00-hostapd-regdomain.orig/src/common/ltq-vendor.h	2015-03-12 15:06:26.000000000 +0200
++++ 00-hostapd-regdomain.dev/src/common/ltq-vendor.h	2015-03-13 14:12:12.000000000 +0200
+@@ -31,6 +31,7 @@ enum ltq_nl80211_vendor_subcmds {
+ 	LTQ_NL80211_VENDOR_SUBCMD_GET_AID = 1,
+ 	LTQ_NL80211_VENDOR_SUBCMD_FREE_AID = 2,
+ 	LTQ_NL80211_VENDOR_SUBCMD_TX_EAPOL = 3,
++	LTQ_NL80211_VENDOR_SUBCMD_COUNTRY_CODE = 4,
+ };
+ 
+ enum ltq_nl80211_vendor_events {
+diff --exclude 'msvc*' -Npur 00-hostapd-regdomain.orig/src/drivers/driver_nl80211.c 00-hostapd-regdomain.dev/src/drivers/driver_nl80211.c
+--- 00-hostapd-regdomain.orig/src/drivers/driver_nl80211.c	2015-03-12 15:06:26.000000000 +0200
++++ 00-hostapd-regdomain.dev/src/drivers/driver_nl80211.c	2015-03-13 14:20:43.000000000 +0200
+@@ -3231,7 +3231,6 @@ static void wpa_driver_nl80211_event_rec
+ 	}
+ }
+ 
+-
+ /**
+  * wpa_driver_nl80211_set_country - ask nl80211 to set the regulatory domain
+  * @priv: driver_nl80211 private data
+@@ -3256,6 +3255,9 @@ static int wpa_driver_nl80211_set_countr
+ 	alpha2[1] = alpha2_arg[1];
+ 	alpha2[2] = '\0';
+ 
++	nl80211_vendor_cmd(priv, OUI_LTQ, LTQ_NL80211_VENDOR_SUBCMD_COUNTRY_CODE,
++						(const u8*)alpha2, sizeof(alpha2), NULL);
++
+ 	nl80211_cmd(drv, msg, 0, NL80211_CMD_REQ_SET_REG);
+ 
+ 	NLA_PUT_STRING(msg, NL80211_ATTR_REG_ALPHA2, alpha2);
+@@ -8046,7 +8048,6 @@ static void nl80211_teardown_ap(struct i
+ 	bss->beacon_set = 0;
+ }
+ 
+-
+ static int nl80211_send_eapol_data(void *priv,
+ 								   const u8 *addr, const u8 *own_addr,
+ 								   const u8 *data, size_t data_len)

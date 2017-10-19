@@ -1,0 +1,63 @@
+#!/bin/sh /etc/rc.common
+# 
+
+START=50
+
+USE_PROCD=1
+
+
+ACOS_SERVICE_BIN="/sbin/acos_service"
+
+
+service_triggers()
+{
+	procd_add_reload_trigger ACOS_SERVICE_BIN
+}
+
+restart()
+{
+	/sbin/acos_service stop
+	/sbin/acos_service start
+
+}
+
+stop_service()
+{
+	/sbin/acos_service stop
+}
+
+start_service() {
+	exec 1>/dev/console
+	exec 2>/dev/console
+
+	cp /www/string_table_2 /storage1/string_table_2 
+	cp /www/string_table_3 /storage1/string_table_3 
+	cp /www/string_table_4 /storage1/string_table_4 
+	cp /www/string_table_5 /storage1/string_table_5 
+	cp /www/string_table_6 /storage1/string_table_6 
+	cp /www/string_table_7 /storage1/string_table_7  
+	cp /www/string_table_8 /storage1/string_table_8
+	cp /www/string_table_9 /storage1/string_table_9
+	cp /www/string_table_10 /storage1/string_table_10   
+
+	/sbin/acos_service start
+	eval "export LD_LIBRARY_PATH=/opt/lantiq/lib:/opt/lantiq/usr/lib:"
+	/sbin/rc wlaninit
+	/etc/init.d/passwd.sh start
+}
+
+boot()
+{
+	/usr/sbin/nvram init
+	ubimkvol /dev/ubi0 -s 8MiB -N storage1
+	mount -t ubifs ubi0:storage1 /storage1
+	ubimkvol /dev/ubi0 -s 4MiB -N openvpn
+	mount -t ubifs ubi0:openvpn /data/openvpn
+	ubimkvol /dev/ubi0 -s 4MiB -N storage2
+	mount -t ubifs ubi0:storage2 /storage2
+#	leddown
+	read_bd
+	/sbin/acos_init
+	start
+}
+

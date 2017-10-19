@@ -1,0 +1,25 @@
+From faec5230259ddc4ef4d8d4a5381e50441038c317 Mon Sep 17 00:00:00 2001
+From: "Brett T. Warden" <brett.t.warden@intel.com>
+Date: Mon, 6 Apr 2015 16:46:58 -0700
+Subject: [PATCH] dw_i2c: add Intel Cougar Mountain I2C ACPI ID
+
+Add Intel Cougar Mountain I2C ACPI ID(80862BC1).
+---
+ drivers/i2c/busses/i2c-designware-platdrv.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/i2c/busses/i2c-designware-platdrv.c b/drivers/i2c/busses/i2c-designware-platdrv.c
+index b62df28..d1eab56 100644
+--- a/drivers/i2c/busses/i2c-designware-platdrv.c
++++ b/drivers/i2c/busses/i2c-designware-platdrv.c
+@@ -107,6 +107,7 @@ static const struct acpi_device_id dw_i2c_acpi_match[] = {
+ 	{ "INT3433", 0 },
+ 	{ "80860F41", 0 },
+ 	{ "808622C1", 0 },
++	{ "80862BC1", 0 },
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(acpi, dw_i2c_acpi_match);
+-- 
+1.7.9.5
+

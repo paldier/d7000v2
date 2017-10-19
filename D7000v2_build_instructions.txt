@@ -1,0 +1,32 @@
+========================================
+ D7000v2 Build Instructions
+
+ Version: 1.0
+ Date   : May 03 2017
+======================================== 
+
+Note: 
+      1. This package has been built successfully on Ubuntu 12.04.5
+         Compiling this package on platforms other than Ubuntu 12.04.5
+         may have unexpected results.
+
+===================
+ Build code
+===================
+
+1. Put the file "D7000v2_Src.tgz" into a directory of your choice.
+   Unzip and untar it with the following command:
+        
+        tar xzvf D7000v2_Src.tgz
+
+2. Run the following commands to build image
+
+        cd UGW-7.1.1
+        make V=s
+        make -f acos_Makefile
+        make -f acos_Makefile install
+        make target/install
+        ./build_acosimg.sh
+
+3. The final firmware is located in image. The filename is *.chk
+

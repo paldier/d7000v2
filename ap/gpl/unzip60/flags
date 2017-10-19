@@ -1,0 +1,1 @@
+CC="mips-openwrt-linux-uclibc-gcc" CF="-I. -Ibzip2 -DUNIX -O3 -DUNICODE_SUPPORT -DUNICODE_WCHAR -DUNICODE_SUPPORT -DUTF8_MAYBE_NATIVE -DNO_LCHMOD -DHAVE_DIRENT_H -DHAVE_TERMIOS_H -D_MBCS " CRCA_O="" AS="mips-openwrt-linux-uclibc-gcc -c" LFLAGS1="" LF2="-s" CC_BZ="mips-openwrt-linux-uclibc-gcc" CFLAGS_BZ=" -O3" IZ_BZIP2="bzip2" D_USE_BZ2="" L_BZ2="" LIBBZ2=""

@@ -1,0 +1,23 @@
+diff --git a/src/ap/ieee802_11.c b/src/ap/ieee802_11.c
+--- a/src/ap/ieee802_11.c
++++ b/src/ap/ieee802_11.c
+@@ -2006,6 +2006,8 @@ static void handle_assoc_cb(struct hosta
+ 		 * step.
+ 		 */
+ 		ap_sta_set_authorized(hapd, sta, 1);
++	} else {
++		ap_sta_set_authorized(hapd, sta, 0);
+ 	}
+ 
+ 	if (reassoc)
+diff --git a/src/ap/wpa_auth.c b/src/ap/wpa_auth.c
+--- a/src/ap/wpa_auth.c
++++ b/src/ap/wpa_auth.c
+@@ -1684,6 +1684,7 @@ SM_STATE(WPA_PTK, AUTHENTICATION2)
+ {
+ 	SM_ENTRY_MA(WPA_PTK, AUTHENTICATION2, wpa_ptk);
+ 
++	wpa_auth_set_eapol(sm->wpa_auth, sm->addr, WPA_EAPOL_portValid, 0);
+ 	wpa_group_ensure_init(sm->wpa_auth, sm->group);
+ 	sm->ReAuthenticationRequest = FALSE;
+ 

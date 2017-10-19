@@ -1,0 +1,12 @@
+diff -Npur hostapd-orig/src/ap/ieee802_11.c hostapd-2.1/src/ap/ieee802_11.c
+--- hostapd-orig/src/ap/ieee802_11.c	2014-09-24 12:09:30.000000000 +0300
++++ hostapd-2.1/src/ap/ieee802_11.c	2014-09-22 18:28:26.000000000 +0300
+@@ -2405,7 +2405,7 @@ void hostapd_wds_sta_connect(void *ctx, 
+ 	}
+ 	sta->flags |= WLAN_STA_AUTH;
+ 
+-	resp = check_assoc_ies_wds(hapd, sta, ie, ielen+4, 0);
++	resp = check_assoc_ies_wds(hapd, sta, ie, ielen, 0);
+ 	if (resp != WLAN_STATUS_SUCCESS) {
+ 		wpa_printf(MSG_ERROR, "check_assoc_ies_wds() failed");
+ 		hostapd_drv_sta_remove(hapd, sta->addr);

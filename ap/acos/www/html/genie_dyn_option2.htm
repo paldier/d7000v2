@@ -1,0 +1,94 @@
+<html>
+<head>
+<%11%>
+<title>NETGEAR   Genie</title>
+<%12%>
+<link rel="stylesheet" href="<%13%>">
+<script language="javascript" type="text/javascript">
+<!-- 
+
+function checkData()
+{
+	var cf = document.forms[0];
+	var msg = "";
+
+	if (msg.length > 1)
+	{
+		alert(msg);
+		return false;
+	}
+	return true;
+}
+
+function loadSettings()
+{
+	var cf = document.forms[0];
+	var wan_iptv = cf.wan_iptv.value;
+
+    if (wan_iptv == "1"){
+        cf.IPTVActive.checked = true;
+    }else{
+        cf.IPTVActive.checked = false;
+    }	
+}
+//-->
+</script>
+
+</head>
+
+<body bgcolor="#ffffff" onload="loadSettings();">
+<form name="formname" method="POST" action="geniedhcp2.cgi"> 
+<table border="0" cellpadding="0" cellspacing="3" width="99%">
+<tr style="height:10px">
+	<td>&nbsp;</td><td colspan="2">&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="centerTd" colspan="2">
+		<h2>DHCP Internet Connection Detected</h2>
+        </td>
+	<td>&nbsp;</td>
+
+</tr>
+<tr>	
+	<td>&nbsp;</td>
+	<td class="textRow centerTd" colspan="2"><p><%20%> </p></td>
+	<td>&nbsp;</td>
+</tr>
+
+<tr style="height:10px">
+	<td>&nbsp;</td><td colspan="2">&nbsp;</td><td>&nbsp;</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td><td nowrap style="height:40px;width:320px;padding-left:20px">
+  <input type="checkbox" name="IPTVActive" value="IPTVEnable" onclick="">
+  <%28%></td>
+  <td style="width:20px; left;">&nbsp;</td>
+  <td>&nbsp;</td>
+</tr>
+<tr style="height:10px">
+  <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+  <td>&nbsp;</td><td class="centerTd"><%33%> <a href="log2.htm" target="_blank"><%34%></a> <%35%>  </td><td>&nbsp;</td>
+</tr>
+
+
+<tr style="height:10px">
+	<td>&nbsp;</td><td colspan="2">&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td NOWRAP class="inputRow centerTd" colspan="2" tabindex="-1" onFocus="this.blur()"><span style="display:-moz-inline-box;display:inline-block;width:340px;text-align:right;padding-bottom:5px"></span><button value="submit" class="purpleBtn"  name="Next" onClick="return checkData()" onFocus="this.blur()" type="submit"><span><%36%></span></button>
+	</td>
+	<td>&nbsp;</td>
+</tr>
+</table>
+<input type="hidden" name="runtest" value="<%37%>">
+<INPUT name=wan_iptv type=hidden value= "<%42%>">
+</form>
+<p></p>
+</body>
+
+</html>

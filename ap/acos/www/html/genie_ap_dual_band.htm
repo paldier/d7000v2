@@ -1,0 +1,287 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR   Genie</title>
+<script src="jquery.js"></script>
+<%12%>
+<link rel="stylesheet" href="CDL.css">
+<script language="javascript" type="text/javascript">
+<!-- hide script from old browsers
+var DisableFixedIPDNS = false;
+  
+   
+function disableFixIP()
+{
+        var cf = document.forms[0];
+        cf.enable_fixed_ip_setting.checked=false;
+        $('.fix_ip_settings').hide();
+        
+}
+function FixIP()
+{
+     var cf = document.forms[0];
+     cf.enable_ap_mode.checked=false;     
+     $('.fix_ip_settings').show();
+}
+    
+   
+
+function checkData()
+{
+	var cf = document.forms[0];
+	var msg = "";
+
+    if (1)
+    {
+        var ap_ipaddr = (cf.WPethr1.value << 24) | (cf.WPethr2.value << 16) | (cf.WPethr3.value << 8)| (cf.WPethr4.value);
+        var ap_netmask = (cf.WMask1.value<< 24) | (cf.WMask2.value<< 16) | (cf.WMask3.value<< 8)| (cf.WMask4.value);    
+
+    
+    	if(cf.enable_fixed_ip_setting.checked)
+    	{
+    		if(checkIP(cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4,255)
+    		    ||checkIPMatchWithNetmask(cf.WMask1,cf.WMask2,cf.WMask3,cf.WMask4,cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4))
+    			msg+= "<%10%>";
+    		else
+    		{
+    			cf.WPethr1.value = parseInt(cf.WPethr1.value,10);
+    			cf.WPethr2.value = parseInt(cf.WPethr2.value,10);
+    			cf.WPethr3.value = parseInt(cf.WPethr3.value,10);
+    			cf.WPethr4.value = parseInt(cf.WPethr4.value,10);
+    		}
+    		if(checkIP(cf.WMask1,cf.WMask2,cf.WMask3,cf.WMask4,255))
+    			msg+= "<%405%>";
+    		else
+    		{
+    			cf.WMask1.value = parseInt(cf.WMask1.value,10);
+    			cf.WMask2.value = parseInt(cf.WMask2.value,10);
+    			cf.WMask3.value = parseInt(cf.WMask3.value,10);
+    			cf.WMask4.value = parseInt(cf.WMask4.value,10);
+    		}
+    		if(checkIP(cf.WGateway1,cf.WGateway2,cf.WGateway3,cf.WGateway4,255)
+    		    ||checkIPMatchWithNetmask(cf.WMask1,cf.WMask2,cf.WMask3,cf.WMask4,cf.WGateway1,cf.WGateway2,cf.WGateway3,cf.WGateway4))
+    			msg+= "<%406%>";
+    		else
+    		{
+    			cf.WGateway1.value = parseInt(cf.WGateway1.value,10);
+    			cf.WGateway2.value = parseInt(cf.WGateway2.value,10);
+    			cf.WGateway3.value = parseInt(cf.WGateway3.value,10);
+    			cf.WGateway4.value = parseInt(cf.WGateway4.value,10);
+    		}
+    
+    		var ap_gateway = (cf.WGateway1.value<< 24) | (cf.WGateway2.value<< 16) | (cf.WGateway3.value<< 8)| (cf.WGateway4.value);
+    		var tmpip = cf.WPethr1.value+'.'+cf.WPethr2.value+'.'+cf.WPethr3.value+'.'+cf.WPethr4.value;
+    		var tmpgwip = cf.WGateway1.value+'.'+cf.WGateway2.value+'.'+cf.WGateway3.value+'.'+cf.WGateway4.value;
+    		if((ap_ipaddr&ap_netmask) != (ap_gateway&ap_netmask))
+    		{
+    			alert("<%548%>" + tmpip + "<%549%>" + tmpgwip);
+    			return false;
+    		}
+
+    		if(checkIP(cf.DAddr1,cf.DAddr2,cf.DAddr3,cf.DAddr4,254)||(parseInt(cf.DAddr4.value,10)==0))
+    			msg+= "<%407%>";
+    		else
+    		{
+    			cf.DAddr1.value = parseInt(cf.DAddr1.value,10);
+    			cf.DAddr2.value = parseInt(cf.DAddr2.value,10);
+    			cf.DAddr3.value = parseInt(cf.DAddr3.value,10);
+    			cf.DAddr4.value = parseInt(cf.DAddr4.value,10);
+    		}
+    		if(cf.PDAddr1.value.length>0 || cf.PDAddr2.value.length>0 || cf.PDAddr3.value.length>0 || cf.PDAddr4.value.length>0)
+    		{
+    			if(checkIP(cf.PDAddr1,cf.PDAddr2,cf.PDAddr3,cf.PDAddr4,254)||(parseInt(cf.PDAddr4.value,10)==0))
+    				msg+= "<%408%>";
+    			else
+    			{
+    				cf.PDAddr1.value = parseInt(cf.PDAddr1.value,10);
+    				cf.PDAddr2.value = parseInt(cf.PDAddr2.value,10);
+    				cf.PDAddr3.value = parseInt(cf.PDAddr3.value,10);
+    				cf.PDAddr4.value = parseInt(cf.PDAddr4.value,10);
+    			}
+    		}
+    	}
+//    	ap_mode_grayout();
+    	
+    	cf.apmode_ipaddr.value = cf.WPethr1.value+'.'+cf.WPethr2.value+'.'+cf.WPethr3.value+'.'+cf.WPethr4.value;
+    	cf.apmode_netmask.value = cf.WMask1.value+'.'+cf.WMask2.value+'.'+cf.WMask3.value+'.'+cf.WMask4.value;
+    	cf.apmode_gateway.value = cf.WGateway1.value+'.'+cf.WGateway2.value+'.'+cf.WGateway3.value+'.'+cf.WGateway4.value;
+    	cf.apmode_dns1_pri.value = cf.DAddr1.value+'.'+cf.DAddr2.value+'.'+cf.DAddr3.value+'.'+cf.DAddr4.value;
+    	cf.apmode_dns1_sec.value = cf.PDAddr1.value+'.'+cf.PDAddr2.value+'.'+cf.PDAddr3.value+'.'+cf.PDAddr4.value;
+        
+           if(<%363%>=="0"){
+           // alert("<%1048%>");
+           }        
+	}
+	else
+	{
+      //  ap_mode_ungrayout();
+        
+         if(<%363%>=="1"){
+         //   alert("<%1048%>");  
+        }      
+	}
+	if (msg.length > 1)
+	{
+		alert(msg);
+		return false;
+	}
+	return true;
+}
+
+function loadSettings()
+{
+	var cf = document.forms[0];
+	var i;
+    
+	var apmode_ipaddr = cf.apmode_ipaddr.value.split(".");
+	var apmode_netmask = cf.apmode_netmask.value.split(".");
+	var apmode_gateway = cf.apmode_gateway.value.split(".");
+	var apmode_dns1_pri = cf.apmode_dns1_pri.value.split(".");
+	var apmode_dns1_sec = cf.apmode_dns1_sec.value.split(".");       
+        $('.fix_ip_settings').hide();	
+
+	cf.WPethr1.value = apmode_ipaddr[0];
+	cf.WPethr2.value = apmode_ipaddr[1];
+	cf.WPethr3.value = apmode_ipaddr[2];
+	cf.WPethr4.value = apmode_ipaddr[3];
+	cf.WMask1.value = apmode_netmask[0];
+	cf.WMask2.value = apmode_netmask[1];
+	cf.WMask3.value = apmode_netmask[2];
+	cf.WMask4.value = apmode_netmask[3];
+	cf.WGateway1.value = apmode_gateway[0];
+	cf.WGateway2.value = apmode_gateway[1];
+	cf.WGateway3.value = apmode_gateway[2];
+	cf.WGateway4.value = apmode_gateway[3];
+	
+	if (cf.apmode_dns1_pri.value != "")
+	{
+		cf.DAddr1.value = apmode_dns1_pri[0];
+		cf.DAddr2.value = apmode_dns1_pri[1];
+		cf.DAddr3.value = apmode_dns1_pri[2];
+		cf.DAddr4.value = apmode_dns1_pri[3];
+	}
+	if (cf.apmode_dns1_sec.value != "")
+	{
+		cf.PDAddr1.value = apmode_dns1_sec[0];
+		cf.PDAddr2.value = apmode_dns1_sec[1];
+		cf.PDAddr3.value = apmode_dns1_sec[2];
+		cf.PDAddr4.value = apmode_dns1_sec[3];
+	}
+}
+
+
+
+function setIP_DNS()
+{
+	var cf = document.forms[0];
+	var dflag = cf.enable_fixed_ip_setting.checked;
+	DisableFixedIPDNS = dflag;
+}
+
+//-->
+</script>
+</head>
+
+<body bgcolor="#ffffff" onload="loadSettings();">
+<form id="target"  name="formname" method="POST" action="genie_ap_set.cgi">
+<table style="border-collapse:collapse;width:97%">
+<tbody>
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+  <td>&nbsp;</td>
+  <td class="centerTd"><h2>To add this router to your network in Access Point Mode</h2></td>
+  <td>&nbsp;</td>
+</tr>
+<tr>
+		<td>&nbsp;</td><td class="centerTd">IP Address of this new device</td><td>&nbsp;</td>
+	</tr>
+<tr>
+  <td>&nbsp;</td>
+  <td class="centerTd textRow">
+  <INPUT TYPE="radio" NAME="enable_ap_mode" value="enable_ap_mode" checked onclick="disableFixIP();">
+  Get IP Address dynamically from existing router.
+  </td>
+  <td>&nbsp;</td>
+</tr>
+
+
+<tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td class="centerTd textRow">    
+    <INPUT TYPE="radio" NAME="enable_fixed_ip_setting" value="enable_fixed_ip_setting" onclick="FixIP();">
+    Use fixed IP Address (not recommended)
+    </td>
+     <td>&nbsp;</td>
+  </tr>
+<tr style="line-height:10px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+  <tr class="fix_ip_settings">
+        	<td>&nbsp;</td>
+        <td nowrap="" class="inputRow centerTd" tabindex="-1"><span style="display:-moz-inline-box;display:inline-block;padding-left:30px;width:300px;padding-bottom:5px"><%444%></span><input type="text" name="WPethr1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheck(this,0)">.<input type="text" name="WPethr2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)" >.<input type="text" name="WPethr3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="WPethr4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,1)"></td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr class="fix_ip_settings">
+        	<td>&nbsp;</td>
+        <td nowrap="" class="inputRow centerTd" tabindex="-1"><span style="display:-moz-inline-box;display:inline-block;padding-left:30px;width:300px;padding-bottom:5px"><%445%></span><input type="text" name="WMask1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheck(this,0)">.<input type="text" name="WMask2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="WMask3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="WMask4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,1)"></td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr class="fix_ip_settings">
+       <td>&nbsp;</td>
+        <td nowrap="" class="inputRow centerTd" tabindex="-1"><span style="display:-moz-inline-box;display:inline-block;padding-left:30px;width:300px;padding-bottom:5px"><%446%></span><input type="text" name="WGateway1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheck(this,0)">.<input type="text" name="WGateway2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="WGateway3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="WGateway4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,1)"></td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr class="fix_ip_settings">
+        <td>&nbsp;</td>
+        <td nowrap="" class="inputRow centerTd" tabindex="-1"><span style="display:-moz-inline-box;display:inline-block;padding-left:30px;width:300px;padding-bottom:5px"><%451%></span><input type="text" name="DAddr1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheck(this,0)">.<input type="text" name="DAddr2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="DAddr3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="DAddr4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,1)"></td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr class="fix_ip_settings">
+         <td>&nbsp;</td>
+        <td nowrap="" class="inputRow centerTd" tabindex="-1"><span style="display:-moz-inline-box;display:inline-block;padding-left:30px;width:300px;padding-bottom:5px"><%452%></span><input type="text" name="PDAddr1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheck(this,0)">.<input type="text" name="PDAddr2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="PDAddr3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="PDAddr4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIPDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,1)"></td>
+        <td>&nbsp;</td>
+  </tr>
+
+<tr style="line-height:10px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+ <tr>
+	<td>&nbsp;</td><td class="centerTd textRow">Note: After you click <b>Next</b>, this router will be assigned a new IP address. When it happens</td><td>&nbsp;</td>
+</tr> 
+<tr>
+	<td>&nbsp;</td><td class="centerTd textRow">your browser might be disconnected from the network. To reconnect to the router, close </td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td><td class="centerTd textRow">the window and launch your browser again.</td><td>&nbsp;</td>
+</tr>
+
+<tr style="line-height:10px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+
+
+<tr>
+	<td>&nbsp;</td>
+	<td NOWRAP class="inputRow centerTd" colspan="2" tabindex="-1" onFocus="this.blur()"><span style="display:-moz-inline-box;display:inline-block;width:260px;text-align:right;padding-bottom:5px"></span><button value="GenieSubmit" class="purpleBtn"  name="Apply" onClick="return checkData()" onFocus="this.blur()" type="submit"><span><%36%></span></button>
+	</td>
+	<td>&nbsp;</td>
+</tr>
+</table>
+
+
+
+<INPUT name=apmode_ipaddr type=hidden value= "<%1224%>">
+<INPUT name=apmode_netmask type=hidden value= "<%1225%>">
+<INPUT name=apmode_gateway type=hidden value= "<%1228%>">
+<INPUT name=apmode_dns_sel type=hidden value= "<%1509%>">
+<INPUT name=apmode_dns1_pri type=hidden value= "<%1233%>">
+<INPUT name=apmode_dns1_sec type=hidden value= "<%1234%>">
+<INPUT name=genie_apmode_page type=hidden value= "1">
+<a name="helpframe-anchor"></a>
+</form>
+</body>
+</html>

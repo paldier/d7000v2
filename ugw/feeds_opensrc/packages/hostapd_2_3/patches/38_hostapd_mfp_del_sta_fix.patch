@@ -1,0 +1,15 @@
+diff --exclude 'msvc*' -Npur orig/src/ap/ieee802_11.c patched/src/ap/ieee802_11.c
+--- orig/src/ap/ieee802_11.c	2015-12-16 10:38:35.000000000 +0200
++++ patched/src/ap/ieee802_11.c	2015-12-21 14:49:55.000000000 +0200
+@@ -1533,7 +1533,10 @@ static void handle_disassoc(struct hosta
+ 	 * authenticated. */
+ 	accounting_sta_stop(hapd, sta);
+ 	ieee802_1x_free_station(sta);
+-	hostapd_drv_sta_remove(hapd, sta->addr);
++	/* Assume STA has MFP ON. Prevent it removing here, letting DEAUTH to be sent encrypted! */
++	if (!sta->flags & WLAN_STA_MFP) {
++		hostapd_drv_sta_remove(hapd, sta->addr);
++	}
+ #if 0
+ 	if (sta->aid > 0 && hapd->driver->free_aid)
+ 		(*hapd->driver->free_aid)(hapd->drv_priv, &sta->aid);

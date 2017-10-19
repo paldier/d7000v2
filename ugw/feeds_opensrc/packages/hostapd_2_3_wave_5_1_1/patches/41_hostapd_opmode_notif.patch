@@ -1,0 +1,43 @@
+--- hostap/hostapd/config_file.c	2016-01-06 17:23:49.000000000 +0200
++++ hostap-opmode_notif/hostapd/config_file.c	2016-01-06 18:58:18.000000000 +0200
+@@ -3275,6 +3275,8 @@ static int hostapd_config_fill(struct ho
+ 		bss->disable_dgaf = atoi(pos);
+ 	} else if (os_strcmp(buf, "proxy_arp") == 0) {
+ 		bss->proxy_arp = atoi(pos);
++	} else if (os_strcmp(buf, "opmode_notif") == 0) {
++		bss->opmode_notif = atoi(pos);
+ 	} else if (os_strcmp(buf, "osen") == 0) {
+ 		bss->osen = atoi(pos);
+ 	} else if (os_strcmp(buf, "anqp_domain_id") == 0) {
+--- hostap/src/ap/ap_config.h	2016-01-06 17:23:58.000000000 +0200
++++ hostap-opmode_notif/src/ap/ap_config.h	2016-01-06 17:45:49.000000000 +0200
+@@ -460,6 +460,7 @@ struct hostapd_bss_config {
+ 
+ 	int osen;
+ 	int proxy_arp;
++	int opmode_notif;
+ #ifdef CONFIG_HS20
+ 	int hs20;
+ 	int disable_dgaf;
+--- hostap/src/ap/ieee802_11_shared.c	2016-01-06 16:22:44.000000000 +0200
++++ hostap-opmode_notif/src/ap/ieee802_11_shared.c	2016-01-06 18:59:45.000000000 +0200
+@@ -212,6 +212,10 @@ static void hostapd_ext_capab_byte(struc
+ 		if (hapd->conf->ssid.utf8_ssid)
+ 			*pos |= 0x01; /* Bit 48 - UTF-8 SSID */
+ 		break;
++	case 7: /* Bits 56-63 */
++		if (hapd->conf->opmode_notif)
++			*pos |= 0x40; /* Bit 62 - Operating Mode Notification */
++		break;
+ 	}
+ }
+ 
+@@ -233,6 +237,8 @@ u8 * hostapd_eid_ext_capab(struct hostap
+ 		len = 7;
+ 	if (len < 2 && hapd->conf->proxy_arp)
+ 		len = 2;
++	if (len < 8 && hapd->conf->opmode_notif)
++		len = 8;
+ #ifdef CONFIG_WNM
+ 	if (len < 4)
+ 		len = 4;

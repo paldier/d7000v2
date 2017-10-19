@@ -1,0 +1,32 @@
+Index: mountd-0.1/lib/mount.c
+===================================================================
+--- mountd-0.1.orig/lib/mount.c	2016-12-10 07:02:23.229843633 +0800
++++ mountd-0.1/lib/mount.c	2016-12-10 07:04:43.542308440 +0800
+@@ -138,8 +138,10 @@
+ 	struct mount *mount;
+ 	char tmp[64], tmp2[64];
+ 	if(fs <= MBR || fs > EXT4)
++	{
++		system_printf("ACTION=mount DEVICE=%s /sbin/hotplug-call mount", dev); /* foxconn added */
+ 		return;
+-
++    }
+ 	system_printf("/etc/init.d/usb_led.sh &");
+ 
+ 	mount  = malloc(sizeof(struct mount));
+@@ -280,6 +282,7 @@
+ 		}
+ 		if(mount->fs == NTFS)
+ 		{
++#if 0 /*removed by Foxconn */
+ 			if (system_printf("[ -f /lib/modules/*/tntfs.ko ]") == 0) {
+ 				ret = system_printf("insmod /lib/modules/*/nls_utf8.ko; insmod /lib/modules/*/tntfs.ko");
+ 				log_printf("mount -t tntfs /dev/%s %s", mount->dev, tmp);
+@@ -290,6 +293,7 @@
+ 				ret = system_printf("insmod /lib/modules/*/fuse.ko");
+ 				ret = system_printf("nice -n 19 ntfs-3g /dev/%s %s -o force", mount->dev, tmp);
+ 			}
++#endif
+ 		}
+ 		exit(WEXITSTATUS(ret));
+ 	}

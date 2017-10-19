@@ -1,0 +1,43 @@
+From acf55ec5b62fc853a6750b90cf83c0d2f36eb399 Mon Sep 17 00:00:00 2001
+From: Wade T Cline <wade.t.cline@intel.com>
+Date: Thu, 7 Jan 2016 16:45:46 -0800
+Subject: [PATCH] Rename CGM to Puma7.
+
+---
+ drivers/usb/host/xhci-pci.c |    6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/usb/host/xhci-pci.c b/drivers/usb/host/xhci-pci.c
+index 533e08f..de1acc5 100644
+--- a/drivers/usb/host/xhci-pci.c
++++ b/drivers/usb/host/xhci-pci.c
+@@ -43,7 +43,7 @@
+ #define PCI_DEVICE_ID_INTEL_LYNXPOINT_XHCI	0x8c31
+ #define PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_XHCI	0x9c31
+ #define PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI		0x22b5
+-#define PCI_DEVICE_ID_INTEL_COUGARPARK_XHCI		0x2bb5
++#define PCI_DEVICE_ID_INTEL_PUMA7_XHCI			0x2bb5
+ #define PCI_DEVICE_ID_INTEL_SUNRISEPOINT_H_XHCI		0xa12f
+ #define PCI_DEVICE_ID_INTEL_SUNRISEPOINT_LP_XHCI	0x9d2f
+ 
+@@ -153,7 +153,7 @@ static void xhci_pci_quirks(struct device *dev, struct xhci_hcd *xhci)
+ 	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
+ 		(pdev->device == PCI_DEVICE_ID_INTEL_SUNRISEPOINT_LP_XHCI ||
+ 		 pdev->device == PCI_DEVICE_ID_INTEL_SUNRISEPOINT_H_XHCI ||
+-		 pdev->device == PCI_DEVICE_ID_INTEL_COUGARPARK_XHCI ||
++		 pdev->device == PCI_DEVICE_ID_INTEL_PUMA7_XHCI ||
+ 		 pdev->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI)) {
+ 		xhci->quirks |= XHCI_PME_STUCK_QUIRK;
+ 	}
+@@ -191,7 +191,7 @@ static void xhci_pme_quirk(struct usb_hcd *hcd, bool suspend)
+ 
+ 	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
+ 		(pdev->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI ||
+-		 pdev->device == PCI_DEVICE_ID_INTEL_COUGARPARK_XHCI)) {
++		 pdev->device == PCI_DEVICE_ID_INTEL_PUMA7_XHCI)) {
+ 
+ 		reg = (void __iomem *) xhci->cap_regs + PORT2_SSIC_CONFIG_REG2;
+ 
+-- 
+1.7.9.5
+

@@ -1,0 +1,358 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR Router <%55%></title> 
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style>
+<%12%>
+<script language="javascript" type="text/javascript">
+<!--
+
+
+
+
+  function changeCursorPointer()
+  {
+        document.body.style.cursor='pointer';
+  }
+
+  function changeCursorDefault()
+  {
+        document.body.style.cursor='default';
+  }
+
+
+
+
+    function buttonFilter()
+    {
+        var buttonElements;
+
+        buttonElements=document.getElementsByTagName('button');
+        var i;
+        for(i=0;i<buttonElements.length;i++)
+        {
+            if(buttonElements[i].type=='submit' || buttonElements[i].type=='button'|| buttonElements[i].type=='reset')
+            {
+                if((buttonElements[i].value!=document.forms[0].buttonHit.name))
+                    buttonElements[i].disabled=1;
+                else
+                {
+                      var name;
+                      name=buttonElements[i].name;
+                      buttonElements[i].name='NoUse';
+                      buttonElements[i].disabled=1;
+                      document.forms[0].buttonValue.name=name;
+                      document.forms[0].buttonHit.disabled=1;
+                }
+            }
+        }
+
+    }
+
+    function buttonClick(btn,value)
+    {
+
+        document.forms[0].buttonHit.value=btn.name;
+        document.forms[0].buttonValue.value=value;
+        return true;
+    }
+
+
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            imgSrc.src="img/helparrowdown-icon.gif";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.gif";
+            setTimeout(setHelpIframeVisible,500);
+        }
+             change_size();
+
+    }
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+    function loadhelp(fname,anchname)
+    {
+                var pane = window.frames["helpframe"].$('#content');
+                var imgSrc=document.getElementById('help-button');
+                if(imgSrc.src.search("up")<0)
+                {
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+
+                        if ((loadhelp.arguments.length == 1 ) || (anchname == "" ))
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm";
+                                $(".help-frame-div").show();
+                        }
+                        else
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm#" + anchname;
+                                $(".help-frame-div").show();
+                        }
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+                }
+    }
+function Loadsettings(index)
+{
+    var cf = document.forms[0];
+
+    if (cf.vdsl_gvector_friendly.value == "on")
+        cf.vector_f.selectedIndex = 0;
+    else
+        cf.vector_f.selectedIndex = 1;
+
+    if (cf.atm_bitswap.value == "on")
+        cf.bitswap.selectedIndex = 0;
+    else
+        cf.bitswap.selectedIndex = 1;
+
+    if (cf.atm_sra.value == "on")
+        cf.sra.selectedIndex = 0;
+    else
+        cf.sra.selectedIndex = 1;
+
+    if (cf.atm_sesdrop.value == "on")
+        cf.sesdrop.selectedIndex = 0;
+    else
+        cf.sesdrop.selectedIndex = 1;
+  
+    if (cf.atm_annex_m.value == "on")
+        cf.annex_m.selectedIndex = 0;
+    else
+        cf.annex_m.selectedIndex = 1;
+
+    if (cf.atm_trellis.value == "on")
+        cf.trellis.selectedIndex = 0;
+    else
+        cf.trellis.selectedIndex = 1;
+
+    if (cf.atm_CoMinMgn.value == "on")
+        cf.CoMinMgn.selectedIndex = 0;
+    else
+        cf.CoMinMgn.selectedIndex = 1;
+
+    if (cf.atm_SOS.value == "on")
+        cf.SOS.selectedIndex = 0;
+    else
+        cf.SOS.selectedIndex = 1;
+
+    if (cf.atm_dynamicD.value == "on")
+        cf.dynamicD.selectedIndex = 0;
+    else
+        cf.dynamicD.selectedIndex = 1;
+
+    if (cf.atm_dynamicF.value == "on")
+        cf.dynamicF.selectedIndex = 0;
+    else
+        cf.dynamicF.selectedIndex = 1;
+}
+
+function checkData()
+{
+	return true;
+}
+
+function isNum(name,value)
+{	
+	var i = 0;
+	for( i = 0;i < value.length;i++ ){
+	if ( (value.charAt(i) >= '0') && (value.charAt(i) <= '9') )
+			continue;
+	else{
+		alert(name+" <%6%>");
+		return false;
+		}
+	}
+	return true;
+}
+
+function loadcheck()
+{
+    //loadhelp('BAS_dsl');
+}
+
+
+//-->
+</script>
+</head>
+
+<body  onLoad="Loadsettings(100);loadcheck();">
+<form id="target"  name="formname" method="post" action="adsl_adv.cgi">
+<img style="position:relative;left:-7px;" src="img/NewNetgeargenie.png" >
+<H1><%69%></H1>
+<div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div>
+<table width:100%">
+<tr><td colspan="3" height="12"></td></tr>
+
+<tr>
+ <td width="50%">AnnexM</TD>
+ <td width="50%">
+ <SELECT name="annex_m" size="1">
+	 <option value="0">On</option>
+	 <option value="1">Off</option>
+ </SELECT></TD>
+</tr>
+
+<tr>
+ <td width="50%">bitswap</TD>
+ <td width="50%">
+ <SELECT name="bitswap" size="1">
+	 <option value="0">On</option>
+	 <option value="1">Off</option>
+ </SELECT></TD>
+</tr>
+
+<tr>
+ <td width="50%">sra</TD>
+ <td width="50%">
+ <SELECT name="sra" size="1">
+	 <option value="0">On</option>
+	 <option value="1">Off</option>
+ </SELECT></TD>
+</tr>
+
+<tr>
+ <td width="50%">trellis</TD>
+ <td width="50%">
+ <SELECT name="trellis" size="1">
+	 <option value="0">On</option>
+	 <option value="1">Off</option>
+ </SELECT></TD>
+</tr>
+
+<tr>
+ <td width="50%">sesdrop</TD>
+ <td width="50%">
+ <SELECT name="sesdrop" size="1">
+	 <option value="0">On</option>
+	 <option value="1">Off</option>
+ </SELECT></TD>
+</tr>
+
+<tr>
+ <td width="50%">CoMinMgn</TD>
+ <td width="50%">
+ <SELECT name="CoMinMgn" size="1">
+	 <option value="0">On</option>
+	 <option value="1">Off</option>
+ </SELECT></TD>
+</tr>
+
+<tr>
+ <td width="50%">SOS</TD>
+ <td width="50%">
+ <SELECT name="SOS" size="1">
+	 <option value="0">On</option>
+	 <option value="1">Off</option>
+ </SELECT></TD>
+</tr>
+
+<tr>
+ <td width="50%">dynamicD</TD>
+ <td width="50%">
+ <SELECT name="dynamicD" size="1">
+	 <option value="0">On</option>
+	 <option value="1">Off</option>
+ </SELECT></TD>
+</tr>
+
+<tr>
+ <td width="50%">dynamicF</TD>
+ <td width="50%">
+ <SELECT name="dynamicF" size="1">
+	 <option value="0">On</option>
+	 <option value="1">Off</option>
+ </SELECT></TD>
+</tr>
+
+ <tr>
+ <td width="50%">snr</TD>
+ <td width="50%">
+                <SELECT name=atm_snr size=1>
+                    <OPTION value=3 <%70%>>3</OPTION>
+                    <OPTION value=4 <%71%>>4</OPTION>
+                    <OPTION value=5 <%72%>>5</OPTION>
+                    <OPTION value=6 <%73%>>6</OPTION>
+                    <OPTION value=7 <%74%>>7</OPTION>
+                    <OPTION value=8 <%75%>>8</OPTION>
+                    <OPTION value=9 <%76%>>9</OPTION></SELECT></td></tr>
+
+<tr>
+ <td width="50%">G.vector friendly mode (G.993.2 Annex Y)</TD>
+ <td width="50%">
+ <SELECT name="vector_f" size="1">
+	 <option value="0">On</option>
+	 <option value="1">Off</option>
+ </SELECT></TD>
+</tr>
+
+
+<tr><td colspan="3" height="12"></td></tr>
+<tr>  
+  <td colspan="2" align="center">
+&nbsp;&nbsp;&nbsp;<button type="submit" value="SUBMIT"  onClick="buttonClick(this,'<%61%>');return checkData()" name="apply" class="button-apply" style="padding-left:10px"> <span class="roundleft_apply" ><%62%>&nbsp;<span class="apply-icon">&nbsp;&nbsp;&nbsp;&nbsp;</span></span><span class="roundright_apply">&nbsp;&nbsp;&nbsp;</span></button>
+&nbsp;&nbsp;&nbsp;<button type="button" value="BUTTON"  onClick="buttonClick(this,'<%63%>');reset();loadSettings();" name="Cancel" class="button-rule" style="padding-left:10px" ><span class="roundleft_button"><span class ="cancel-icon">&nbsp;&nbsp;&nbsp;&nbsp;<%64%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+</tr>
+</table></td></tr>
+
+<INPUT name=atm_bitswap type=hidden value= "<%77%>">
+<INPUT name=atm_sra type=hidden value= "<%78%>">
+<INPUT name=atm_sesdrop type=hidden value= "<%79%>">
+<INPUT name=atm_annex_m type=hidden value= "<%80%>">
+<INPUT name=atm_trellis type=hidden value= "<%81%>">
+<INPUT name=atm_CoMinMgn type=hidden value= "<%82%>">
+<INPUT name=atm_SOS type=hidden value= "<%83%>">
+<INPUT name=atm_dynamicD type=hidden value= "<%84%>">
+<INPUT name=atm_dynamicF type=hidden value= "<%85%>">
+<INPUT name=vdsl_gvector_friendly type=hidden value= "<%86%>">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+</form>
+</body>
+</html>
+
+
+

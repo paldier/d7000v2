@@ -1,0 +1,88 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR Router <%55%></title>
+<link rel="stylesheet" href="css/table.css">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<script language=JavaScript type="text/javascript">
+
+
+
+    $(document).ready(function()
+    {	
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+function refreshPage() {
+	if(document.forms[0].refreshScrn.value == 'yes')
+	window.setTimeout('window.location.href = "RST_st_ipoa.htm";',5000);
+}
+
+//-->
+</script>
+</head>
+<body  leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" text=black onLoad="refreshPage()" style="margin:0px;background-color:#e5e5e5">
+
+<form id="target"  method="post" action="st_ipoa.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+
+<TABLE border=0 width="100%">
+
+ 
+ <TR>
+ <TD colspan="2" align="left" nowrap><h1><%771%> </h1></TD>
+ </TR>
+ 
+</TABLE>
+
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+
+<tr> 
+ <td background="liteblue.gif" height="12"> &nbsp;</td>
+</tr>
+</table>
+
+
+<table width="100%" border=1 cellspacing=1 cellpadding=4>
+<tr>
+	<TD NOWRAP><B><%397%></B></td>
+	<TD NOWRAP><%968%></td>
+</tr>
+<tr>
+	<TD NOWRAP><B><%1279%></B></td>
+	<TD NOWRAP><%1281%></td>
+<tr>
+         <TD NOWRAP><B><%1231%></B></td>
+        <TD NOWRAP><%1232%></td>
+</tr>
+</table>
+
+
+<table border="0" cellpadding="0" cellspacing="3" width="100%">
+
+<tr> 
+ <td background="liteblue.gif" height="12"> &nbsp;</td>
+</tr>
+ <TR>
+ <TD align="center">&nbsp;&nbsp;&nbsp;<button type=button value="<%386%>" name="close" class="button-rule" onclick="buttonClick(this,'<%386%>');self.close();"><span class="roundleft_button">&nbsp;&nbsp; <%386%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button></TD>
+</TR>
+</TABLE>
+
+
+<input type="hidden" name="refreshScrn" value="yes">
+</form>
+
+</body>
+</html>
+

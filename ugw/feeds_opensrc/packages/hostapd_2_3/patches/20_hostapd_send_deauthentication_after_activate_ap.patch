@@ -1,0 +1,18 @@
+# HG changeset patch
+# Parent 000395eb5c657dc9e197b9f06c153251c9a44311
+
+diff --git a/src/ap/hostapd.c b/src/ap/hostapd.c
+--- a/src/ap/hostapd.c
++++ b/src/ap/hostapd.c
+@@ -1312,6 +1312,11 @@ int hostapd_setup_interface_complete(str
+ 	if (iface->interfaces && iface->interfaces->terminate_on_error > 0)
+ 		iface->interfaces->terminate_on_error--;
+ 
++	for (j = 0; j < iface->num_bss; j++) {
++		hapd = iface->bss[j];
++		hostapd_flush_old_stations(hapd, WLAN_REASON_PREV_AUTH_NOT_VALID);
++	}
++
+ 	return 0;
+ 
+ fail:

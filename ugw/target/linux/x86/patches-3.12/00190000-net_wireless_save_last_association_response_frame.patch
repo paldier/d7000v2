@@ -1,0 +1,37 @@
+diff -Npur '-x*.*.rej' '-x*.*.orig' '-x*.patch' a/include/net/cfg80211.h b/include/net/cfg80211.h
+--- a/include/net/cfg80211.h	2014-04-03 08:32:32.000000000 +0000
++++ b/include/net/cfg80211.h	2015-11-11 15:41:36.844046100 +0000
+@@ -735,6 +735,9 @@ enum station_parameters_apply_mask {
+  * @capability: station capability
+  * @ext_capab: extended capabilities of the station
+  * @ext_capab_len: number of extended capabilities
++ * @resp: last association response frame
++ *	(or NULL for no change)
++ * @resp_len: length of last association response
+  */
+ struct station_parameters {
+ 	const u8 *supported_rates;
+@@ -754,6 +757,8 @@ struct station_parameters {
+ 	u16 capability;
+ 	const u8 *ext_capab;
+ 	u8 ext_capab_len;
++	u8 *resp;
++	size_t resp_len;
+ };
+ 
+ /**
+diff -Npur '-x*.*.rej' '-x*.*.orig' '-x*.patch' a/net/wireless/nl80211.c b/net/wireless/nl80211.c
+--- a/net/wireless/nl80211.c	2014-04-03 08:32:32.000000000 +0000
++++ b/net/wireless/nl80211.c	2015-11-11 15:41:36.866046100 +0000
+@@ -4055,6 +4055,11 @@ static int nl80211_new_station(struct sk
+ 	params.listen_interval =
+ 		nla_get_u16(info->attrs[NL80211_ATTR_STA_LISTEN_INTERVAL]);
+ 
++	if (info->attrs[NL80211_ATTR_FRAME]) {
++		params.resp = nla_data(info->attrs[NL80211_ATTR_FRAME]);
++		params.resp_len = nla_len(info->attrs[NL80211_ATTR_FRAME]);
++	}
++
+ 	if (info->attrs[NL80211_ATTR_PEER_AID])
+ 		params.aid = nla_get_u16(info->attrs[NL80211_ATTR_PEER_AID]);
+ 	else

@@ -1,0 +1,1 @@
+PAGES := blur_new.jpg logo_new.gif repeat_edge_new.gif overlib.js style.css index.asp basic.gif lan.asp lan.gif wan.asp wan.gif status.asp status.gif filter.asp filter.gif forward.asp forward.gif wireless.asp wireless.gif security.asp security.gif firmware.asp firmware.gif internal.asp internal.gif

@@ -1,0 +1,3 @@
+libntfs_3g_la-xattrs.lo: xattrs.c ../config.h
+
+../config.h:

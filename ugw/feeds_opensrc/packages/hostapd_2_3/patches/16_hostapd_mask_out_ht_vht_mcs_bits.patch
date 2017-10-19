@@ -1,0 +1,92 @@
+diff --exclude 'msvc*' -Npur hostap-patched_ap_free_sta/src/ap/ieee802_11_ht.c hostap-patched_mcs_bitmask/src/ap/ieee802_11_ht.c
+--- hostap-patched_ap_free_sta/src/ap/ieee802_11_ht.c	2015-05-19 17:14:48.000000000 +0300
++++ hostap-patched_mcs_bitmask/src/ap/ieee802_11_ht.c	2015-05-29 10:03:32.000000000 +0300
+@@ -476,6 +476,7 @@ void hostapd_get_ht_capab(struct hostapd
+ 			  struct ieee80211_ht_capabilities *neg_ht_cap)
+ {
+ 	u16 cap;
++	int i;
+ 
+ 	if (ht_cap == NULL)
+ 		return;
+@@ -501,6 +502,11 @@ void hostapd_get_ht_capab(struct hostapd
+ 		cap &= ~HT_CAP_INFO_RX_STBC_MASK;
+ 
+ 	neg_ht_cap->ht_capabilities_info = host_to_le16(cap);
++
++	/* mask out supported MCS set vs our own MCS set */
++	for (i = 0; i < sizeof(neg_ht_cap->supported_mcs_set); i++) {
++		neg_ht_cap->supported_mcs_set[i] = ht_cap->supported_mcs_set[i] & hapd->iface->current_mode->mcs_set[i];
++	}
+ }
+ 
+ 
+diff --exclude 'msvc*' -Npur hostap-patched_ap_free_sta/src/ap/ieee802_11_vht.c hostap-patched_mcs_bitmask/src/ap/ieee802_11_vht.c
+--- hostap-patched_ap_free_sta/src/ap/ieee802_11_vht.c	2014-10-09 17:41:31.000000000 +0300
++++ hostap-patched_mcs_bitmask/src/ap/ieee802_11_vht.c	2015-05-29 14:59:47.000000000 +0300
+@@ -122,6 +122,38 @@ u16 set_sta_vht_opmode(struct hostapd_da
+ 	return WLAN_STATUS_SUCCESS;
+ }
+ 
++#ifndef MIN
++#define MIN(x,y) ((x) < (y) ? (x) : (y))
++#endif
++
++static inline u16 limit_rx_tx_highest (u16 x, u16 y) {
++	u16 res = 0;
++	x = le_to_host16(x);
++	y = le_to_host16(y);
++	if (!x)
++		res = y;
++	else if (!y)
++		res = x;
++	else
++		res = MIN(x, y);
++	return host_to_le16(res);
++}
++
++static inline u16 limit_rx_tx_map (u16 x, u16 y) {
++	u16 res = 0;
++	int i;
++	for (i = 0; i < 16; i+=2) {
++		u16 mask = 3 << i;
++		u16 r1 = x & mask;
++		u16 r2 = y & mask;
++		if (r1 == mask || r2 == mask) {
++			res |= mask;
++		} else {
++			res |= MIN(r1, r2);
++		}
++	}
++	return res;
++}
+ 
+ void hostapd_get_vht_capab(struct hostapd_data *hapd,
+ 			   struct ieee80211_vht_capabilities *vht_cap,
+@@ -183,4 +215,26 @@ void hostapd_get_vht_capab(struct hostap
+ 		cap &= ~VHT_CAP_RXSTBC_MASK;
+ 
+ 	neg_vht_cap->vht_capabilities_info = host_to_le32(cap);
++
++	/* mask out supported MCS set vs our own MCS set */
++	{
++		u16 our_mcs_set[4];
++
++		os_memcpy(our_mcs_set, hapd->iface->current_mode->vht_mcs_set, sizeof(our_mcs_set));
++		/* RX highest vs our TX highest*/
++		neg_vht_cap->vht_supported_mcs_set.rx_highest =
++			limit_rx_tx_highest(neg_vht_cap->vht_supported_mcs_set.rx_highest, our_mcs_set[3]);
++
++		/* TX highest vs our RX highest*/
++		neg_vht_cap->vht_supported_mcs_set.tx_highest =
++			limit_rx_tx_highest(neg_vht_cap->vht_supported_mcs_set.tx_highest, our_mcs_set[1]);
++
++		/* RX map vs our TX map */
++		neg_vht_cap->vht_supported_mcs_set.rx_map =
++			limit_rx_tx_map(neg_vht_cap->vht_supported_mcs_set.rx_map, our_mcs_set[2]);
++
++		/* TX map vs our RX map */
++		neg_vht_cap->vht_supported_mcs_set.tx_map =
++			limit_rx_tx_map(neg_vht_cap->vht_supported_mcs_set.tx_map, our_mcs_set[0]);
++	}
+ }

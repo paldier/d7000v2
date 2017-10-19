@@ -1,0 +1,84 @@
+Index: iproute2-2.6.39/include/linux/pkt_cls.h
+===================================================================
+--- iproute2-2.6.39.orig/include/linux/pkt_cls.h	2011-06-30 04:31:48.000000000 +0530
++++ iproute2-2.6.39/include/linux/pkt_cls.h	2013-11-28 11:26:44.000000000 +0530
+@@ -188,6 +188,7 @@
+ 	TCA_U32_INDEV,
+ 	TCA_U32_PCNT,
+ 	TCA_U32_MARK,
++	TCA_U32_EXTMARK,
+ 	__TCA_U32_MAX
+ };
+ 
+Index: iproute2-2.6.39/tc/f_u32.c
+===================================================================
+--- iproute2-2.6.39.orig/tc/f_u32.c	2013-11-28 11:19:09.000000000 +0530
++++ iproute2-2.6.39/tc/f_u32.c	2013-11-28 11:25:35.000000000 +0530
+@@ -990,6 +990,40 @@
+ 	return res;
+ }
+ 
++static int parse_extmark(int *argc_p, char ***argv_p, struct nlmsghdr *n)
++{
++	int res = -1;
++	int argc = *argc_p;
++	char **argv = *argv_p;
++	struct tc_u32_mark extmark;
++
++	if (argc <= 1)
++		return -1;
++
++	if (get_u32(&extmark.val, *argv, 0)) {
++		fprintf(stderr, "Illegal \"extmark\" value\n");
++		return -1;
++	}
++	NEXT_ARG();
++
++	if (get_u32(&extmark.mask, *argv, 0)) {
++		fprintf(stderr, "Illegal \"extmark\" mask\n");
++		return -1;
++	}
++	NEXT_ARG();
++
++	if ((extmark.val & extmark.mask) != extmark.val) {
++		fprintf(stderr, "Illegal \"extmark\" (impossible combination)\n");
++		return -1;
++	}
++
++	addattr_l(n, MAX_MSG, TCA_U32_EXTMARK, &extmark, sizeof(extmark));
++	res = 0;
++
++	*argc_p = argc;
++	*argv_p = argv;
++	return res;
++}
+ static int parse_selector(int *argc_p, char ***argv_p,
+ 			  struct tc_u32_sel *sel, struct nlmsghdr *n)
+ {
+@@ -1027,6 +1061,9 @@
+ 	} else if (matches(*argv, "mark") == 0) {
+ 		NEXT_ARG();
+ 		res = parse_mark(&argc, &argv, n);
++	} else if (matches(*argv, "extmark") == 0) {
++		NEXT_ARG();
++		res = parse_extmark(&argc, &argv, n);
+ 	} else if (matches(*argv, "ether") == 0) {
+ 		NEXT_ARG();
+ 		res = parse_ether(&argc, &argv, sel);
+@@ -1540,6 +1577,16 @@
+ 				mark->val, mark->mask, mark->success);
+ 		}
+ 	}
++	
++	if (tb[TCA_U32_EXTMARK]) {
++		struct tc_u32_mark *mark = RTA_DATA(tb[TCA_U32_EXTMARK]);
++		if (RTA_PAYLOAD(tb[TCA_U32_EXTMARK]) < sizeof(*mark)) {
++			fprintf(f, "\n  Invalid extmark (kernel&iproute2 mismatch)\n");
++		} else {
++			fprintf(f, "\n  extmark 0x%04x 0x%04x (success %d)",
++				mark->val, mark->mask, mark->success);
++		}
++	}
+ 
+ 	if (sel) {
+ 		if (sel->nkeys) {

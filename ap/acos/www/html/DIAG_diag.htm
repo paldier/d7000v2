@@ -1,0 +1,230 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%> 
+<title><%1757%></title> 
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+classes.num.all.fontFamily = "Courier";
+classes.num.all.fontSize = "10pt" ;
+</style>
+<%12%> 
+<script language="javascript" type="text/javascript">
+<!-- 
+$(document).ready(function()
+{	
+    $("#target").submit(function() {
+        buttonFilter();
+    });
+
+});
+
+
+function setHelpIframeVisible(){
+    $('.help-frame-div').css("visibility","visible");
+}
+
+
+function showHelpIframe() {
+
+
+    var imgSrc=document.getElementById('help-button');
+
+    if(imgSrc.src.search("up")>=0)
+    {
+        $(".help-frame-div").show();
+        imgSrc.src="img/helparrowdown-icon.gif";
+    }
+    else
+    {
+        $(".help-frame-div").hide();
+        imgSrc.src="img/helparrowup-icon.gif";
+        setTimeout(setHelpIframeVisible,500);
+    }
+         change_size();
+
+}
+function moveToHTMLend()
+{
+    window.location.href='#helpframe-anchor';
+    setHelpIframeVisible();
+}
+
+
+function loadhelp(fname,anchname)
+{
+            var pane = window.frames["helpframe"].$('#content');
+            var imgSrc=document.getElementById('help-button');
+            if(imgSrc.src.search("up")<0)
+            {
+
+                    $(".help-frame-div").show();
+                    pane.jScrollPane({showArrows:true});
+
+
+                    if ((loadhelp.arguments.length == 1 ) || (anchname == "" ))
+                    {
+                            window.frames["helpframe"].location.href=fname+"_h.htm";
+                            $(".help-frame-div").show();
+                    }
+                    else
+                    {
+                            window.frames["helpframe"].location.href=fname+"_h.htm#" + anchname;
+                            $(".help-frame-div").show();
+                    }
+
+                    $(".help-frame-div").show();
+                    pane.jScrollPane({showArrows:true});
+
+            }
+}
+
+function ping_ck()
+{
+    var cf = document.forms[0];
+    if(checkIP(cf.IPAddr1,cf.IPAddr2,cf.IPAddr3,cf.IPAddr4,254))
+    {
+        alert("<%10%>!\n");
+        return false;
+    }
+    cf.ping_IPAddr.value = cf.IPAddr1.value+'.'+cf.IPAddr2.value+'.'+cf.IPAddr3.value+'.'+cf.IPAddr4.value;
+    return ;
+}
+
+function checkIPAddr(dstText)
+{
+    data = dstText.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/);
+    if (!data || !dstText) return false;
+    return true;
+}
+
+function lookup_ck()
+{
+    var cf = document.forms[0];
+    if(isBlank(cf.host_name))
+    {
+        alert("<%1758%>!\n");
+        return false;
+    }
+    
+	if(cf.host_name.value.indexOf(".") == -1)
+    {
+        alert("<%1759%>.\n");
+        return false;
+    }
+	
+	if(checkIPAddr(cf.host_name.value))
+	{
+        alert("<%1759%>.\n");
+        return false;
+    }
+    return true;
+}
+
+var msg_restart = "<%1760%>";
+
+//-->
+</script>
+</head>
+<body onload="change_size();" class="page-body"  onResize="change_size();">
+<img class="cover-image" src="<%57%>">
+<img class="body-image" src="<%58%>">
+<div id="full-page-container">
+    
+<form id="target"  name="frmRules" method="POST" action="diag.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+<img class="subtop-image" src="<%59%>">
+<div class="subhead2"> <%1757%></div>
+<table border="0" style="height:370px"  class="subhead2-table">
+
+<tr><td class="scrollpane-table-seperate-border" colspan="2"><div class="scroll-pane" style="height:365px;width:620px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+
+<tr><td colspan="3" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<tr><td colspan="3" nowrap>    <a href="javascript:loadhelp('DIAG_diag','ping')" tabindex="-1"><b><%1761%></b></a></td></tr>
+<tr>
+  <td nowrap><%444%>:</td>
+  <td align="right" nowrap class="num">
+  	<input type="text" name="IPAddr1" class="num" size="4" maxlength="3" value="">.
+  	<input type="text" name="IPAddr2" class="num" size="4" maxlength="3" value="">.
+  	<input type="text" name="IPAddr3" class="num" size="4" maxlength="3" value="">.
+  	<input type="text" name="IPAddr4" class="num" size="4" maxlength="3" value="">
+  </td>
+  <td nowrap align="right">&nbsp;
+    &nbsp;&nbsp;&nbsp;<button type="submit" value="<%1762%>" name="ping" class="button-rule" onclick="buttonClick(this,'<%1762%>');return ping_ck();" ><span class="roundleft_button">&nbsp;&nbsp; <%1762%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+
+  </td>
+</tr>
+
+
+<tr><td colspan="3" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+<tr>
+	<td colspan="3" nowrap><a href="javascript:loadhelp('DIAG_diag','dnslookup')" tabindex="-1" ><b><%1763%></b></a></td>
+</tr>
+<tr>
+	<td nowrap><%1764%>:</td>
+	<td nowrap align="right"><input type="text" name="host_name" value="<%1765%>" size="24" maxlength="128"></td>
+	<td nowrap align="right">
+    &nbsp;&nbsp;&nbsp;<button type="submit" value="<%1766%>" name="lookup" class="button-rule" onclick="buttonClick(this,'<%1766%>');return lookup_ck();" ><span class="roundleft_button">&nbsp;&nbsp; <%1766%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+		</td>
+</tr>
+<tr>
+ 	<td nowrap><%444%>:</td>
+ 	<td nowrap align="right"><b><%1767%></b></td>
+ 	<td> &nbsp; </td>
+</tr> 
+<tr>
+ 	<td nowrap><%1231%>:</td>
+    <td nowrap align="right"><b><%1232%></b></td>
+    <td> &nbsp; </td>
+</tr>
+
+
+<tr><td colspan="3" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+<tr>
+	<td nowrap><a href="javascript:loadhelp('DIAG_diag','rtable')" tabindex="-1"><b><%1768%></b></a></td>
+</tr>
+<tr><td colspan="3" align="right">
+   &nbsp;&nbsp;&nbsp;<button type="submit" value="<%1769%>" name="display" class="button-rule" onclick="buttonClick(this,'<%1769%>');" ><span class="roundleft_button">&nbsp;&nbsp; <%1769%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+ 	</td></tr>
+
+<tr><td nowrap height="12"> &nbsp;</td></tr>
+<tr><td colspan="3" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<tr>
+    <td nowrap><a href="javascript:loadhelp('DIAG_diag','reboot')" tabindex="-1"><b><%1770%></b></a></td>
+    <td>&nbsp;</td>
+    <td nowrap align="right">
+    &nbsp;&nbsp;&nbsp;<button type="submit" value="<%1771%>" name="Reboot" class="button-rule" onclick="buttonClick(this,'<%1771%>');" ><span class="roundleft_button">&nbsp;&nbsp; <%1771%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+    </td>
+</tr>
+
+</table></div></td></tr>
+
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div class="help-frame-div" > <iframe id="helpframe"  src="DIAG_diag_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+<img class="subfooter-image" src="img/subhead2-bottom.gif">
+<div class="subhead2-bottom" >
+<span style="float:left;padding-left:10px;padding-top:5px"><img src="img/help-icon.gif" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+<span class="subhead2-text" style="float:left;padding-left:3px;" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%211%> </span>
+<span class="button-help-arrow">
+<img src="img/helparrowdown-icon.gif" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+<span class="subhead2-text" style="text-decoration:underline;float:right;padding-right:10px" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%212%> </span>
+</div>
+<input type="hidden" name="ping_IPAddr" value="">
+<a name="helpframe-anchor"></a>
+</form>
+</div>
+</body>
+</html>
+
+

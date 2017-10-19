@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<%11%>
+<title>NETGEAR   Genie</title>
+<link rel="stylesheet" href="<%13%>">
+<script language="javascript" type="text/javascript">
+<!--
+function checkSel(){
+	if (document.formname.WANDetc[0].checked == true){
+		window.location.href="genie_detwan.htm";
+	}else if (document.formname.WANDetc[1].checked == true){
+		window.location.href="genie_detwan.htm";
+	}else if (document.formname.WANDetc[2].checked == true){
+		window.location.href="genie_ph_fail.htm";
+	}else{
+		alert("<%2462%>");
+	}
+}
+
+function loadSettings()
+{
+    if (<%2546%>=="1")//vdsl usa/att
+    {
+        document.getElementById("no_conn").style.display="none";
+        document.getElementById("return").style.display="block";        
+    }
+    else
+    {
+        document.getElementById("no_conn").style.display="block";
+        document.getElementById("return").style.display="none";
+        document.forms[0].elements[0].focus();
+            <%2463%>;     
+            if(top.parent.frames['topframe'] != null){           	          
+               top.parent.frames['topframe'].location="genie_top.htm"; 
+            }
+    	var cf = document.forms[0];	
+    	cf.WANDetc[1].checked = false;
+    	cf.WANDetc[0].checked = false;
+    	cf.WANDetc[2].checked = false;        
+    }
+}
+//-->
+</script>
+</head>
+
+<body bgcolor="#ffffff" onLoad="loadSettings();">
+<form name="formname"> 
+<div id="no_conn" style="display: none;">
+<table border="0" cellpadding="0" cellspacing="0" width="99%">
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="centerTd">
+		<h2 style="color:#ff0000;"><%2547%></h2>
+        </td>
+	<td>&nbsp;</td>
+
+</tr>
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="textRow centerTd"><p><%2548%></p></td>
+	<td>&nbsp;</td>
+<tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="textRow centerTd"><p><%2549%></p></td>
+	<td>&nbsp;</td>
+<tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="textRow centerTd"><p style="padding-left:20px"><%2550%></p></td>
+	<td>&nbsp;</td>
+<tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="textRow centerTd"><p><%2551%></p></td>
+	<td>&nbsp;</td>
+<tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="textRow centerTd"><p style="padding-left:20px"><%2552%><p></td>
+	<td>&nbsp;</td>
+<tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="textRow centerTd"><p><%2553%></p></td>
+	<td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td  class="textRow centerTd"  colspan="2" onFocus="this.blur()"><input type="radio"  checked name="WANDetc" value="Yes"><span style="padding-left:10px;"><%2554%></span></td>
+	<td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="textRow centerTd" colspan="2" nowrap onFocus="this.blur()"><input type="radio" name="WANDetc" value="No"><span style="padding-left:10px;"><%2555%></span></td>
+	<td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="textRow centerTd" colspan="2" nowrap onFocus="this.blur()"><input type="radio" name="WANDetc" value="None"><span style="padding-left:10px;"><%2556%></span></td>
+	<td>&nbsp;</td>
+</tr>
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td><td class="centerTd"><%33%> <a href="log2.htm" target="_blank"><%34%></a> <%35%>  </td><td>&nbsp;</td>
+</tr>
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="textRow centerTd2">
+		<button class = "purpleBtn" width=100px name="next" onClick="checkSel();" type="Button"><span><%36%></span></button>
+	</td>
+	<td>&nbsp;</td>
+</tr>
+
+</table>
+</div>
+
+<div id="return" style="display: none;">
+<table border="0" cellpadding="0" cellspacing="0" width="99%">
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="centerTd">
+		<h2 style="color:#ff0000;">The D6220 is not compatible with your service provider. Please return this product to the store that you purchased it from.</h2>
+        </td>
+	<td>&nbsp;</td>
+
+</tr>
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+</table>
+</div>
+</form>
+</body>
+</html>

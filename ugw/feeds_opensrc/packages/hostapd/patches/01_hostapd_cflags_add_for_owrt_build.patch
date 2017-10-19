@@ -1,0 +1,82 @@
+diff --git a/hostapd/Makefile b/hostapd/Makefile
+--- a/hostapd/Makefile
++++ b/hostapd/Makefile
+@@ -1,7 +1,3 @@
+-ifndef CC
+-CC=gcc
+-endif
+-
+ ifndef CFLAGS
+ CFLAGS = -MMD -O2 -Wall -g
+ endif
+@@ -128,7 +124,8 @@
+ # define HOSTAPD_DUMP_STATE to include support for dumping internal state
+ # through control interface commands (undefine it, if you want to save in
+ # binary size)
+-CFLAGS += -DHOSTAPD_DUMP_STATE
++CFLAGS += -DHOSTAPD_DUMP_STATE $(IFX_CFLAGS)
++LDFLAGS = $(IFX_LDFLAGS)
+ OBJS += ../src/eapol_auth/eapol_auth_dump.o
+ endif
+ 
+@@ -916,7 +913,8 @@
+ BCHECK=../src/drivers/build.hostapd
+ 
+ hostapd: $(BCHECK) $(OBJS)
+-	$(Q)$(CC) $(LDFLAGS) -o hostapd $(OBJS) $(LIBS)
++	$(Q)$(CC) $(LDFLAGS) -o hostapd $(OBJS) $(LIBS) $(LDFLAGS)
++	if [ "$(STRIP)" ]; then cp hostapd hostapd_debug && $(STRIP) hostapd; fi
+ 	@$(E) "  LD " $@
+ 
+ ifdef CONFIG_WPA_TRACE
+diff --git a/wpa_supplicant/Makefile b/wpa_supplicant/Makefile
+--- a/wpa_supplicant/Makefile
++++ b/wpa_supplicant/Makefile
+@@ -6,10 +6,13 @@
+ CFLAGS = -MMD -O2 -Wall -g
+ endif
+ 
+-export LIBDIR ?= /usr/local/lib/
+-export BINDIR ?= /usr/local/sbin/
+ PKG_CONFIG ?= pkg-config
+ 
++# Include directories for CVS version
++#CFLAGS += -I. -I../utils -I../hostapd
++LFLAGS = $(IFX_LDFLAGS)
++CFLAGS += $(IFX_CFLAGS)
++
+ CFLAGS += -I$(abspath ../src)
+ CFLAGS += -I$(abspath ../src/utils)
+ 
+@@ -1586,23 +1589,26 @@
+ $(OBJS_c) $(OBJS_t) $(OBJS_t2) $(OBJS) $(BCHECK) $(EXTRA_progs): .config
+ 
+ wpa_supplicant: $(BCHECK) $(OBJS) $(EXTRA_progs)
+-	$(Q)$(LDO) $(LDFLAGS) -o wpa_supplicant $(OBJS) $(LIBS) $(EXTRALIBS)
++	$(Q)$(LDO) $(LDFLAGS) -o wpa_supplicant $(OBJS) $(LIBS) $(EXTRALIBS) $(LFLAGS)
++	if [ "$(STRIP)" ]; then cp wpa_supplicant wpa_supplicant_debug && $(STRIP) wpa_supplicant; fi
+ 	@$(E) "  LD " $@
+ 
+ eapol_test: $(OBJS_t)
+-	$(Q)$(LDO) $(LDFLAGS) -o eapol_test $(OBJS_t) $(LIBS)
++	$(Q)$(LDO) $(LDFLAGS) -o eapol_test $(OBJS_t) $(LIBS) $(LFLAGS)
+ 	@$(E) "  LD " $@
+ 
+ preauth_test: $(OBJS_t2)
+-	$(Q)$(LDO) $(LDFLAGS) -o preauth_test $(OBJS_t2) $(LIBS)
++	$(Q)$(LDO) $(LDFLAGS) -o preauth_test $(OBJS_t2) $(LIBS) $(LFLAGS)
+ 	@$(E) "  LD " $@
+ 
+ wpa_passphrase: $(OBJS_p)
+-	$(Q)$(LDO) $(LDFLAGS) -o wpa_passphrase $(OBJS_p) $(LIBS_p)
++	$(Q)$(LDO) $(LDFLAGS) -o wpa_passphrase $(OBJS_p) $(LIBS_p) $(LFLAGS)
++	if [ "$(STRIP)" ]; then cp wpa_passphrase wpa_passphrase_debug && $(STRIP) wpa_passphrase; fi
+ 	@$(E) "  LD " $@
+ 
+ wpa_cli: $(OBJS_c)
+-	$(Q)$(LDO) $(LDFLAGS) -o wpa_cli $(OBJS_c) $(LIBS_c)
++	$(Q)$(LDO) $(LDFLAGS) -o wpa_cli $(OBJS_c) $(LIBS_c) $(LFLAGS)
++	if [ "$(STRIP)" ]; then cp wpa_cli wpa_cli_debug && $(STRIP) wpa_cli; fi
+ 	@$(E) "  LD " $@
+ 
+ link_test: $(OBJS) $(OBJS_h) tests/link_test.o

@@ -1,0 +1,48 @@
+From 97f2d4866be9d494cd613bd4dad856a8b77c213f Mon Sep 17 00:00:00 2001
+From: Tomas Winkler <tomas.winkler@intel.com>
+Date: Mon, 12 May 2014 12:19:41 +0300
+Subject: [PATCH] mei: me: read H_CSR after asserting reset
+
+commit c40765d919d25d2d44d99c4ce39e48808f137e1e upstream.
+
+According the spec the host should read H_CSR again
+after asserting reset H_RST to ensure that reset was
+read by the firmware
+
+Signed-off-by: Tomas Winkler <tomas.winkler@intel.com>
+Signed-off-by: Alexander Usyskin <alexander.usyskin@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+(cherry picked from commit d27fb05d96cd11c2577ae89cbb0fe1778b1051d1)
+
+Signed-off-by: Nagaraj S <sivasankaranx.nagaraj@intel.com>
+---
+ drivers/misc/mei/hw-me.c |   12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/drivers/misc/mei/hw-me.c b/drivers/misc/mei/hw-me.c
+index f67c37e..fbc4a7b 100644
+--- a/drivers/misc/mei/hw-me.c
++++ b/drivers/misc/mei/hw-me.c
+@@ -189,6 +189,18 @@ static int mei_me_hw_reset(struct mei_device *dev, bool intr_enable)
+ 	dev->recvd_hw_ready = false;
+ 	mei_me_reg_write(hw, H_CSR, hcsr);
+ 
++	/*
++	 * Host reads the H_CSR once to ensure that the
++	 * posted write to H_CSR completes.
++	 */
++	hcsr = mei_hcsr_read(hw);
++
++	if ((hcsr & H_RST) == 0)
++		dev_warn(&dev->pdev->dev, "H_RST is not set = 0x%08X", hcsr);
++
++	if ((hcsr & H_RDY) == H_RDY)
++		dev_warn(&dev->pdev->dev, "H_RDY is not cleared 0x%08X", hcsr);
++
+ 	if (intr_enable == false)
+ 		mei_me_hw_reset_release(dev);
+ 
+-- 
+1.7.9.5
+

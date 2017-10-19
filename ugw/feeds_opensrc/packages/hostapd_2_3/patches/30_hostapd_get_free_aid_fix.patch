@@ -1,0 +1,44 @@
+diff --exclude 'msvc*' -Npur orig/src/ap/ieee802_11.c patched/src/ap/ieee802_11.c
+--- orig/src/ap/ieee802_11.c	2015-10-20 13:10:08.000000000 +0300
++++ patched/src/ap/ieee802_11.c	2015-10-21 09:54:14.000000000 +0300
+@@ -785,6 +785,11 @@ static int hostapd_get_aid(struct hostap
+ 
+ 	if (hapd->driver->get_aid) {
+ 		ap_sta_remove_in_other_bss_now(hapd, sta);
++		/* check if STA already has AID - reuse it */
++		if (sta->aid > 0) {
++			wpa_printf(MSG_DEBUG, "  old AID %d", sta->aid);
++			return 0;
++		}
+ 		return (*hapd->driver->get_aid)(hapd->drv_priv, &sta->aid, sta->addr);
+ 	}
+ 
+@@ -1526,10 +1531,10 @@ static void handle_disassoc(struct hosta
+ 	accounting_sta_stop(hapd, sta);
+ 	ieee802_1x_free_station(sta);
+ 	hostapd_drv_sta_remove(hapd, sta->addr);
+-
++#if 0
+ 	if (sta->aid > 0 && hapd->driver->free_aid)
+ 		(*hapd->driver->free_aid)(hapd->drv_priv, &sta->aid);
+-
++#endif
+ 	if (sta->timeout_next == STA_NULLFUNC ||
+ 	    sta->timeout_next == STA_DISASSOC) {
+ 		sta->timeout_next = STA_DEAUTH;
+diff --exclude 'msvc*' -Npur orig/src/ap/sta_info.c patched/src/ap/sta_info.c
+--- orig/src/ap/sta_info.c	2015-10-20 13:10:08.000000000 +0300
++++ patched/src/ap/sta_info.c	2015-10-21 09:53:07.000000000 +0300
+@@ -665,10 +665,10 @@ static int ap_sta_remove(struct hostapd_
+ 			   " from kernel driver.", MAC2STR(sta->addr));
+ 		return -1;
+ 	}
+-
++#if 0
+ 	if (sta->aid > 0 && hapd->driver->free_aid)
+ 		(*hapd->driver->free_aid)(hapd->drv_priv, &sta->aid);
+-
++#endif
+ 	return 0;
+ }
+ 

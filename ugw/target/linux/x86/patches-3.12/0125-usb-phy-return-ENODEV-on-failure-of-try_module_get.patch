@@ -1,0 +1,38 @@
+From 441c8bd561d8f054a58765c7aec520fc03c74462 Mon Sep 17 00:00:00 2001
+From: Arjun Sreedharan <arjun024@gmail.com>
+Date: Mon, 18 Aug 2014 11:17:33 +0530
+Subject: [PATCH] usb: phy: return -ENODEV on failure of try_module_get
+
+commit 2c4e3dbf63b39d44a291db70016c718f45d9cd46 upstream.
+
+When __usb_find_phy_dev() does not return error and
+try_module_get() fails, return -ENODEV.
+
+Signed-off-by: Arjun Sreedharan <arjun024@gmail.com>
+Signed-off-by: Felipe Balbi <balbi@ti.com>
+Cc: Mark Brown <broonie@kernel.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+(cherry picked from commit f259d867e35ffc1bd240d41c72278beec1faee33)
+Signed-off-by: Maladau Mou <maladau.mou@intel.com>
+---
+ drivers/usb/phy/phy.c |    3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/usb/phy/phy.c b/drivers/usb/phy/phy.c
+index e158f99..3e2e361 100644
+--- a/drivers/usb/phy/phy.c
++++ b/drivers/usb/phy/phy.c
+@@ -229,6 +229,9 @@ struct usb_phy *usb_get_phy_dev(struct device *dev, u8 index)
+ 	phy = __usb_find_phy_dev(dev, &phy_bind_list, index);
+ 	if (IS_ERR(phy) || !try_module_get(phy->dev->driver->owner)) {
+ 		dev_dbg(dev, "unable to find transceiver\n");
++		if (!IS_ERR(phy))
++			phy = ERR_PTR(-ENODEV);
++
+ 		goto err0;
+ 	}
+ 
+-- 
+1.7.9.5
+

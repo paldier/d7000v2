@@ -1,0 +1,65 @@
+From 0ea75ede8540383f3a37ff65f954d09f12c998db Mon Sep 17 00:00:00 2001
+From: Tomas Winkler <tomas.winkler@intel.com>
+Date: Mon, 12 May 2014 12:19:39 +0300
+Subject: [PATCH] mei: me: fix hw ready reset flow
+
+commit b04ada92ffaabb868497a1fce8e4f6bf74e5488f upstream.
+
+We cleared H_RST for H_CSR on spurious interrupt generated when ME_RDY
+while cleared and not while  ME_RDY is set. The spurious interrupt
+is not delivered on all platforms in this case the
+driver may fail to initialize.
+
+Signed-off-by: Tomas Winkler <tomas.winkler@intel.com>
+Signed-off-by: Alexander Usyskin <alexander.usyskin@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+(cherry picked from commit 7247670d5fb03e33ddd732aec69159b8d09c11c1)
+
+Signed-off-by: Nagaraj S <sivasankaranx.nagaraj@intel.com>
+---
+ drivers/misc/mei/hw-me.c |    9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/misc/mei/hw-me.c b/drivers/misc/mei/hw-me.c
+index 6f656c0..d4e72fc 100644
+--- a/drivers/misc/mei/hw-me.c
++++ b/drivers/misc/mei/hw-me.c
+@@ -164,6 +164,9 @@ static void mei_me_hw_reset_release(struct mei_device *dev)
+ 	hcsr |= H_IG;
+ 	hcsr &= ~H_RST;
+ 	mei_hcsr_set(hw, hcsr);
++
++	/* complete this write before we set host ready on another CPU */
++	mmiowb();
+ }
+ /**
+  * mei_me_hw_reset - resets fw via mei csr register.
+@@ -201,6 +204,7 @@ static int mei_me_hw_reset(struct mei_device *dev, bool intr_enable)
+ static void mei_me_host_set_ready(struct mei_device *dev)
+ {
+ 	struct mei_me_hw *hw = to_me_hw(dev);
++	hw->host_hw_state = mei_hcsr_read(hw);
+ 	hw->host_hw_state |= H_IE | H_IG | H_RDY;
+ 	mei_hcsr_set(hw, hw->host_hw_state);
+ }
+@@ -491,14 +495,13 @@ irqreturn_t mei_me_irq_thread_handler(int irq, void *dev_id)
+ 	/*  check if we need to start the dev */
+ 	if (!mei_host_is_ready(dev)) {
+ 		if (mei_hw_is_ready(dev)) {
++			mei_me_hw_reset_release(dev);
+ 			dev_dbg(&dev->pdev->dev, "we need to start the dev.\n");
+ 
+ 			dev->recvd_hw_ready = true;
+ 			wake_up_interruptible(&dev->wait_hw_ready);
+ 		} else {
+-
+-			dev_dbg(&dev->pdev->dev, "Reset Completed.\n");
+-			mei_me_hw_reset_release(dev);
++			dev_dbg(&dev->pdev->dev, "Spurious Interrupt\n");
+ 		}
+ 		goto end;
+ 	}
+-- 
+1.7.9.5
+

@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR Router <%55%></title>
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<%12%>
+<script language="javascript" type="text/javascript">
+<!--
+
+
+    $(document).ready(function()
+    {	
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+//-->
+</script>
+</head>
+<body style="margin:0px;background-color:#e5e5e5">
+<form id="target"  name="formname" action="user_setup_add.cgi" method="POST">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue"> 
+<table border="0"   width="100%">
+
+<tr><td colspan="2" background="liteblue.gif" height="12"> &nbsp;</td></tr>
+<tr>
+<td colspan="2" align="center"><h2><%2791%></h2></td>
+</tr>
+
+<tr><td colspan="2" background="liteblue.gif" height="12"> &nbsp;</td></tr>
+
+<tr>
+<td colspan="2" align="center">
+&nbsp;&nbsp;&nbsp;<button value="<%1748%>"  onclick="buttonClick(this,'<%1748%>');"  type="submit" name="ok_overwrite" class="button-apply" > <span class="roundleft_apply" ><%1748%>&nbsp;<span class="apply-icon">&nbsp;&nbsp;&nbsp;&nbsp;</span></span><span class="roundright_apply">&nbsp;&nbsp;&nbsp;</span></button>
+&nbsp;&nbsp;&nbsp;<button value="<%63%>" onClick="buttonClick(this,'<%63%>');location.href='User_setup.htm'" type="button" name="cancel" class="button-rule" ><span class="roundleft_button"><span class ="cancel-icon">&nbsp;&nbsp;&nbsp;&nbsp;<%64%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+</td>
+</tr>
+  <input type="hidden" name="username" value="<%2784%>">
+  <input type="hidden" name="passwd" value="<%2785%>">
+    <input type="hidden" name="repasswd" value="<%2785%>">
+    <input type="hidden" name="old_username" value="<%2790%>">
+	  <input type="hidden" name="mail" value="LocalUser">
+  
+
+</table>
+</form>
+</body>
+</html>

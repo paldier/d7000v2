@@ -1,0 +1,737 @@
+# HG changeset patch
+# Parent ce49b0506410efc5b92ddea60a3690110b0e015f
+
+diff --git a/hostapd/.config b/hostapd/.config
+--- a/hostapd/.config
++++ b/hostapd/.config
+@@ -49,7 +49,9 @@
+ # draft and is subject to change since the standard has not yet been finalized.
+ # Driver support is also needed for IEEE 802.11w.
+ CONFIG_IEEE80211W=y
+-# CONFIG_P2P_MANAGER is not set
++CONFIG_P2P_MANAGER=y
++CONFIG_INTERWORKING=y
++CONFIG_HS20=y
+ 
+ # Integrated EAP server
+ CONFIG_EAP=y
+diff --git a/hostapd/config_file.c b/hostapd/config_file.c
+--- a/hostapd/config_file.c
++++ b/hostapd/config_file.c
+@@ -1541,7 +1541,10 @@
+ }
+ 
+ 
+-static int hs20_parse_wan_metrics(struct hostapd_bss_config *bss, char *buf,
++#ifndef CONFIG_DRIVER_MTLK
++static 
++#endif
++int hs20_parse_wan_metrics(struct hostapd_bss_config *bss, char *buf,
+ 				  int line)
+ {
+ 	u8 *wan_metrics;
+diff --git a/hostapd/config_file.h b/hostapd/config_file.h
+--- a/hostapd/config_file.h
++++ b/hostapd/config_file.h
+@@ -14,4 +14,8 @@
+ 		      struct hostapd_bss_config *bss, char *field,
+ 		      char *value);
+ 
++#ifdef CONFIG_DRIVER_MTLK
++int hs20_parse_wan_metrics(struct hostapd_bss_config *bss, char *buf,
++				  int line);
++#endif
+ #endif /* CONFIG_FILE_H */
+diff --git a/hostapd/ctrl_iface.c b/hostapd/ctrl_iface.c
+--- a/hostapd/ctrl_iface.c
++++ b/hostapd/ctrl_iface.c
+@@ -694,6 +694,24 @@
+ 
+ #endif /* CONFIG_HS20 */
+ 
++#ifdef CONFIG_DRIVER_MTLK
++static int hostapd_ctrl_iface_update_wan_metrics(struct hostapd_data *hapd,
++						const char *cmd)
++{
++	struct hostapd_iface *iface = hapd->iface;
++	char buf[128];
++	int j;
++
++	os_strlcpy(buf, cmd, 128);
++	wpa_printf(MSG_DEBUG, "hostapd_ctrl_iface_update_wan_metrics, iface->num_bss=%d"
++			,iface->num_bss);
++	for (j = 0; j < iface->num_bss; j++) {
++		if (hs20_parse_wan_metrics(iface->bss[j]->conf, buf, 0) != 0)
++			return -1;
++	}
++	return 0;
++}
++#endif
+ 
+ #ifdef CONFIG_INTERWORKING
+ 
+@@ -1490,6 +1508,11 @@
+ 			reply_len = -1;
+ #endif /* CONFIG_WPS_NFC */
+ #endif /* CONFIG_WPS */
++#ifdef CONFIG_DRIVER_MTLK
++	} else if (os_strncmp(buf, "UPDATE_WAN_METRICS ", 19) == 0) {
++		if (hostapd_ctrl_iface_update_wan_metrics(hapd, buf + 19))
++			reply_len = -1;
++#endif /* CONFIG_DRIVER_MTLK */
+ #ifdef CONFIG_INTERWORKING
+ 	} else if (os_strncmp(buf, "SET_QOS_MAP_SET ", 16) == 0) {
+ 		if (hostapd_ctrl_iface_set_qos_map_set(hapd, buf + 16))
+diff --git a/hostapd/hostapd_cli.c b/hostapd/hostapd_cli.c
+--- a/hostapd/hostapd_cli.c
++++ b/hostapd/hostapd_cli.c
+@@ -703,6 +703,25 @@
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_DRIVER_MTLK
++static int hostapd_cli_cmd_update_wan_metrics(struct wpa_ctrl *ctrl,
++				int argc, char *argv[])
++{
++	char buf[200];
++	int res;
++	
++	if (argc != 1) {
++		printf("Invalid 'update_wan_metrics' command - "
++			   "one argument is needed\n");
++		return -1;
++	}
++	
++	res = os_snprintf(buf, sizeof(buf), "UPDATE_WAN_METRICS %s", argv[0]);
++	if (res < 0 || res >= (int) sizeof(buf))
++		return -1;
++	return wpa_ctrl_command(ctrl, buf);
++}
++#endif
+ 
+ static int hostapd_cli_cmd_set_qos_map_set(struct wpa_ctrl *ctrl,
+ 					   int argc, char *argv[])
+@@ -1005,6 +1024,9 @@
+ 	{ "set", hostapd_cli_cmd_set },
+ 	{ "get", hostapd_cli_cmd_get },
+ 	{ "set_qos_map_set", hostapd_cli_cmd_set_qos_map_set },
++#ifdef CONFIG_DRIVER_MTLK
++	{ "update_wan_metrics", hostapd_cli_cmd_update_wan_metrics },
++#endif /* CONFIG_DRIVER_MTLK */
+ 	{ "send_qos_map_conf", hostapd_cli_cmd_send_qos_map_conf },
+ 	{ "chan_switch", hostapd_cli_cmd_chan_switch },
+ 	{ "hs20_wnm_notif", hostapd_cli_cmd_hs20_wnm_notif },
+diff --git a/src/ap/hs20.c b/src/ap/hs20.c
+--- a/src/ap/hs20.c
++++ b/src/ap/hs20.c
+@@ -20,21 +20,32 @@
+ u8 * hostapd_eid_hs20_indication(struct hostapd_data *hapd, u8 *eid)
+ {
+ 	u8 conf;
++	u8 len=5;
++	u8 anqp_domain_id_present=0;
++
+ 	if (!hapd->conf->hs20)
+ 		return eid;
+ 	*eid++ = WLAN_EID_VENDOR_SPECIFIC;
+-	*eid++ = 7;
++	if (hapd->conf->anqp_domain_id != 65535) {
++		wpa_printf(MSG_DEBUG, "anqp_domain_id is set, add it to HS2.0 IE");
++		anqp_domain_id_present=1;
++		len+=2;
++	}
++	*eid++ = len;
+ 	WPA_PUT_BE24(eid, OUI_WFA);
+ 	eid += 3;
+ 	*eid++ = HS20_INDICATION_OUI_TYPE;
+ 	conf = HS20_VERSION; /* Release Number */
+-	conf |= HS20_ANQP_DOMAIN_ID_PRESENT;
++	if (anqp_domain_id_present) {
++		conf |= HS20_ANQP_DOMAIN_ID_PRESENT;
++	}
+ 	if (hapd->conf->disable_dgaf)
+ 		conf |= HS20_DGAF_DISABLED;
+ 	*eid++ = conf;
+-	WPA_PUT_LE16(eid, hapd->conf->anqp_domain_id);
+-	eid += 2;
+-
++	if (anqp_domain_id_present) {
++		WPA_PUT_LE16(eid, hapd->conf->anqp_domain_id);
++		eid += 2;
++	}
+ 	return eid;
+ }
+ 
+diff --git a/src/drivers/driver_mtlk.c b/src/drivers/driver_mtlk.c
+--- a/src/drivers/driver_mtlk.c
++++ b/src/drivers/driver_mtlk.c
+@@ -31,7 +31,7 @@
+ #include "netlink.h"
+ #include "l2_packet/l2_packet.h"
+ #include "radius/radius.h"
+-
++#include "ap/hostapd.h"
+ 
+ //#define MTLK_DEBUG_DRIVER
+ #ifdef MTLK_DEBUG_DRIVER
+@@ -51,6 +51,8 @@
+ #define NL_DRV_CMD_MAN_FRAME 4
+ #define NL_DRV_CMD_RCVRY_STARTED 6
+ #define NL_DRV_CMD_RCVRY_CONFIG 7
++#define NL_DRV_CMD_ACT_FRAME_RX 8
++#define NL_DRV_CMD_ACT_FRAME_TX 9
+ #define NETLINK_SIMPLE_CONFIG_GROUP 1
+ 
+ /* API Wrapper related definitions:*/
+@@ -78,6 +80,7 @@
+   __u8  proto_ver;
+   __u8  cmd_id;
+   __u16 data_len;
++  char  ifname[IFNAMSIZ];
+ } __attribute__ ((aligned(1), packed));
+ 
+ /* attributes of the family */
+@@ -897,6 +900,159 @@
+     nl_recvmsgs_default(handle);
+ }
+ 
++int mtlk_nlink_send_msg(struct mtlk_driver_data *drv, void *buf, size_t length)
++{
++	struct nl_msg *msg;
++	char *data_buf;
++	struct mtlk_nl_msghdr *phdr;
++	static const char fingerprint[] = { 'm', 't', 'l', 'k' };
++
++	wpa_printf(MSG_DEBUG, "%s: interface = %s, data length=%d",__func__,drv->iface, length);
++	data_buf = os_zalloc(sizeof(struct mtlk_nl_msghdr) + length);
++	if (data_buf == NULL) {
++		wpa_printf(MSG_DEBUG, "Error in mtlk_nlink_send_msg- mem allocate failed");
++		return -1;
++	}
++	phdr=(struct mtlk_nl_msghdr*)data_buf;
++	phdr->proto_ver = 1;
++	phdr->cmd_id = NL_DRV_CMD_ACT_FRAME_TX;
++	phdr->data_len = length;
++	memcpy(phdr->fingerprint, fingerprint, sizeof(sizeof(fingerprint)));
++	memcpy(data_buf, phdr, sizeof(struct mtlk_nl_msghdr));
++	/* Fill the netlink message header */
++	strncpy(phdr->ifname, drv->iface, IFNAMSIZ);
++
++	/* create a new message */
++	msg = nlmsg_alloc();
++	if (msg == NULL) {
++		wpa_printf(MSG_DEBUG, "Error in mtlk_nlink_send_msg (nlmsg_alloc return NULL)");
++		return -1;
++	}
++	genlmsg_put(msg, NL_AUTO_PID, 0, drv->nlink_socket->family, 0, 0, MTLK_GENL_CMD_EVENT, 0);
++
++	if (buf != NULL) {
++		memcpy(data_buf + sizeof(struct mtlk_nl_msghdr), buf, length);
++		wpa_printf(MSG_EXCESSIVE, "%s: fill in the data, length=%d, phdr->ifname=%s",__func__,length,phdr->ifname);
++		wpa_hexdump(MSG_EXCESSIVE, "IE", buf, length);
++	}
++	if (nla_put(msg, MTLK_GENL_ATTR_EVENT, (sizeof(struct mtlk_nl_msghdr)+phdr->data_len), data_buf) < 0) {
++		wpa_printf(MSG_DEBUG, "Error in mtlk_nlink_send_msg (nla_put failed)");
++		os_free(data_buf);
++		return -1;
++	}
++	wpa_printf(MSG_EXCESSIVE, "%s: nlmsghdr size = %d",__func__,(sizeof(struct mtlk_nl_msghdr)+phdr->data_len));
++
++	/*nl_send_auto_complete: return Number of characters sent on success or a negative error code*/
++	if (nl_send_auto_complete(drv->nlink_socket->sock, msg) < 0) {
++		wpa_printf(MSG_DEBUG, "Error in mtlk_nlink_send_msg (err < 0)");
++		os_free(data_buf);
++		return -1;
++	}
++	os_free(data_buf);
++	return 0;
++}
++
++
++#define HAPD_BROADCAST ((struct hostapd_data *) -1)
++
++static struct hostapd_data * get_hapd_bssid(struct hostapd_iface *iface,
++					    const u8 *bssid)
++{
++	size_t i;
++
++	if (bssid == NULL)
++		return NULL;
++	if (bssid[0] == 0xff && bssid[1] == 0xff && bssid[2] == 0xff &&
++	    bssid[3] == 0xff && bssid[4] == 0xff && bssid[5] == 0xff)
++		return HAPD_BROADCAST;
++	wpa_printf(MSG_DEBUG, "%s: message bssid=" MACSTR,__func__,MAC2STR(bssid));
++	for (i = 0; i < iface->num_bss; i++) {
++		wpa_printf(MSG_DEBUG, "%s: iface->bss own_addr=" MACSTR,__func__,MAC2STR(iface->bss[i]->own_addr));
++		if (os_memcmp(bssid, iface->bss[i]->own_addr, ETH_ALEN) == 0)
++			return iface->bss[i];
++	}
++
++	return NULL;
++}
++
++static int mtlk_hostapd_mgmt_rx(struct hostapd_data *hapd, struct rx_mgmt *rx_mgmt)
++{
++	struct hostapd_iface *iface = hapd->iface;
++	const struct ieee80211_hdr *hdr;
++	struct hostapd_frame_info fi;
++	struct hostapd_data *hapd_bssid;
++	struct ieee80211_mgmt *mgmt;
++	const u8 *bssid;
++	u16 fc, stype;
++
++	/*Next code copied from hostapd_mgmt_rx:
++	*/
++	hdr = (const struct ieee80211_hdr *) rx_mgmt->frame;
++	bssid = get_hdr_bssid(hdr, rx_mgmt->frame_len);
++	if (bssid == NULL) {
++		wpa_printf(MSG_DEBUG, "%s: hdr bssid = NULL, return",__func__);
++		return 0;
++	}
++
++	hapd_bssid = get_hapd_bssid(iface, bssid);
++	if (hapd_bssid == NULL) {
++		wpa_printf(MSG_DEBUG, "mtlk_hostapd_mgmt_rx, hapd_bssid = NULL, return");
++		return 0;
++	}
++
++	/*Next code copied from ieee802_11_mgmt:
++	*/
++	mgmt = (struct ieee80211_mgmt *) rx_mgmt->frame;
++	fc = le_to_host16(mgmt->frame_control);
++	stype = WLAN_FC_GET_STYPE(fc);
++
++	if ((hapd_bssid != HAPD_BROADCAST) &&
++	    os_memcmp(mgmt->bssid, hapd->own_addr, ETH_ALEN) != 0) {
++		wpa_printf(MSG_DEBUG, "%s: BSSID=" MACSTR " not our address",
++			   __func__ ,MAC2STR(mgmt->bssid));
++		return 0;
++	}
++	if (os_memcmp(mgmt->da, hapd->own_addr, ETH_ALEN) != 0) {
++		hostapd_logger(hapd, mgmt->sa, HOSTAPD_MODULE_IEEE80211,
++			       HOSTAPD_LEVEL_DEBUG,
++			       "%s: DA=" MACSTR " not our address",
++			       __func__,MAC2STR(mgmt->da));
++		return 0;
++	}
++
++	switch (stype) {
++	case WLAN_FC_STYPE_ACTION:
++		wpa_printf(MSG_DEBUG, "mgmt::action");
++
++		/*Next code copied from handle_action:
++		*/
++		if (rx_mgmt->frame_len < IEEE80211_HDRLEN + 1) {
++			hostapd_logger(hapd, mgmt->sa, HOSTAPD_MODULE_IEEE80211,
++					   HOSTAPD_LEVEL_DEBUG,
++					   "handle_action - too short payload (len=%lu)",
++					   (unsigned long) rx_mgmt->frame_len);
++			return 0;
++		}
++		if (mgmt->u.action.category != WLAN_ACTION_PUBLIC) {
++			wpa_printf(MSG_DEBUG, "IEEE 802.11: Ignored Action "
++				   "frame (category=%u)" MACSTR,
++				   MAC2STR(mgmt->sa), mgmt->u.action.category);
++			return 0;
++		}
++		if (hapd->public_action_cb2) {
++			wpa_printf(MSG_DEBUG, "%s: exec public_action_cb2",__func__);
++			hapd->public_action_cb2(hapd->public_action_cb2_ctx, (u8 *)rx_mgmt->frame, rx_mgmt->frame_len , hapd->iface->freq);
++		}
++		break;
++	default:
++		hostapd_logger(hapd, mgmt->sa, HOSTAPD_MODULE_IEEE80211,
++			       HOSTAPD_LEVEL_DEBUG,
++			       "ignor mgmt frame subtype %d", stype);
++		break;
++	}
++	return 1;
++}
++
+ 
+ /*
+ *  mtlk_nlink_parse_msg:
+@@ -919,68 +1075,95 @@
+   char *interface;
+   char *netlink_data;
+   int index;
++  struct rx_mgmt rx_mgmt;
++  struct hostapd_data *hapd=drv->hapd;
+ 
+   /* Silently ignore packets from other applications */
+   if (memcmp(phdr->fingerprint, mtlk_fingerprint, sizeof(mtlk_fingerprint))) {
+     return 0;
+   }
+   /* Silently ignore not relevant frame */
+-  if ((phdr->cmd_id != NL_DRV_CMD_MAN_FRAME) && (phdr->cmd_id != NL_DRV_CMD_RCVRY_STARTED) && (phdr->cmd_id != NL_DRV_CMD_RCVRY_CONFIG)){
+-    MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - return 0 (cmd_id=%d)\n",phdr->cmd_id);
++  if ((phdr->cmd_id != NL_DRV_CMD_MAN_FRAME) &&
++      (phdr->cmd_id != NL_DRV_CMD_RCVRY_STARTED) &&
++      (phdr->cmd_id != NL_DRV_CMD_RCVRY_CONFIG) &&
++      (phdr->cmd_id != NL_DRV_CMD_ACT_FRAME_RX)){
++    wpa_printf(MSG_EXCESSIVE, "gnl debug: mtlk_nlink_parse_msg - return 0 (cmd_id=%d)",phdr->cmd_id);
+     return 0;
+   }
+   if (phdr->proto_ver != supported_protocol_version) {
+-    MTLK_PRINT("Version mismatch: got %u, expected %u",
+-    phdr->proto_ver, supported_protocol_version);
++    wpa_printf(MSG_DEBUG, "Version mismatch: got %u, expected %u",phdr->proto_ver, supported_protocol_version);
+     return 0;
+   }
+ 
+   data_ptr = (char *)phdr;
+-  MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - data_ptr before=0x%p\n",data_ptr);
+   data_ptr +=NLMSG_ALIGN(sizeof(struct mtlk_nl_msghdr));
+-  MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - data_ptr after=0x%p\n",data_ptr);
+-  if (phdr->cmd_id == NL_DRV_CMD_MAN_FRAME) {
++  wpa_printf(MSG_EXCESSIVE, "gnl debug: mtlk_nlink_parse_msg - cmd_id=%d",phdr->cmd_id);
++
++  switch (phdr->cmd_id) {
++  case NL_DRV_CMD_MAN_FRAME:
++    /* event = PROBE REQ
++     * data format: Probe Req packet
++    */
++    wpa_printf(MSG_EXCESSIVE, "%s NL_DRV_CMD_MAN_FRAME",__func__);
+     mgmt = (const struct ieee80211_mgmt *)data_ptr;
+-  } else {
+-    /* Parameter format: <interface> <netlink_data>
+-   interface="wlanX" (where X=0/1)
+-   netlink_data- two data types are expected:
+-         event (string) = "fw_crash"
+-         fw recovery configuration (int vector) = full fast complete time dumps
++    event.rx_probe_req.sa = mgmt->sa;
++    event.rx_probe_req.da = mgmt->da;
++    event.rx_probe_req.bssid = mgmt->bssid;
++    event.rx_probe_req.ie = mgmt->u.probe_req.variable;
++    event.rx_probe_req.ie_len =
++          phdr->data_len - (IEEE80211_HDRLEN + sizeof(mgmt->u.probe_req));
++    /*pass probe request event to hostapd: */
++    wpa_supplicant_event(drv->hapd, EVENT_RX_PROBE_REQ, &event);
++  break;
++
++  case NL_DRV_CMD_RCVRY_STARTED:
++    /* fw_crash event
++     * data format: <interface> "fw_crash"
+     */
+     interface = strtok (data_ptr, " ");
+     index = mtlk_get_physical_index(interface);
++    wpa_printf(MSG_DEBUG, "%s: NL_DRV_CMD_RCVRY_STARTED, index=%d",__func__,index);
++    netlink_data = strtok (NULL, " ");
++    wpa_printf(MSG_DEBUG, "num_fw_fails[%d]=%d",index,num_fw_fails[index]);
++    /* TODO- validation: if (strcmp(..."fw_crash"...))...*/
++    num_fw_fails[index] += 1;
++  break;
+ 
+-    if (phdr->cmd_id == NL_DRV_CMD_RCVRY_STARTED) {
+-      netlink_data = strtok (NULL, " ");
+-      MTLK_PRINT("num_fw_fails[%d]=%d\n",index,num_fw_fails[index]);
+-      /* TODO- add validation over string event
+-      if (strcmp(..."fw_crash"...))
+-      */
+-      num_fw_fails[index] += 1;
+-    } else {
+-      /* cmd_id -> NL_DRV_CMD_RCVRY_CONFIG*/
+-      netlink_data = strtok (NULL, " ");
+-      api_resend_max[index] = atoi(netlink_data);
+-      netlink_data = strtok (NULL, " ");
+-      api_resend_max[index] += atoi(netlink_data);
+-      MTLK_PRINT("api_resend_max[%d]=%d\n",index,api_resend_max[index]);
+-    }
+-    /* Finished - can return for both events
++  case NL_DRV_CMD_RCVRY_CONFIG:
++    /* event = fw recovery configuration
++     * data format: <interface> <int vector>
++     *   int vector = full fast complete time dumps
+     */
+-    return 0;
++    interface = strtok (data_ptr, " ");
++    index = mtlk_get_physical_index(interface);
++    wpa_printf(MSG_DEBUG, "%s NL_DRV_CMD_RCVRY_CONFIG, index=%d",__func__,index);
++    netlink_data = strtok (NULL, " ");
++    api_resend_max[index] = atoi(netlink_data);
++    netlink_data = strtok (NULL, " ");
++    api_resend_max[index] += atoi(netlink_data);
++    wpa_printf(MSG_DEBUG, "api_resend_max[%d]=%d",index,api_resend_max[index]);
++  break;
++
++  case NL_DRV_CMD_ACT_FRAME_RX:
++    /* event = Rx Public Frame
++     * data format: Public Frame
++    */
++    index = mtlk_get_physical_index(phdr->ifname);
++    wpa_printf(MSG_DEBUG, "%s event = Rx Public Frame, index=%d",__func__,index);
++    mgmt = (const struct ieee80211_mgmt *)data_ptr;
++    /*if not same interface - ignore*/
++    if (strcmp(phdr->ifname, drv->iface) != 0)
++      return 0;
++    rx_mgmt.frame = (const u8 *) mgmt;
++    rx_mgmt.frame_len = len;
++    mtlk_hostapd_mgmt_rx(hapd, &rx_mgmt);
++  break;
++
++  default:
++    wpa_printf(MSG_DEBUG, "%s error in message id (%d)",__func__,phdr->cmd_id);
++  break;
+   }
+ 
+-  /*Call hostapd probe request event
+-  */
+-  event.rx_probe_req.sa = mgmt->sa;
+-  event.rx_probe_req.da = mgmt->da;
+-  event.rx_probe_req.bssid = mgmt->bssid;
+-  event.rx_probe_req.ie = mgmt->u.probe_req.variable;
+-  event.rx_probe_req.ie_len =
+-        phdr->data_len - (IEEE80211_HDRLEN + sizeof(mgmt->u.probe_req));
+-  wpa_supplicant_event(drv->hapd, EVENT_RX_PROBE_REQ, &event);
+-
+   return 0;
+ }
+ 
+@@ -1038,7 +1221,6 @@
+     int enabled=1;
+     int res=0;
+ 
+-
+     nlink_socket->sock = nl_handle_alloc();
+     if (NULL == nlink_socket->sock) {
+       MTLK_PRINT("Generic netlink socket allocation failed");
+@@ -1080,9 +1262,7 @@
+   MTLK_PRINT("gnl debug: use nl_socket_modify_cb\n");
+   /* set callback for all valid messages */
+   nl_socket_modify_cb(nlink_socket->sock, NL_CB_VALID, NL_CB_CUSTOM, mtlk_wireless_netlink_event, drv);
+-#ifdef CONFIG_P2P_MANAGER
+-printf("AG: mtlk_gnl_nlink_init,  SET\n");
+-#endif
++
+   goto end;
+ 
+ err_dealloc:
+@@ -1355,9 +1535,8 @@
+ 	return mtlk_set_iface_flags(priv, 1);
+ }
+ 
+-#ifdef CONFIG_WPS
+ static int
+-mtlk_set_wps_ie(void *priv, const u8 *ie, size_t ie_len, u16 ie_type)
++mtlk_set_ie(void *priv, const u8 *ie, size_t ie_len, u16 ie_type)
+ {
+ 	struct mtlk_driver_data *drv = priv;
+ 	struct iwreq iwr;
+@@ -1369,6 +1548,7 @@
+ 	iwr.u.data.length = ie_len;
+ 	iwr.u.data.flags = ie_type;
+ 
++	wpa_printf(MSG_DEBUG, "%s: send ioctl (=%d), len=%d",__func__,ie_type,iwr.u.data.length);
+ 	if (mtlk_ioctl_wrapper(drv, SIOCSIWGENIE, &iwr) < 0) {
+ 		perror("ioctl[SIOCSIWGENIE]");
+ 		ret = -1;
+@@ -1377,23 +1557,32 @@
+ 	return ret;
+ }
+ 
++#ifdef CONFIG_WPS
+ static int
+ mtlk_set_ap_wps_ie(void *priv, const struct wpabuf *beacon,
+ 			const struct wpabuf *proberesp,
+ 			const struct wpabuf *assocresp)
+ {
+ 	int ret;
+-	ret = mtlk_set_wps_ie(priv, beacon ? wpabuf_head(beacon) : NULL,
++
++	wpa_hexdump_buf(MSG_DEBUG, "mtlk: beacon",
++			beacon);
++	wpa_hexdump_buf(MSG_DEBUG, "mtlk: proberesp",
++			proberesp);
++	wpa_hexdump_buf(MSG_DEBUG, "mtlk: assocresp",
++			assocresp);
++
++	ret = mtlk_set_ie(priv, beacon ? wpabuf_head(beacon) : NULL,
+ 				beacon ? wpabuf_len(beacon) : 0,
+ 				IE_WSC_BEACON);
+ 	if (ret < 0)
+ 		return ret;
+-	ret = mtlk_set_wps_ie(priv, proberesp ? wpabuf_head(proberesp) : NULL,
++	ret = mtlk_set_ie(priv, proberesp ? wpabuf_head(proberesp) : NULL,
+ 				proberesp ? wpabuf_len(proberesp) : 0,
+ 				IE_WSC_PROBE_RESP);
+ 	if (ret < 0)
+ 		return ret;
+-	ret = mtlk_set_wps_ie(priv, assocresp ? wpabuf_head(assocresp) : NULL,
++	ret = mtlk_set_ie(priv, assocresp ? wpabuf_head(assocresp) : NULL,
+ 				assocresp ? wpabuf_len(assocresp) : 0,
+ 				IE_WSC_ASSOC_RESP);
+ 	return ret;
+@@ -1403,6 +1592,155 @@
+ #define mtlk_set_ap_wps_ie NULL
+ #endif
+ 
++#ifdef CONFIG_HS20
++
++static int mtlk_is_code_in_white_list(u16 ie_code)
++{
++	const u16 allowed[] = { WLAN_EID_INTERWORKING, WLAN_EID_ADV_PROTO, WLAN_EID_QOS_MAP_SET, WLAN_EID_ROAMING_CONSORTIUM, WLAN_EID_VENDOR_SPECIFIC};
++	unsigned int i;
++
++	wpa_printf(MSG_EXCESSIVE, "%s: ie_code=0x%x",__func__,ie_code);
++	for (i = 0; i < ARRAY_SIZE(allowed); i++) {
++		wpa_printf(MSG_EXCESSIVE, "%s: allowed_code=0x%x",__func__,allowed[i]);
++		if (ie_code == allowed[i])
++			return 1;
++	}
++	return 0;
++}
++
++
++static int mtlk_set_ap_ie(void *priv, const u8 *ie, size_t ie_len, u16 ie_type)
++{
++	u8 *pos_ie = (u8 *)ie;
++	int left;
++	size_t len;
++	left = ie_len;
++
++	wpa_printf(MSG_DEBUG, "%s: ie_type=%d, ie_len=%d",__func__,ie_type,ie_len);
++	while (left > 2)
++	{
++		len = *(pos_ie + 1);
++		wpa_printf(MSG_EXCESSIVE, "%s: in while, len=%d, left=%d",__func__,len,left);
++		if (mtlk_is_code_in_white_list(*(pos_ie))) {
++			wpa_printf(MSG_EXCESSIVE, "%s: call mtlk_set_ie for (0x%x) IE",__func__,*(pos_ie));
++			mtlk_set_ie(priv, pos_ie, (len+2), ie_type);
++		}
++
++		/* DEBUG IEs Start ***/
++		wpa_printf(MSG_EXCESSIVE, "%s: element code=0x%x\n",__func__,pos_ie[0]);
++		wpa_printf(MSG_EXCESSIVE, "%s: element len=0x%x\n",__func__,len/*pos_ie[1]*/);
++		wpa_hexdump(MSG_EXCESSIVE, "IE", &(pos_ie[2]), len);
++		/* DEBUG IEs End ***/
++
++		pos_ie+=(len+2); //point to next code
++		left  -= 2; //reduce tag and len
++		left -= len; //reduce tag data
++		wpa_printf(MSG_EXCESSIVE, "%s: left=%d\n",__func__,left);
++	}//while
++	return 0;
++}
++
++
++static int mtlk_set_ap(void *priv, struct wpa_driver_ap_params *params)
++{
++	wpa_printf(MSG_DEBUG, "%s: SSID=%s",__func__,params->ssid);
++	wpa_printf(MSG_DEBUG, "mtlk: set_ap - pairwise_ciphers=0x%x "
++		   "group_cipher=0x%x key_mgmt_suites=0x%x auth_algs=0x%x "
++		   "wpa_version=0x%x privacy=%d interworking=%d",
++		   params->pairwise_ciphers, params->group_cipher,
++		   params->key_mgmt_suites, params->auth_algs,
++		   params->wpa_version, params->privacy, params->interworking);
++	wpa_hexdump_ascii(MSG_DEBUG, "mtlk: SSID",
++			  params->ssid, params->ssid_len);
++	if (params->hessid)
++		wpa_printf(MSG_DEBUG, "mtlk: HESSID " MACSTR,
++			   MAC2STR(params->hessid));
++	/* Configure driver:
++	*/
++	if (params->beacon_ies != NULL) {
++		wpa_hexdump_buf(MSG_DEBUG, "mtlk: beacon_ies",
++				params->beacon_ies);
++		mtlk_set_ap_ie(priv,
++			wpabuf_head(params->beacon_ies),
++			wpabuf_len(params->beacon_ies),
++			IE_WSC_BEACON);
++	}
++	if (params->proberesp_ies != NULL) {
++		wpa_hexdump_buf(MSG_DEBUG, "mtlk: proberesp_ies",
++				params->proberesp_ies);
++		mtlk_set_ap_ie(priv,
++			wpabuf_head(params->proberesp_ies),
++			wpabuf_len(params->proberesp_ies),
++			IE_WSC_PROBE_RESP);
++	}
++	if (params->assocresp_ies != NULL) {
++		wpa_hexdump_buf(MSG_DEBUG, "mtlk: assocresp_ies",
++				params->assocresp_ies);
++		mtlk_set_ap_ie(priv,
++			wpabuf_head(params-> assocresp_ies),
++			wpabuf_len(params-> assocresp_ies),
++			IE_WSC_ASSOC_RESP);
++	}
++
++	return 0;
++}
++
++
++#define QOS_MAP_SIZE_MAX 2+16+(2*21)
++static int mtlk_set_qos_map(void *priv, const u8 *qos_map_set, u8 qos_map_set_len)
++{
++	struct mtlk_driver_data *drv = priv;
++	u8 buf[QOS_MAP_SIZE_MAX];
++	int ret=0, len;
++
++	wpa_printf(MSG_DEBUG, "%s: qos_map_set_len=%d",__func__,qos_map_set_len);
++
++	len = qos_map_set_len;
++	memcpy((buf+2), qos_map_set, qos_map_set_len);
++	buf[0] = WLAN_EID_QOS_MAP_SET;
++	buf[1] = len;
++
++	mtlk_set_ap_ie(priv,
++		buf,
++		len,
++		IE_WSC_ASSOC_RESP);
++
++	return ret;
++}
++
++
++static int mtlk_send_action(void *priv, unsigned int freq,
++			unsigned int wait,
++			const u8 *dst, const u8 *src,
++			const u8 *bssid,
++			const u8 *data, size_t data_len, int no_cck)
++{
++	struct mtlk_driver_data *drv = priv;
++	struct ieee80211_hdr *hdr;
++	unsigned char *buf = os_zalloc(24 + data_len);
++	int res = -1;
++
++	wpa_printf(MSG_DEBUG, "mtlk: Send Action frame (ifindex=%d, "
++		   "freq=%u MHz, no_cck=%d)",
++		   drv->ifindex, freq, no_cck);
++	memcpy(buf + 24, data, data_len);
++	hdr = (struct ieee80211_hdr *) buf;
++	hdr->frame_control = IEEE80211_FC(WLAN_FC_TYPE_MGMT, WLAN_FC_STYPE_ACTION);
++	memcpy(hdr->addr1, dst, ETH_ALEN);
++	memcpy(hdr->addr2, src, ETH_ALEN);
++	memcpy(hdr->addr3, bssid, ETH_ALEN);
++
++	wpa_printf(MSG_DEBUG, "mtlk: Send Action frame, dst " MACSTR, MAC2STR(dst));
++	wpa_printf(MSG_DEBUG, "mtlk: Send Action frame, src " MACSTR, MAC2STR(src));
++	wpa_printf(MSG_DEBUG, "mtlk: Send Action frame, bssid " MACSTR, MAC2STR(bssid));
++	res = mtlk_nlink_send_msg(drv, (void*)buf, (24+data_len));
++	os_free(buf);
++	return res;
++}
++
++#endif //CONFIG_HS20
++
++
+ const struct wpa_driver_ops wpa_driver_mtlk_ops = {
+ 	.name			= "mtlk",
+ 	.hapd_init		= mtlk_init,
+@@ -1419,11 +1757,12 @@
+ 	.hapd_get_ssid		= mtlk_get_ssid,
+ 	.sta_clear_stats	= mtlk_sta_clear_stats,
+ 	.commit			= mtlk_commit,
++#ifdef CONFIG_HS20
++	.set_ap				= mtlk_set_ap,
++	.set_qos_map		= mtlk_set_qos_map,
++	.send_action		= mtlk_send_action,
++#else
+ 	.set_ap_wps_ie		= mtlk_set_ap_wps_ie,
++#endif
+ };
+ 
+-#ifdef CONFIG_AG_TEST
+-void no_error() {};
+-#else
+-void no_error() {};
+-#endif

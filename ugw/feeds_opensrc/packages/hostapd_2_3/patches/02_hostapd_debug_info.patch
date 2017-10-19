@@ -1,0 +1,98 @@
+# HG changeset patch
+# Parent 7a4c3f58af79f35816e0fc77a6e94b0981e4197e
+
+diff --git a/hostapd/.config b/hostapd/.config
+--- a/hostapd/.config
++++ b/hostapd/.config
+@@ -320,3 +320,7 @@ CONFIG_NO_RANDOM_POOL=y
+ # http://wireless.kernel.org/en/users/Documentation/acs
+ #
+ #CONFIG_ACS=y
++
++# Change the hostapd output to differentiate between info, debug and error messages.
++# If you are using an old parser to analyze log prints, don't enable this option.
++CONFIG_FANCY_LOG=y
+diff --git a/hostapd/Makefile b/hostapd/Makefile
+--- a/hostapd/Makefile
++++ b/hostapd/Makefile
+@@ -868,6 +868,10 @@ LIBS += -lsqlite3
+ LIBS_h += -lsqlite3
+ endif
+ 
++ifdef CONFIG_FANCY_LOG
++CFLAGS += -DCONFIG_FANCY_LOG
++endif
++
+ ALL=hostapd hostapd_cli
+ 
+ all: verify_config $(ALL)
+diff --git a/hostapd/defconfig b/hostapd/defconfig
+--- a/hostapd/defconfig
++++ b/hostapd/defconfig
+@@ -315,3 +315,7 @@ CONFIG_IPV6=y
+ # http://wireless.kernel.org/en/users/Documentation/acs
+ #
+ #CONFIG_ACS=y
++
++# Change the hostapd output to differentiate between info, debug and error messages.
++# If you are using an old parser to analyze log prints, don't enable this option.
++#CONFIG_FANCY_LOG=y
+diff --git a/hostapd/main.c b/hostapd/main.c
+--- a/hostapd/main.c
++++ b/hostapd/main.c
+@@ -238,7 +238,7 @@ hostapd_interface_init(struct hapd_inter
+ 	struct hostapd_iface *iface;
+ 	int k;
+ 
+-	wpa_printf(MSG_ERROR, "Configuration file: %s", config_fname);
++	wpa_printf(MSG_INFO, "Configuration file: %s", config_fname);
+ 	iface = hostapd_init(interfaces, config_fname);
+ 	if (!iface)
+ 		return NULL;
+diff --git a/src/ap/hostapd.c b/src/ap/hostapd.c
+--- a/src/ap/hostapd.c
++++ b/src/ap/hostapd.c
+@@ -781,7 +781,7 @@ static int hostapd_setup_bss(struct host
+ 	}
+ 
+ 	if (!hostapd_drv_none(hapd)) {
+-		wpa_printf(MSG_ERROR, "Using interface %s with hwaddr " MACSTR
++		wpa_printf(MSG_INFO, "Using interface %s with hwaddr " MACSTR
+ 			   " and ssid \"%s\"",
+ 			   conf->iface, MAC2STR(hapd->own_addr),
+ 			   wpa_ssid_txt(conf->ssid.ssid, conf->ssid.ssid_len));
+diff --git a/src/utils/wpa_debug.c b/src/utils/wpa_debug.c
+--- a/src/utils/wpa_debug.c
++++ b/src/utils/wpa_debug.c
+@@ -189,6 +189,10 @@ void wpa_debug_close_linux_tracing(void)
+ 
+ #endif /* CONFIG_DEBUG_LINUX_TRACING */
+ 
++#ifdef CONFIG_FANCY_LOG
++/* msg_hdr: Debug level string to prepend to wpa_printf msg */
++const char* msg_hdr[] = { "EXCESSIVE", "MSGDUMP", "DEBUG", "INFO", "WARNING", "ERROR" };
++#endif /* CONFIG_FANCY_LOG */
+ 
+ /**
+  * wpa_printf - conditional printf
+@@ -219,10 +223,20 @@ void wpa_printf(int level, const char *f
+ 		wpa_debug_print_timestamp();
+ #ifdef CONFIG_DEBUG_FILE
+ 		if (out_file) {
++#ifdef CONFIG_FANCY_LOG
++			if (wpa_debug_level <= MSG_DEBUG) {
++				fprintf(out_file, "WPA %s: ", msg_hdr[level]);
++			}
++#endif /* CONFIG_FANCY_LOG */
+ 			vfprintf(out_file, fmt, ap);
+ 			fprintf(out_file, "\n");
+ 		} else {
+ #endif /* CONFIG_DEBUG_FILE */
++#ifdef CONFIG_FANCY_LOG
++		if (wpa_debug_level <= MSG_DEBUG) {
++			printf("WPA %s: ", msg_hdr[level]);
++		}
++#endif /* CONFIG_FANCY_LOG */
+ 		vprintf(fmt, ap);
+ 		printf("\n");
+ #ifdef CONFIG_DEBUG_FILE

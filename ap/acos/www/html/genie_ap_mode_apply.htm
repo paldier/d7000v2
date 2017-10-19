@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>NETGEAR   Genie</title>
+<%11%>
+<style type="text/css">
+h2{
+	padding-left:0%;
+	font-size:20px;
+	font-family: Arial, Helvetica, sans-serif;
+        font-weight:bold;
+        color:#9d98ff;                
+}
+   .centerTd{
+	font-family: Arial, Helvetica, sans-serif; 
+	font-size:14px;
+	height:25px;
+        color:#404040;    
+	width:600px;
+	padding-left:20px;
+   }
+   .textRow{
+	font-family: Arial, Helvetica, sans-serif;  
+	font-size:14px;
+	height:15px;
+        color:#404040;              
+   }
+
+.LoadingImg{
+        text-align:center;                
+	line-height:20%;
+   }
+
+
+</style>
+<script type="text/javascript">
+function check_top_url()
+{
+    if(window.location.href.indexOf("www.routerlogin.com") > 0)
+        return "www.routerlogin.com";
+    else if (window.location.href.indexOf("www.routerlogin.net") > 0)
+        return "www.routerlogin.net";
+    else if(window.location.href.indexOf("routerlogin.com") > 0)
+        return "routerlogin.com";
+    else if (window.location.href.indexOf("routerlogin.net") > 0)
+        return "routerlogin.net";
+    else
+        return "";
+}
+
+function change_url(file_name)
+{    
+    if("www.routerlogin.com" == check_top_url())
+        window.location.href = "http://www.routerlogin.net" + "/" + file_name;
+    else if("www.routerlogin.net" == check_top_url())
+        window.location.href = "http://routerlogin.com" + "/" + file_name;
+    else if("routerlogin.com" == check_top_url())
+        window.location.href = "http://routerlogin.net" + "/" + file_name;
+    else if("routerlogin.net" == check_top_url())
+        window.location.href = "http://www.routerlogin.com" + "/" + file_name;
+    else 
+        window.location.href = "http://routerlogin.net" + "/" + file_name;
+}
+function wait()
+{
+	setTimeout("redirect()",85000);                
+}
+function redirect()
+{                
+	var cf = document.forms[0];	
+	window.location.href=cf.next_file.value;
+        //change_url(cf.next_file.value);
+}
+</script>
+
+</head>
+<body  leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" onLoad="wait();" style="background-color:#ffffff;">
+<form name="update">
+<table border="0" cellpadding="0" cellspacing="0" width="99%">
+<tr style="height:10px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td>
+	<td class="centerTd">
+		 <h2>Applying Internet Connection Settings</h2>
+        </td>
+	<td>&nbsp;</td>
+</tr>
+<tr>
+	<td>&nbsp;</td><td class="textRow centerTd" > This process can take a minute or two; please wait...</td><td>&nbsp;</td>
+<tr>
+<tr style="height:40px">
+	<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+</tr>	
+<tr>
+	<td>&nbsp;</td><td class = "LoadingImg" style="border:0;" ><img id="loading" src="loading.gif" frameborder="0" border="0" ></td><td>&nbsp;</td>
+</tr>
+
+</table>
+<input type="hidden" name="next_file" value="<%845%>">
+<input type="hidden" name="disable_menu" value="true">
+</form>
+</body>
+</html>

@@ -1,0 +1,118 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	<link rel="stylesheet" href="<%13%>">	
+	<script src="script/script.js"></script>
+
+</head>
+<body bgcolor=#ffffff>
+<script>
+
+var download_desktop = <%2207%>;
+var download_readyshare = <%2208%>;
+var is_Mac = detectOS();
+var cf = document.forms[0];
+//var page_status = "genie_downloading";
+//var mode = <%2209%>;
+
+function download_readyshare_vault()
+{
+    location.href='http://updates1.netgear.com/readysharevault/ReadySHAREVault-install.exe'
+}
+function download_genie()
+{
+	 if( download_desktop == "1" && download_readyshare == "1")
+   {
+        location.href='http://updates1.netgear.com/netgeargenie/update/NETGEARGenie-install.exe'
+		setTimeout("download_readyshare_vault()", 5000);
+   }
+   else if ( download_desktop == "1")
+   {
+		if( is_Mac == "Mac")
+		{
+				document.write('<img src="http://updates1.netgear.com/readysharevault/ReadySHARE_Vault.jpg" style="display:none" onerror="alert(\'Cannot download Desktop NETGEAR Mac Genie now, please download it and install it later.\');location.href=\'VER_check.htm\'" onload="setTimeout( function() { location.href=\'http://updates1.netgear.com/netgeargenie/mac/update/NETGEARGenieInstaller.dmg\' }, 6000 ); ">');
+		}
+		else
+		{
+				document.write('<img src="http://updates1.netgear.com/readysharevault/ReadySHARE_Vault.jpg" style="display:none" onerror="alert(\'Cannot download Desktop Genie now, please download it and install it later.\');location.href=\'VER_check.htm\'" onload="setTimeout( function() { location.href=\'http://updates1.netgear.com/netgeargenie/update/NETGEARGenie-install.exe\' }, 6000 );">');
+		}
+   }
+   else if  ( download_readyshare == "1")
+   {
+        document.write('<img src="http://updates1.netgear.com/readysharevault/ReadySHARE_Vault.jpg" style="display:none" onerror="alert(\'Cannot download Netgear ReadySHARE Vault now, please download it and install it later.\');location.href=\'VER_check.htm\'" onload="setTimeout( function() { location.href=\'http://updates1.netgear.com/readysharevault/ReadySHAREVault-install.exe\' }, 6000 );">');
+   }				
+}
+
+</script>
+	<table border="0" cellpadding="0" cellspacing="3"  width="99%" >
+<script>
+	if( download_desktop == "1" || download_readyshare == "1")
+		document.write('<TR height=40px;><td>&nbsp;</td><TD class="centerTd"><h2 style="color:#404040;"><%2210%></h2></TD><td>&nbsp;</td></TR>')
+	else
+		location.href="VER_check.htm";
+</script>
+            
+			<tr height=40px; id="string_genie">
+			     <td>&nbsp;</td>
+                 <td class="centerTd"><%2211%><br><br><b><%2212%></b></td>
+                 <td>&nbsp;</td>
+                 </tr>
+            </tr>
+			<tr height=40px; id="string_rs">
+			     <td>&nbsp;</td>
+                 <td class="centerTd"><%2213%><br><br><b><%2214%></b></td>
+                 <td>&nbsp;</td>
+            </tr>
+			<tr height=40px; id="string_genie_rs">
+                 <td>&nbsp;</td>
+			     <td class="centerTd"><%2215%><br><br><b><%2216%></b></td>
+                 <td>&nbsp;</td>
+            </tr>
+
+	</TABLE>
+	<div id="wait_img" align="center" class="waiting_img_div" style="display:none">
+	<img src="img/wait.gif" />
+	</div>
+	  <table border="0" cellpadding="0" cellspacing="3"  width="99%">
+         <TR><td></td><td>&nbsp;</td><td></td></TR>
+         <TR><td></td><td>&nbsp;</td><td></td></TR>
+         <TR><td></td><td>&nbsp;</td><td></td></TR>
+         <TR><td>&nbsp;</td>
+         <TD nowrap class="centerTd" align=right>
+         <button class = "purpleBtn2"  onClick='download_next( document.forms[0])'><span>&nbsp;&nbsp;&nbsp;<%36%>&nbsp;>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+         </TD><td>&nbsp;</td></TR>
+      </TABLE>
+<script>
+show_first();
+function show_first()
+{
+	document.getElementById("string_genie_rs").style.display="none";
+	document.getElementById("string_genie").style.display="none";
+	document.getElementById("string_rs").style.display="none";
+	
+	
+	if( (download_desktop==1) && (download_readyshare==1) )
+	{
+	    document.getElementById("string_genie_rs").style.display="";
+    }
+	else if( download_readyshare == 1)
+	{
+		document.getElementById("string_rs").style.display="";
+	}
+	else
+	{
+	    document.getElementById("string_genie").style.display="";
+	}
+}
+
+download_genie();
+
+function download_next()
+{
+    location.href='VER_check.htm';
+}
+</script>
+</body>
+</html>

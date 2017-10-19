@@ -1,0 +1,388 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR Router <%55%></title> 
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style>
+<%12%>
+<script language="javascript" type="text/javascript">
+<!-- 
+  
+    $(document).ready(function()
+    {	
+//        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".help-frame-div").show();
+            window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.gif";
+        }
+        else
+        {
+            $(".help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.gif";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size();
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+    function loadhelp(fname,anchname)
+    {
+                var pane = window.frames["helpframe"].$('#content');
+                var imgSrc=document.getElementById('help-button');
+                if(imgSrc.src.search("up")<0)
+                {
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+
+                        if ((loadhelp.arguments.length == 1 ) || (anchname == "" ))
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm";
+                                $(".help-frame-div").show();
+                        }
+                        else
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm#" + anchname;
+                                $(".help-frame-div").show();
+                        }
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+                }
+    }
+
+   
+
+function checkData()
+{
+ 	var cf = document.forms[0];
+	var msg = "";
+	
+	if (cf.skeyword[0].checked)
+		cf.bs_enable.value = 0;
+	else if (cf.skeyword[1].checked)
+		cf.bs_enable.value = 1;	
+	else	
+		cf.bs_enable.value = 2;			
+		
+	if (cf.trustipenble.checked)
+		cf.bs_trustedip_enable.value = 1;
+	else
+		cf.bs_trustedip_enable.value = 0;			
+		
+	cf.bs_trustedip.value = cf.cfTrusted_IPAddress1.value+'.'+cf.cfTrusted_IPAddress2.value+'.'+cf.cfTrusted_IPAddress3.value+'.'+cf.cfTrusted_IPAddress4.value;		
+	
+	var str_lan_ip = "<%245%>";
+	var str_lan_netmask = "<%476%>";
+	var lan_ip = str_lan_ip.split(".");
+	var lan_netmask = str_lan_netmask.split(".");
+	var lan_ipaddr = (lan_ip[0] << 24) | (lan_ip[1] << 16) | (lan_ip[2] << 8)| (lan_ip[3]);
+	var lan_netmaskaddr = (lan_netmask[0] << 24) | (lan_netmask[1] << 16) | (lan_netmask[2] << 8)| (lan_netmask[3]);
+
+	if(cf.trustipenble.checked)
+	{
+		var trusted_ipaddr = (cf.cfTrusted_IPAddress1.value << 24) | (cf.cfTrusted_IPAddress2.value << 16)
+							 | (cf.cfTrusted_IPAddress3.value << 8)| cf.cfTrusted_IPAddress4.value;
+		if(checkIP(cf.cfTrusted_IPAddress1,cf.cfTrusted_IPAddress2,cf.cfTrusted_IPAddress3,cf.cfTrusted_IPAddress4,254)
+			|| (parseInt(cf.cfTrusted_IPAddress4.value,10)==0)
+			|| ( (trusted_ipaddr & lan_netmaskaddr) != (lan_ipaddr & lan_netmaskaddr) ) )
+			msg+= "<%10%>";
+		else
+		{
+			cf.cfTrusted_IPAddress1.value = parseInt(cf.cfTrusted_IPAddress1.value,10);
+			cf.cfTrusted_IPAddress2.value = parseInt(cf.cfTrusted_IPAddress2.value,10);
+			cf.cfTrusted_IPAddress3.value = parseInt(cf.cfTrusted_IPAddress3.value,10);
+			cf.cfTrusted_IPAddress4.value = parseInt(cf.cfTrusted_IPAddress4.value,10);
+			cf.bs_trustedip.value = cf.cfTrusted_IPAddress1.value+'.'+cf.cfTrusted_IPAddress2.value+'.'
+								+cf.cfTrusted_IPAddress3.value+'.'+cf.cfTrusted_IPAddress4.value;	
+		}
+	}		
+	if (msg.length > 1)
+	{
+		alert(msg);
+        //start adding by Henny Chen
+        cf.cfTrusted_IPAddress1.value = lan_ip[0];
+        cf.cfTrusted_IPAddress2.value = lan_ip[1];
+        cf.cfTrusted_IPAddress3.value = lan_ip[2];
+        cf.cfTrusted_IPAddress4.value = lan_ip[3];
+        //end adding by Henny Chen
+		return false;
+	}
+	return true;	
+}
+function checkKeyWord()
+{
+	var cf = document.forms[0];
+	var msg = "";
+	msg+= checkBlank(cf.cfKeyWord_Domain, "");
+
+    var bs_temp_rules_number = parseInt("<%573%>");
+    // check number of rules, if over 255 return fault.
+
+    if (bs_temp_rules_number >= 255){
+        alert("<%574%>");
+        return false;
+    }
+
+	if (msg.length > 1)
+	{
+		cf.cfKeyWord_Domain.focus();
+		alert(msg);         //  modify by Henny Chen ,delete "//" 
+		return false;
+	}
+	if (cf.cfKeyWord_Domain.value.match( /[^\x20-\x7E]/ ))
+	{
+		alert("<%575%>");
+		return false;
+	}
+	
+	if (cf.skeyword[0].checked)
+		cf.bs_enable.value = 0;
+	else if (cf.skeyword[1].checked)
+		cf.bs_enable.value = 1;	
+	else	
+		cf.bs_enable.value = 2;			
+		
+	if (cf.trustipenble.checked)
+		cf.bs_trustedip_enable.value = 1;
+	else
+		cf.bs_trustedip_enable.value = 0;							
+							
+	cf.bs_trustedip.value = cf.cfTrusted_IPAddress1.value+'.'+cf.cfTrusted_IPAddress2.value+'.'+cf.cfTrusted_IPAddress3.value+'.'+cf.cfTrusted_IPAddress4.value;	
+		
+	return true;	
+}
+
+function checkTrustIP()
+{
+	var cf = document.forms[0];
+	if(!cf.trustipenble.checked)
+	{
+		cf.cfTrusted_IPAddress1.disabled = true;
+		cf.cfTrusted_IPAddress2.disabled = true;
+		cf.cfTrusted_IPAddress3.disabled = true;
+		cf.cfTrusted_IPAddress4.disabled = true;
+		
+	}
+	else
+	{
+		cf.cfTrusted_IPAddress1.disabled = false;
+		cf.cfTrusted_IPAddress2.disabled = false;
+		cf.cfTrusted_IPAddress3.disabled = false;
+		cf.cfTrusted_IPAddress4.disabled = false;
+	}
+}
+
+function checkTrustIP1()
+{
+	var cf = document.forms[0];
+    var ip = document.forms[0].bs_trustedip.value.split(".");
+
+    cf.cfTrusted_IPAddress1.value = ip[0];           
+    cf.cfTrusted_IPAddress2.value = ip[1];          
+    cf.cfTrusted_IPAddress3.value = ip[2];         
+    cf.cfTrusted_IPAddress4.value = ip[3];	
+	
+	if(!cf.trustipenble.checked)
+	{
+		cf.cfTrusted_IPAddress1.disabled = true;
+		cf.cfTrusted_IPAddress2.disabled = true;
+		cf.cfTrusted_IPAddress3.disabled = true;
+		cf.cfTrusted_IPAddress4.disabled = true;
+		
+	}
+	else
+	{
+		cf.cfTrusted_IPAddress1.disabled = false;
+		cf.cfTrusted_IPAddress2.disabled = false;
+		cf.cfTrusted_IPAddress3.disabled = false;
+		cf.cfTrusted_IPAddress4.disabled = false;
+	}
+}
+
+function checkKeyWordDomainList()
+{
+	var cf = document.forms[0];
+	
+    cf.cfKeyWord_Domain.value = "";
+    
+	if(cf.cfKeyWord_DomainList.options[0] == null)
+	{
+		return false;
+	}
+		
+	if (cf.skeyword[0].checked)
+		cf.bs_enable.value = 0;
+	else if (cf.skeyword[1].checked)
+		cf.bs_enable.value = 1;	
+	else	
+		cf.bs_enable.value = 2;			
+		
+	if (cf.trustipenble.checked)
+		cf.bs_trustedip_enable.value = 1;
+	else
+		cf.bs_trustedip_enable.value = 0;							
+							
+	cf.bs_trustedip.value = cf.cfTrusted_IPAddress1.value+'.'+cf.cfTrusted_IPAddress2.value+'.'+cf.cfTrusted_IPAddress3.value+'.'+cf.cfTrusted_IPAddress4.value;
+					
+	return true;	
+}
+
+<%576%>
+function chSession(newsession)
+{
+    if(newsession == 2)
+        location.href = "BKS_keyword_ppp2.htm";		
+    else if(newsession == 1)
+        location.href = "BKS_keyword.htm";		
+}
+<%577%>
+//-->
+</script> 
+</head>
+<body  onload="change_size();checkTrustIP1();" class="page-body"  onResize="change_size();" >
+<img class="cover-image" src="<%57%>">
+<img class="body-image" src="<%58%>">
+<div id="full-page-container">
+
+<form id="target"  method="POST" action="keyword.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue">
+	<img class="subtop-image" src="<%59%>">
+<div class="subhead2"> <%319%></div>
+<table border="0"    style="height:370px"  class="subhead2-table">
+
+<tr align="left" valign="middle">
+<td  style="padding-top:10px;padding-bottom:10px" align="center" colspan="2" class="table-seperate-border">
+&nbsp;&nbsp;&nbsp;<button value="<%61%>"  onClick="buttonClick(this,'<%61%>');return checkData()" type="SUBMIT" name="wzWAN_IPFinish" class="button-apply" > <span class="roundleft_apply" ><%62%>&nbsp;<span class="apply-icon">&nbsp;&nbsp;&nbsp;&nbsp;</span></span><span class="roundright_apply">&nbsp;&nbsp;&nbsp;</span></button>
+&nbsp;&nbsp;&nbsp;<button value="<%63%>" onclick="buttonClick(this,'<%63%>');"  type="SUBMIT" name="Cancel" class="button-rule" ><span class="roundleft_button"><span class ="cancel-icon">&nbsp;&nbsp;&nbsp;&nbsp;<%64%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+</td>
+</tr>
+
+<tr><td class="scrollpane-table-seperate-border" colspan="2"><div class="scroll-pane" style="height:365px;width:620px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+<%578%>
+	<input checked type="radio" name=pppoesession value=session1 onClick="chSession(1);"><%579%>
+	<input type="radio" name=pppoesession value=session2 onClick="chSession(2);"><%580%><br>
+<%581%>	
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+<tr>
+	<td colspan="2">
+	<%582%></td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<tr>
+	 <td colspan="2" height="18"><a href="javascript:loadhelp('BKS_keyword','blocking')" tabindex="-1"><b><%583%></b></a><br>
+		<input <%584%> type="radio" name="skeyword" value="never"><%585%><br> 
+		<input <%586%> type="radio" name="skeyword" value="perschedule"><%587%><br>
+		<input <%588%> type="radio" name="skeyword" value="always"><%589%>
+	 </td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<tr>
+ <td colspan="2"><a href="javascript:loadhelp('BKS_keyword','toaddword')" tabindex="-1"><b><%590%></b></a></td>
+</tr>
+
+<tr>
+	<td colspan="2"><input type="text" name="cfKeyWord_Domain" size="32" maxlength="60" value="<%591%>"></td>
+</tr>
+
+<tr>
+	<td width="50%" align="left" colspan="2" >&nbsp;&nbsp;&nbsp;<button type="submit" value="<%592%>" name="cfKeyWord_AddKeyword" class="button-rule" onClick="buttonClick(this,'<%592%>');if(!checkKeyWord()) return false;"><span class="roundleft_button"><span class="add-icon">&nbsp;&nbsp;&nbsp;&nbsp;<%592%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button></td>
+</tr>		
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+		<tr>
+			<td colspan="2"><a href="javascript:loadhelp('BKS_keyword','blocklist')" tabindex="-1"><b><%593%></b></a></td>
+		</tr>
+		<tr>
+			<td colspan="2">
+				<select name="cfKeyWord_DomainList" size="6" multiple><%594%></select> 
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2">&nbsp;&nbsp;&nbsp;<button type="submit" value="<%595%>" name="cfKeyWord_DeleteKeyword" class="button-rule" onclick="buttonClick(this,'<%595%>');if(!checkKeyWordDomainList()) return false;"><span class="roundleft_button"><span class="cancel-icon">&nbsp;&nbsp;&nbsp;&nbsp;  <%595%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button> 
+			&nbsp;&nbsp;&nbsp;<button type="submit" value="<%596%>" name="cfKeyWord_ClearList" class="button-rule" onclick="buttonClick(this,'<%596%>');if(!checkKeyWordDomainList()) return false;"><span class="roundleft_button">&nbsp;&nbsp; <%596%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button></td>
+		</tr>
+		
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+	<tr>
+	<td nowrap colspan="2"><input <%597%> type="checkbox" name="trustipenble" value="" onclick= "checkTrustIP();"><a href="javascript:loadhelp('BKS_keyword','trusted')" tabindex="-1"><b><%598%></b></a></td>
+</tr>
+		<tr>
+				<td width="50%"><a href="javascript:loadhelp('BKS_keyword','trusted')" tabindex="-1"><b><%599%></b></a></td>
+				<td width="50%" align="right" class="num"><input type="text" name="cfTrusted_IPAddress1" class="num" size="4" maxlength="3" value="192" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheck(this,0)">.<input type="text" name="cfTrusted_IPAddress2" class="num" size="4" maxlength="3" value="168" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="cfTrusted_IPAddress3" class="num" size="4" maxlength="3" value="0" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="cfTrusted_IPAddress4" class="num" size="4" maxlength="3" value="0" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,1)"></td>
+			</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+		
+
+ 
+</table></div></td></tr>
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div class="help-frame-div" > <iframe id="helpframe"  src="BKS_keyword_h.htm" class="help-iframe" scrolling="no" name="helpframe" frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <img class="subfooter-image" src="img/subhead2-bottom.gif">
+<div class="subhead2-bottom" >
+    <span style="float:left;padding-left:10px;padding-top:5px"><img src="img/help-icon.gif" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span class="subhead2-text" style="float:left;padding-left:3px;" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%211%> </span>
+    <span class="button-help-arrow">
+      <img src="img/helparrowdown-icon.gif" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span class="subhead2-text" style="text-decoration:underline;float:right;padding-right:10px" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%212%> </span>
+      </div>
+
+
+
+
+<INPUT name=bs_enable type=hidden value= "<%600%>">
+<INPUT name=bs_trustedip_enable type=hidden value= "<%601%>">
+<INPUT name=bs_trustedip type=hidden value= "<%602%>">
+
+<a name="helpframe-anchor"></a>
+</form>
+
+</div>
+</body>
+</html>
+
+

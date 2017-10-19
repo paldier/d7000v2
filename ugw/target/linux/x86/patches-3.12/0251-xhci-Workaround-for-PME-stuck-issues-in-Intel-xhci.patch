@@ -1,0 +1,110 @@
+From b729970bb5369e69faba218bd831912234e85ed1 Mon Sep 17 00:00:00 2001
+From: Mathias Nyman <mathias.nyman@linux.intel.com>
+Date: Fri, 6 Mar 2015 17:23:19 +0200
+Subject: [PATCH] xhci: Workaround for PME stuck issues in Intel xhci
+
+The xhci in Intel Sunrisepoint and Cherryview platforms need a driver
+workaround for a Stuck PME that might either block PME events in suspend,
+or create spurious PME events preventing runtime suspend.
+
+Workaround is to clear a internal PME flag, BIT(28) in a vendor specific
+PMCTRL register at offset 0x80a4, in both suspend resume callbacks
+
+Without this, xhci connected usb devices might never be able to wake up the
+system from suspend, or prevent device from going to suspend (xhci d3)
+
+Cc: <stable@vger.kernel.org>
+Signed-off-by: Mathias Nyman <mathias.nyman@linux.intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Backported-by: Wade Cline <wade.t.cline@intel.com>
+---
+ drivers/usb/host/xhci-pci.c |   32 ++++++++++++++++++++++++++++++++
+ drivers/usb/host/xhci.h     |    1 +
+ 2 files changed, 33 insertions(+)
+
+diff --git a/drivers/usb/host/xhci-pci.c b/drivers/usb/host/xhci-pci.c
+index 3d3dfcb..94eae29 100644
+--- a/drivers/usb/host/xhci-pci.c
++++ b/drivers/usb/host/xhci-pci.c
+@@ -38,6 +38,10 @@
+ 
+ #define PCI_DEVICE_ID_INTEL_LYNXPOINT_XHCI	0x8c31
+ #define PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_XHCI	0x9c31
++#define PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI		0x22b5
++#define PCI_DEVICE_ID_INTEL_COUGARPARK_XHCI		0x2bb5
++#define PCI_DEVICE_ID_INTEL_SUNRISEPOINT_H_XHCI		0xa12f
++#define PCI_DEVICE_ID_INTEL_SUNRISEPOINT_LP_XHCI	0x9d2f
+ 
+ static const char hcd_name[] = "xhci_hcd";
+ 
+@@ -142,6 +146,13 @@ static void xhci_pci_quirks(struct device *dev, struct xhci_hcd *xhci)
+ 		if (pdev->subsystem_vendor == PCI_VENDOR_ID_HP)
+ 			xhci->quirks |= XHCI_SPURIOUS_WAKEUP;
+ 	}
++	if (pdev->vendor == PCI_VENDOR_ID_INTEL &&
++		(pdev->device == PCI_DEVICE_ID_INTEL_SUNRISEPOINT_LP_XHCI ||
++		 pdev->device == PCI_DEVICE_ID_INTEL_SUNRISEPOINT_H_XHCI ||
++		 pdev->device == PCI_DEVICE_ID_INTEL_COUGARPARK_XHCI ||
++		 pdev->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI)) {
++		xhci->quirks |= XHCI_PME_STUCK_QUIRK;
++	}
+ 	if (pdev->vendor == PCI_VENDOR_ID_ETRON &&
+ 			pdev->device == PCI_DEVICE_ID_ASROCK_P67) {
+ 		xhci->quirks |= XHCI_RESET_ON_RESUME;
+@@ -158,6 +169,21 @@ static void xhci_pci_quirks(struct device *dev, struct xhci_hcd *xhci)
+ 		xhci->quirks |= XHCI_RESET_ON_RESUME;
+ }
+ 
++/*
++ * Make sure PME works on some Intel xHCI controllers by writing 1 to clear
++ * the Internal PME flag bit in vendor specific PMCTRL register at offset 0x80a4
++ */
++static void xhci_pme_quirk(struct xhci_hcd *xhci)
++{
++	u32 val;
++	void __iomem *reg;
++
++	reg = (void __iomem *) xhci->cap_regs + 0x80a4;
++	val = readl(reg);
++	writel(val | BIT(28), reg);
++	readl(reg);
++}
++
+ /* called during probe() after chip reset completes */
+ static int xhci_pci_setup(struct usb_hcd *hcd)
+ {
+@@ -275,6 +301,9 @@ static int xhci_pci_suspend(struct usb_hcd *hcd, bool do_wakeup)
+ 	if (xhci_compliance_mode_recovery_timer_quirk_check())
+ 		pdev->no_d3cold = true;
+ 
++	if (xhci->quirks & XHCI_PME_STUCK_QUIRK)
++		xhci_pme_quirk(xhci);
++
+ 	return xhci_suspend(xhci);
+ }
+ 
+@@ -305,6 +334,9 @@ static int xhci_pci_resume(struct usb_hcd *hcd, bool hibernated)
+ 	if (pdev->vendor == PCI_VENDOR_ID_INTEL)
+ 		usb_enable_intel_xhci_ports(pdev);
+ 
++	if (xhci->quirks & XHCI_PME_STUCK_QUIRK)
++		xhci_pme_quirk(xhci);
++
+ 	retval = xhci_resume(xhci, hibernated);
+ 	return retval;
+ }
+diff --git a/drivers/usb/host/xhci.h b/drivers/usb/host/xhci.h
+index 365fa97..fe91d77 100644
+--- a/drivers/usb/host/xhci.h
++++ b/drivers/usb/host/xhci.h
+@@ -1551,6 +1551,7 @@ struct xhci_hcd {
+ #define XHCI_PLAT		(1 << 16)
+ #define XHCI_SLOW_SUSPEND	(1 << 17)
+ #define XHCI_SPURIOUS_WAKEUP	(1 << 18)
++#define XHCI_PME_STUCK_QUIRK	(1 << 20)
+ 	unsigned int		num_active_eps;
+ 	unsigned int		limit_active_eps;
+ 	/* There are two roothubs to keep track of bus suspend info for */
+-- 
+1.7.9.5
+

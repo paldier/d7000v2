@@ -1,0 +1,183 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="<%13%>">	
+	<script src="script/script.js"></script>
+	<title>NETGEAR Genie</title>
+	
+	
+</head>
+<style type="text/css">
+<!--
+A {
+	COLOR: blue; TEXT-DECORATION: underline; font-size:10pt; font-family:Times;
+}
+-->
+</style>
+<script >
+
+var OSType = detectOS();
+var RS_num=1;
+var genie_mac_num=1;
+var genie_num=1;
+var mode = <%2209%>;
+
+function downloadSoftware()
+{
+    if(OSType != "Win" && OSType != "Mac"){
+    window.location.href='VER_check.htm';
+    }
+}
+function choose_RS(n, cf)
+{
+	if(  document.getElementById("RS_choose").className == "checked")
+	{
+		document.getElementById("RS_choose").className = "uncheck"
+		cf.download_readyshare.value = "0";
+	}
+	else
+	{
+		document.getElementById("RS_choose").className = "checked"
+		cf.download_readyshare.value = "1";
+	}	
+		//alert(RS_num);
+}
+function genie_mac_choose(n, cf)
+{
+	if( document.getElementById("genie_mac").className == "checked")
+	{
+		document.getElementById("genie_mac").className = "uncheck"
+		cf.download_desktop_genie.value = "0";
+	}
+	else
+	{
+		document.getElementById("genie_mac").className = "checked"
+		cf.download_desktop_genie.value = "1";
+	}
+}
+
+function genie_choose(n, cf)
+{
+        if( document.getElementById("genie_chice").className == "checked")
+        {
+                document.getElementById("genie_chice").className = "uncheck"
+                cf.download_desktop_genie.value = "0";
+        }
+        else
+        {
+                document.getElementById("genie_chice").className = "checked"
+                cf.download_desktop_genie.value = "1";
+        }
+}
+
+function click_next(cf)
+{
+	if( OSType == "Mac" )
+		cf.download_readyshare.value = "0";
+	
+	cf.submit();
+}
+
+function do_submit(cf)
+{
+       cf.exit_genie.value = "exit"; 
+       if(OSType == "Mac")
+           cf.download_readyshare.value = "0";
+       	cf.submit();
+}
+
+function do_submit2(cf)
+{
+       cf.exit_genie.value = "previous"; 
+       if(OSType == "Mac")
+           cf.download_readyshare.value = "0";
+       	cf.submit();
+}
+
+</script>
+<body style="background-color:#ffffff" onLoad="downloadSoftware();">
+<form id="target"  name="formname" method="POST" action="genieDownload.cgi">
+	<table border="0" cellpadding="0" cellspacing="3"  width="99%">
+	<tr style="height:10px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+	<TR height=40px;> 
+	    <script>
+	    if( OSType == "Mac")
+	    {
+            document.write(' <td>&nbsp;</td><TD class="centerTd"><B><%2217%> </B></TD><td>&nbsp;</td> ');
+        }
+        else
+        {
+            document.write(' <td>&nbsp;</td><TD class="centerTd"><B><%2218%> </B></TD><td>&nbsp;</td> ');
+        }
+        </script>
+        
+    </TR>
+	<tr>
+		<td>&nbsp;</td><td></td><td>&nbsp;</td>
+        </tr>
+    <tr>
+		<script>
+            if( OSType == "Mac")
+                {
+                    document.write(' <td>&nbsp;</td><td class="textRow centerTd" nowrap height=25px; width=25px;>')
+                    document.write(' <div id="genie_mac" class="checked" onclick="genie_mac_choose(genie_mac_num, document.forms[0]);genie_mac_num++;"> </div> ')
+                    document.write(' <b class="choice_font"><a style="cursor:pointer;" href="http://www.netgear.com/genie" target="_blank"><%2219%></a> <%2220%></b></td><td>&nbsp;</td>');
+                }
+                else
+                {
+                    document.write('<td>&nbsp;</td><td class="textRow centerTd" nowrap height=25px; width=25px; >')
+                    document.write('<div id="genie_chice" class="checked" onclick="genie_choose(genie_num, document.forms[0]);genie_num++;"></div>')
+                    document.write('<b class="choice_font"><a style="cursor:pointer;" href="http://www.netgear.com/genie" target="_blank"><%2221%></a> <%2220%></b></td><td>&nbsp;</td>');
+                }
+        </script>
+    </tr>
+	<tr>
+		<td>&nbsp;</td><td></td><td>&nbsp;</td>
+        </tr>
+	<tr>
+		<script>
+			if( OSType != "Mac" )
+			{
+				document.write('<td>&nbsp;</td><td class="textRow centerTd" nowrap height=25px; width=25px;>');
+				document.write('<div id="RS_choose" class="checked"  src="checked.jpg" onclick="choose_RS(RS_num, document.forms[0]);RS_num++;"></div>');
+				document.write('<b class="choice_font"><a style="cursor:pointer;" href="http://www.netgear.com/readyshare" target="_blank"><%2222%></a> <%2223%></b></td><td>&nbsp;</td>');
+			}
+			else
+			{
+				//document.write('<td>&nbsp;</td><td class="textRow centerTd" height=40px;><b class="choice_font"><%2224%></b></td><td>&nbsp;</td>');
+			}
+		</script>
+	</tr>	
+    	<tr>
+		<td>&nbsp;</td><td></td><td>&nbsp;</td>
+        </tr>
+        	<tr>
+		<td>&nbsp;</td><td></td><td>&nbsp;</td>
+        </tr>
+        </table>
+<table border="0" cellpadding="0" cellspacing="3"  width="99%">
+    <TR><td>&nbsp;</td><td class="textRow centerTd" colspan=2></td><td>&nbsp;</td></TR>
+    <TR><td>&nbsp;</td><td class="textRow centerTd" colspan=2></td><td>&nbsp;</td></TR>
+    <TR><td>&nbsp;</td><td class="textRow centerTd" colspan=2></td><td>&nbsp;</td></TR>
+    <TR>
+            <td>&nbsp;</td>
+	        <TD style="padding:0px 0px 0px 300px;white-space:nowrap;width=300px;align=left">
+            <button value="submit" class="purpleBtn2" name="exit" onClick="do_submit(document.forms[0]);" type="button"><span>&nbsp;&nbsp;&nbsp;<%2225%>&nbsp;&nbsp;&nbsp;&nbsp;</span></button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </TD>
+            <TD style="padding:0px 100px 0px 0px;white-space:nowrap;width=300px;align=right">
+            <button value="submit" class="purpleBtn2" name="previous" onClick="do_submit2(document.forms[0]);" type="button"><span>< <%2226%>&nbsp;&nbsp;</span></button>&nbsp;&nbsp;
+            <button value="submit" class ="purpleBtn2" name="next" onclick="click_next( document.forms[0]);" type="submit"><span>&nbsp;&nbsp;&nbsp;<%36%> >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+            </TD>
+            <td >&nbsp;</td>
+    </TR>
+</table>
+    <input type="hidden" name="download_desktop_genie" value="1" />
+    <input type="hidden" name="download_readyshare" value="1" />
+    <input type="hidden" name="exit_genie" value=""/>
+</form>
+</body>
+</html>

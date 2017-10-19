@@ -1,0 +1,17 @@
+diff --exclude 'msvc*' -Npur hostap-724fce8/src/ap/wpa_auth.c hostap-patched_disable_pairwise_rekeying_tkip/src/ap/wpa_auth.c
+--- hostap-724fce8/src/ap/wpa_auth.c	2014-10-09 17:41:31.000000000 +0300
++++ hostap-patched_disable_pairwise_rekeying_tkip/src/ap/wpa_auth.c	2015-08-27 09:51:34.000000000 +0300
+@@ -773,11 +773,13 @@ static int wpa_receive_error_report(stru
+ 		wpa_auth->dot11RSNAStatsTKIPRemoteMICFailures++;
+ 	}
+ 
++#if 0 /* disable pairwise rekeying */
+ 	/*
+ 	 * Error report is not a request for a new key handshake, but since
+ 	 * Authenticator may do it, let's change the keys now anyway.
+ 	 */
+ 	wpa_request_new_ptk(sm);
++#endif
+ 	return 0;
+ }
+ 

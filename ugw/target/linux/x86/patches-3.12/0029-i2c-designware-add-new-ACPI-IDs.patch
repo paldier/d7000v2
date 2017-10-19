@@ -1,0 +1,33 @@
+From c2e05e049a824dbd9a22757ff54df2cd2f0399e5 Mon Sep 17 00:00:00 2001
+From: Mika Westerberg <mika.westerberg@linux.intel.com>
+Date: Tue, 12 Nov 2013 11:57:30 +0200
+Subject: [PATCH] i2c: designware: add new ACPI IDs
+
+Newer Intel PCHs with LPSS have the same Designware I2C controllers than
+Haswell but the ACPI IDs differ. Add these IDs to the driver list.
+
+Signed-off-by: Mika Westerberg <mika.westerberg@linux.intel.com>
+Signed-off-by: Wolfram Sang <wsa@the-dreams.de>
+(cherry picked from commit 25b3dfc87bff80317d67ddd2cd4cfb91e6fe7d79)
+
+Signed-off-by: Brett T. Warden <brett.t.warden@intel.com>
+---
+ drivers/i2c/busses/i2c-designware-platdrv.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/i2c/busses/i2c-designware-platdrv.c b/drivers/i2c/busses/i2c-designware-platdrv.c
+index 0aa0113..d0bdac0 100644
+--- a/drivers/i2c/busses/i2c-designware-platdrv.c
++++ b/drivers/i2c/busses/i2c-designware-platdrv.c
+@@ -103,6 +103,8 @@ static int dw_i2c_acpi_configure(struct platform_device *pdev)
+ static const struct acpi_device_id dw_i2c_acpi_match[] = {
+ 	{ "INT33C2", 0 },
+ 	{ "INT33C3", 0 },
++	{ "INT3432", 0 },
++	{ "INT3433", 0 },
+ 	{ "80860F41", 0 },
+ 	{ }
+ };
+-- 
+1.7.9.5
+

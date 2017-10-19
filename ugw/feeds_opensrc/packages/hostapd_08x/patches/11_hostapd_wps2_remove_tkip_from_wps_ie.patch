@@ -1,0 +1,24 @@
+# HG changeset patch
+# Parent 493f25ba051d3d587fc885a5c4fd0172cc1918d4
+
+diff --git a/src/ap/wps_hostapd.c b/src/ap/wps_hostapd.c
+--- a/src/ap/wps_hostapd.c
++++ b/src/ap/wps_hostapd.c
+@@ -874,7 +874,7 @@
+ 		if (conf->rsn_pairwise & WPA_CIPHER_TKIP)
+ 			wps->encr_types |= WPS_ENCR_TKIP;
+ 	}
+-
++#ifndef CONFIG_WPS2
+ 	if (conf->wpa & WPA_PROTO_WPA) {
+ 		if (conf->wpa_key_mgmt & WPA_KEY_MGMT_PSK)
+ 			wps->auth_types |= WPS_AUTH_WPAPSK;
+@@ -886,7 +886,7 @@
+ 		if (conf->wpa_pairwise & WPA_CIPHER_TKIP)
+ 			wps->encr_types |= WPS_ENCR_TKIP;
+ 	}
+-
++#endif
+ 	if (conf->ssid.security_policy == SECURITY_PLAINTEXT) {
+ 		wps->encr_types |= WPS_ENCR_NONE;
+ 		wps->auth_types |= WPS_AUTH_OPEN;

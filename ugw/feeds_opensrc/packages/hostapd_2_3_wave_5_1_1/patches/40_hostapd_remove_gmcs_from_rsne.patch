@@ -1,0 +1,19 @@
+diff --git a/src/ap/wpa_auth_ie.c b/src/ap/wpa_auth_ie.c
+--- a/src/ap/wpa_auth_ie.c
++++ b/src/ap/wpa_auth_ie.c
+@@ -251,6 +251,7 @@ int wpa_write_rsn_ie(struct wpa_auth_con
+ 	}
+ 
+ #ifdef CONFIG_IEEE80211W
++#if 0
+ 	if (conf->ieee80211w != NO_MGMT_FRAME_PROTECTION) {
+ 		if (pos + 2 + 4 > buf + len)
+ 			return -1;
+@@ -282,6 +283,7 @@ int wpa_write_rsn_ie(struct wpa_auth_con
+ 		}
+ 		pos += RSN_SELECTOR_LEN;
+ 	}
++#endif /* 0 */
+ #endif /* CONFIG_IEEE80211W */
+ 
+ #ifdef CONFIG_RSN_TESTING

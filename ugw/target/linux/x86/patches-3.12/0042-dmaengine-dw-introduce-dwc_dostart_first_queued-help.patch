@@ -1,0 +1,69 @@
+From b6f188d336904067e51bbcb49cf19ce5c3235c43 Mon Sep 17 00:00:00 2001
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Date: Wed, 18 Jun 2014 12:15:36 +0300
+Subject: [PATCH] dmaengine: dw: introduce dwc_dostart_first_queued() helper
+
+commit e7637c6c0382485f4d2e20715d058dae6f2b6a7c upstream.
+
+We have a duplicate code which starts first descriptor in the queue. Let's make
+this as a separate helper that can be used in future as well.
+
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Signed-off-by: Vinod Koul <vinod.koul@intel.com>
+Cc: "Petallo, MauriceX R" <mauricex.r.petallo@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+(cherry picked from commit 97a4115f3d3b7add0983dcc78dfd99ff19007bdd)
+
+Signed-off-by: Brett T. Warden <brett.t.warden@intel.com>
+---
+ drivers/dma/dw/core.c |   19 +++++++++++--------
+ 1 file changed, 11 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/dma/dw/core.c b/drivers/dma/dw/core.c
+index 34a6f0b..5283f6b 100644
+--- a/drivers/dma/dw/core.c
++++ b/drivers/dma/dw/core.c
+@@ -283,6 +283,15 @@ static void dwc_dostart(struct dw_dma_chan *dwc, struct dw_desc *first)
+ 	channel_set_bit(dw, CH_EN, dwc->mask);
+ }
+ 
++static void dwc_dostart_first_queued(struct dw_dma_chan *dwc)
++{
++	if (list_empty(&dwc->queue))
++		return;
++
++	list_move(dwc->queue.next, &dwc->active_list);
++	dwc_dostart(dwc, dwc_first_active(dwc));
++}
++
+ /*----------------------------------------------------------------------*/
+ 
+ static void
+@@ -358,10 +367,7 @@ static void dwc_complete_all(struct dw_dma *dw, struct dw_dma_chan *dwc)
+ 	 * the completed ones.
+ 	 */
+ 	list_splice_init(&dwc->active_list, &list);
+-	if (!list_empty(&dwc->queue)) {
+-		list_move(dwc->queue.next, &dwc->active_list);
+-		dwc_dostart(dwc, dwc_first_active(dwc));
+-	}
++	dwc_dostart_first_queued(dwc);
+ 
+ 	spin_unlock_irqrestore(&dwc->lock, flags);
+ 
+@@ -490,10 +496,7 @@ static void dwc_scan_descriptors(struct dw_dma *dw, struct dw_dma_chan *dwc)
+ 	/* Try to continue after resetting the channel... */
+ 	dwc_chan_disable(dw, dwc);
+ 
+-	if (!list_empty(&dwc->queue)) {
+-		list_move(dwc->queue.next, &dwc->active_list);
+-		dwc_dostart(dwc, dwc_first_active(dwc));
+-	}
++	dwc_dostart_first_queued(dwc);
+ 	spin_unlock_irqrestore(&dwc->lock, flags);
+ }
+ 
+-- 
+1.7.9.5
+

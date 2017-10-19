@@ -1,0 +1,14 @@
+# HG changeset patch
+# Parent a79d6ea477add5ea848c471c612b10cedd2bd6b0
+
+--- a/drivers/net/Kconfig
++++ b/drivers/net/Kconfig
+@@ -315,6 +315,8 @@ source "drivers/net/ieee802154/Kconfig"
+ 
+ source "drivers/net/lantiq_ppa/Kconfig"
+ 
++source "drivers/net/lantiq_ppa/Kconfig.swaccl"
++
+ config XEN_NETDEV_FRONTEND
+ 	tristate "Xen network device frontend driver"
+ 	depends on XEN

@@ -1,0 +1,24 @@
+# HG changeset patch
+# Parent 0ecfb7beb36cb0ee86ada8dee4bf1338d0d271fd
+
+diff --git a/src/drivers/driver_nl80211.c b/src/drivers/driver_nl80211.c
+--- a/src/drivers/driver_nl80211.c
++++ b/src/drivers/driver_nl80211.c
+@@ -8954,7 +8954,7 @@
+ 	if (!msg)
+ 		return -ENOMEM;
+ 
+-	if (rts >= 2347)
++	if (rts > 2347)
+ 		val = (u32) -1;
+ 	else
+ 		val = rts;
+@@ -8987,7 +8987,7 @@
+ 	if (!msg)
+ 		return -ENOMEM;
+ 
+-	if (frag >= 2346)
++	if (frag > 2346)
+ 		val = (u32) -1;
+ 	else
+ 		val = frag;

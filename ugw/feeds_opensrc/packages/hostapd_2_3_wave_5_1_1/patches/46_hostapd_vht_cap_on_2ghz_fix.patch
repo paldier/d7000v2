@@ -1,0 +1,39 @@
+--- hostap-724fce8_orig/src/ap/ieee802_11.c	2016-04-06 08:52:58.000000000 +0300
++++ hostap-724fce8/src/ap/ieee802_11.c	2016-04-12 12:41:47.000000000 +0300
+@@ -960,21 +960,23 @@ static u16 check_assoc_ies(struct hostap
+ #endif /* CONFIG_IEEE80211N */
+ 
+ #ifdef CONFIG_IEEE80211AC
+-	resp = copy_sta_vht_capab(hapd, sta, elems.vht_capabilities,
+-				  elems.vht_capabilities_len);
+-	if (resp != WLAN_STATUS_SUCCESS)
+-		return resp;
++	if (hapd->iconf->channel > 14) {
++		resp = copy_sta_vht_capab(hapd, sta, elems.vht_capabilities,
++					  elems.vht_capabilities_len);
++		if (resp != WLAN_STATUS_SUCCESS)
++			return resp;
+ 
+-	resp = set_sta_vht_opmode(hapd, sta, elems.vht_opmode_notif);
+-	if (resp != WLAN_STATUS_SUCCESS)
+-		return resp;
++		resp = set_sta_vht_opmode(hapd, sta, elems.vht_opmode_notif);
++		if (resp != WLAN_STATUS_SUCCESS)
++			return resp;
+ 
+-	if (hapd->iconf->ieee80211ac && hapd->iconf->require_vht &&
+-	    !(sta->flags & WLAN_STA_VHT)) {
+-		hostapd_logger(hapd, sta->addr, HOSTAPD_MODULE_IEEE80211,
+-			       HOSTAPD_LEVEL_INFO, "Station does not support "
+-			       "mandatory VHT PHY - reject association");
+-		return WLAN_STATUS_ASSOC_DENIED_NO_VHT;
++		if (hapd->iconf->ieee80211ac && hapd->iconf->require_vht &&
++		    !(sta->flags & WLAN_STA_VHT)) {
++			hostapd_logger(hapd, sta->addr, HOSTAPD_MODULE_IEEE80211,
++				       HOSTAPD_LEVEL_INFO, "Station does not support "
++				       "mandatory VHT PHY - reject association");
++			return WLAN_STATUS_ASSOC_DENIED_NO_VHT;
++		}
+ 	}
+ #endif /* CONFIG_IEEE80211AC */
+ 

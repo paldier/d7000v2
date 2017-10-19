@@ -1,0 +1,2508 @@
+Index: linux-3.10.102/Makefile
+===================================================================
+--- linux-3.10.102.orig/Makefile	2017-03-09 11:21:28.816645353 +0800
++++ linux-3.10.102/Makefile	2017-03-09 11:21:30.796645361 +0800
+@@ -3,6 +3,10 @@
+ SUBLEVEL = 102
+ EXTRAVERSION =
+ NAME = TOSSUG Baby Fish
++ifndef PROFILE
++PROFILE=D7000v2
++endif
++export PROFILE
+ 
+ # *DOCUMENTATION*
+ # To see a list of typical targets execute "make help"
+@@ -384,6 +388,16 @@
+ KBUILD_LDFLAGS_MODULE = -T $(srctree)/scripts/module-common.lds $(if $(CONFIG_PROFILING)$(CONFIG_MODULE_DEBUG),,-s)
+ #CONFIG_MODULE_DEBUG set via command line if needed
+ 
++##Foxconn added start
++KBUILD_CFLAGS += -D__FOXCONN_KERNEL_PORTING__
++KBUILD_CFLAGS += -DWLAN_5G_BAND -DINCLUDE_DUAL_BAND
++KBUILD_CFLAGS += -DMULTIPLE_SSID
++KBUILD_CFLAGS += -DSAMBA_ENABLE
++KBUILD_CFLAGS += -DAP_MODE
++#KBUILD_CFLAGS += -DINCLUDE_DETECT_AP_MODE
++KBUILD_CFLAGS += -DINCLUDE_ACCESSCONTROL
++KBUILD_CFLAGS += -DD7000v2 -DCONFIG_INTEL_SDK
++##Foxconn added end
+ # Read KERNELRELEASE from include/config/kernel.release (if it exists)
+ KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)
+ KERNELVERSION = $(VERSION)$(if $(PATCHLEVEL),.$(PATCHLEVEL)$(if $(SUBLEVEL),.$(SUBLEVEL)))$(EXTRAVERSION)
+Index: linux-3.10.102/include/linux/sched.h
+===================================================================
+--- linux-3.10.102.orig/include/linux/sched.h	2016-06-12 17:41:54.000000000 +0800
++++ linux-3.10.102/include/linux/sched.h	2017-03-09 11:21:30.796645361 +0800
+@@ -2029,6 +2029,10 @@
+ extern int kill_pgrp(struct pid *pid, int sig, int priv);
+ extern int kill_pid(struct pid *pid, int sig, int priv);
+ extern int kill_proc_info(int, struct siginfo *, pid_t);
++/*Foxconn modify start */
++/*add kill_proc function, let user space can call it*/
++extern int kill_proc(pid_t pid, int sig, int priv);
++/*Foxconn modify end */
+ extern __must_check bool do_notify_parent(struct task_struct *, int);
+ extern void __wake_up_parent(struct task_struct *p, struct task_struct *parent);
+ extern void force_sig(int, struct task_struct *);
+Index: linux-3.10.102/include/linux/skbuff.h
+===================================================================
+--- linux-3.10.102.orig/include/linux/skbuff.h	2017-03-09 11:21:30.780645361 +0800
++++ linux-3.10.102/include/linux/skbuff.h	2017-03-09 11:21:30.796645361 +0800
+@@ -448,7 +448,9 @@
+ #if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
+ 	void			*cb_next;
+ #endif
+-
++	/* Foxconn add start, Max Ding, 03/23/2016 @porting from R8000 */
++#define pp_bridge_indev(skb) (struct net_device **)(&(skb->cb[44]))
++	/* Foxconn add end, Max Ding, 03/23/2016 */
+ 	unsigned long		_skb_refdst;
+ #ifdef CONFIG_XFRM
+ 	struct	sec_path	*sp;
+Index: linux-3.10.102/kernel/signal.c
+===================================================================
+--- linux-3.10.102.orig/kernel/signal.c	2016-06-12 17:41:54.000000000 +0800
++++ linux-3.10.102/kernel/signal.c	2017-03-09 11:21:30.800645361 +0800
+@@ -1378,6 +1378,18 @@
+ 	return error;
+ }
+ 
++/*Foxconn modify start */
++/*add a function for user space using*/
++#define __si_special(priv) \
++	((priv) ? SEND_SIG_PRIV : SEND_SIG_NOINFO)
++
++int
++kill_proc(pid_t pid, int sig, int priv)
++{
++	return kill_proc_info(sig, __si_special(priv), pid);
++}
++EXPORT_SYMBOL(kill_proc);
++/*Foxconn modify end */
+ static int kill_as_cred_perm(const struct cred *cred,
+ 			     struct task_struct *target)
+ {
+Index: linux-3.10.102/net/bridge/br_input.c
+===================================================================
+--- linux-3.10.102.orig/net/bridge/br_input.c	2017-03-09 11:21:30.172645359 +0800
++++ linux-3.10.102/net/bridge/br_input.c	2017-03-09 11:21:30.800645361 +0800
+@@ -55,6 +55,11 @@
+ 		return NET_RX_DROP;
+ 
+ 	indev = skb->dev;
++#ifdef __FOXCONN_KERNEL_PORTING__
++	/* foxconn wklin added, 2010/06/15 @attach_dev */
++	if (htons(ETH_P_ARP) == eth_hdr(skb)->h_proto)
++	    *(pp_bridge_indev(skb)) = indev;/*backup incoming port to be used in arp.c */
++#endif
+ 	skb->dev = brdev;
+ 
+ 	return BR_HOOK(NFPROTO_BRIDGE, NF_BR_LOCAL_IN, skb, indev, NULL,
+Index: linux-3.10.102/net/bridge/br_stp_if.c
+===================================================================
+--- linux-3.10.102.orig/net/bridge/br_stp_if.c	2016-06-12 17:41:54.000000000 +0800
++++ linux-3.10.102/net/bridge/br_stp_if.c	2017-03-09 11:21:30.800645361 +0800
+@@ -231,8 +231,12 @@
+ 		return false;
+ 
+ 	list_for_each_entry(p, &br->port_list, list) {
++#ifdef __FOXCONN_KERNEL_PORTING__
++	    #if 0
+ 		if (addr == br_mac_zero ||
+ 		    memcmp(p->dev->dev_addr, addr, ETH_ALEN) < 0)
++		#endif
++#endif
+ 			addr = p->dev->dev_addr;
+ 
+ 	}
+Index: linux-3.10.102/net/ipv4/arp.c
+===================================================================
+--- linux-3.10.102.orig/net/ipv4/arp.c	2016-06-12 17:41:54.000000000 +0800
++++ linux-3.10.102/net/ipv4/arp.c	2017-03-09 11:21:30.800645361 +0800
+@@ -118,6 +118,18 @@
+ 
+ #include <linux/netfilter_arp.h>
+ 
++#ifdef __FOXCONN_KERNEL_PORTING__
++#define CLI_INTERFACE_2G "wlan0" 
++#define CLI_INTERFACE_5G "wlan1" 
++#define ATTADEV
++#ifdef ATTADEV
++static int attadev_init(struct net *net);
++
++static int attadev_update(u32 sip, char *sha, struct net_device *dev);
++
++#endif
++#endif 
++
+ /*
+  *	Interface to generic neighbour cache.
+  */
+@@ -126,7 +138,12 @@
+ static void arp_solicit(struct neighbour *neigh, struct sk_buff *skb);
+ static void arp_error_report(struct neighbour *neigh, struct sk_buff *skb);
+ static void parp_redo(struct sk_buff *skb);
+-
++/* foxconn added start */
++static int attadev_update(u32 sip, char *sha, struct net_device *dev);
++static int attadev_init(struct net *net);
++int g_pid=0; /* Foxconn tab tseng added, 2013/05/27, for xbox qos */
++int g_updated=0; /* Foxconn tab tseng added, 2013/05/27, for xbox qos */
++/* foxconn added end */
+ static const struct neigh_ops arp_generic_ops = {
+ 	.family =		AF_INET,
+ 	.solicit =		arp_solicit,
+@@ -703,6 +720,14 @@
+ 
+ 	if (dev->flags&IFF_NOARP)
+ 		return;
++    	/* Foxconn added start pling 03/25/2011 */
++	/* If we are using auto IP, the ARP reply should be in Broadcast */
++	if (type == ARPOP_REPLY &&
++		((htonl(src_ip) & 0xFFFF0000) == 0xa9fe0000))
++		skb = arp_create(type, ptype, dest_ip, dev, src_ip,
++			 NULL, src_hw, target_hw);
++	else
++	/* Foxconn added end pling 03/25/2011 */
+ 
+ 	skb = arp_create(type, ptype, dest_ip, dev, src_ip,
+ 			 dest_hw, src_hw, target_hw);
+@@ -720,6 +745,9 @@
+ static int arp_process(struct sk_buff *skb)
+ {
+ 	struct net_device *dev = skb->dev;
++#ifdef __FOXCONN_KERNEL_PORTING__
++	struct net_device *bridge_indev = NULL;
++#endif 
+ 	struct in_device *in_dev = __in_dev_get_rcu(dev);
+ 	struct arphdr *arp;
+ 	unsigned char *arp_ptr;
+@@ -738,6 +766,9 @@
+ 	if (in_dev == NULL)
+ 		goto out;
+ 
++#ifdef __FOXCONN_KERNEL_PORTING__
++    bridge_indev = *(pp_bridge_indev(skb));
++#endif 
+ 	arp = arp_hdr(skb);
+ 
+ 	switch (dev_type) {
+@@ -839,6 +870,29 @@
+ 		goto out;
+ 	}
+ 
++#ifdef __FOXCONN_KERNEL_PORTING__
++#define ATTADEV
++#ifdef ATTADEV
++        if ((arp->ar_op == htons(ARPOP_REQUEST) || arp->ar_op == htons(ARPOP_REPLY))
++          && inet_addr_type(net, sip)==RTN_UNICAST &&
++           ( (memcmp(dev->name,"br0", 3) == 0) || (memcmp(dev->name,"br1", 3) == 0) || 
++           (memcmp(dev->name,"br2", 3) == 0) || (memcmp(dev->name,"br3", 3) == 0) ||
++           (memcmp(dev->name,"br-lan", 6) == 0) 
++           )) 
++        {
++             attadev_update(sip, sha, bridge_indev);
++        }
++#endif
++    /*fxcn added by dennis start,01/02/2013,@ ap mode detection*/
++#ifdef INCLUDE_DETECT_AP_MODE
++	if ((arp->ar_op == htons(ARPOP_REQUEST) || arp->ar_op == htons(ARPOP_REPLY))
++       && inet_addr_type(net,sip)==RTN_UNICAST && (memcmp(dev->name,"eth1", 4) == 0)) {
++       wandev_update(sip, sha, bridge_indev);
++    }
++#endif
++    /* fxcn added by dennis end,01/02/2013, */
++#endif 
++
+ 	if (arp->ar_op == htons(ARPOP_REQUEST) &&
+ 	    ip_route_input_noref(skb, tip, sip, 0, dev) == 0) {
+ 
+@@ -1422,6 +1476,14 @@
+ {
+ 	if (!proc_create("arp", S_IRUGO, net->proc_net, &arp_seq_fops))
+ 		return -ENOMEM;
++#ifdef __FOXCONN_KERNEL_PORTING__
++#ifdef ATTADEV
++    attadev_init(net);
++#endif
++#ifdef INCLUDE_DETECT_AP_MODE
++        wandev_init(net);
++#endif
++#endif 
+ 	return 0;
+ }
+ 
+@@ -1448,3 +1510,262 @@
+ }
+ 
+ #endif /* CONFIG_PROC_FS */
++#ifdef __FOXCONN_KERNEL_PORTING__
++#ifdef ATTADEV
++#define FLAG_VALID 1
++#define FLAG_INVALID 0
++#define MAX_ATTADEV_ENTRY 128
++#define ATTADEV_HASHMASK 0x7f
++
++typedef struct {
++    u32 sip;
++    unsigned char sha[6];
++    unsigned short flag;
++    char ifname[IFNAMSIZ];
++} attadev_t;
++
++static rwlock_t attadev_lock;
++static attadev_t attadevs[MAX_ATTADEV_ENTRY];
++
++static int attadev_get_info(struct seq_file *seq, void *v)
++{
++    attadev_t *p = &attadevs[0];
++    int i, size;
++
++    read_lock_bh(&attadev_lock);
++    for (i=0; i<MAX_ATTADEV_ENTRY; i++) {
++        if ((p+i)->flag == FLAG_VALID) {
++            seq_printf(seq, "%08X %02X:%02X:%02X:%02X:%02X:%02X %s\n",
++                    ntohl((p+i)->sip),
++                    ((p+i)->sha)[0], ((p+i)->sha)[1], ((p+i)->sha)[2],
++                    ((p+i)->sha)[3], ((p+i)->sha)[4], ((p+i)->sha)[5], 
++                    (p+i)->ifname);/*Foxconn add by Mos: 05/30/2011 : for attached devices read wifi/wireless device*/
++        }
++    }
++    read_unlock_bh(&attadev_lock);
++        return 0;
++}
++
++static int attadev_del_info(struct seq_file *seq, void *v)
++{
++    attadev_t *p = &attadevs[0];
++    int i=0;
++
++    write_lock_bh(&attadev_lock);
++    for (i=0; i<MAX_ATTADEV_ENTRY; i++) {
++        (p+i)->sip = 0;
++        memset((p+i)->sha,'\0', 6);
++        (p+i)->flag = FLAG_INVALID;
++    }
++    write_unlock_bh(&attadev_lock);
++    return 0;
++}
++
++static int attadev_seq_open(struct inode *inode, struct file *file)
++{
++    return single_open_net(inode, file, attadev_get_info);
++}
++
++static int delatta_seq_open(struct inode *inode, struct file *file)
++{
++    return single_open_net(inode, file, attadev_del_info);
++}
++
++static const struct file_operations attadev_seq_fops = {
++        .owner          = THIS_MODULE,
++        .open       = attadev_seq_open,
++        .read       = seq_read,
++        .llseek     = seq_lseek,
++        .release        = single_release_net,
++};
++
++static const struct file_operations delatta_seq_fops = {
++        .owner          = THIS_MODULE,
++        .open       = delatta_seq_open,
++        .read       = seq_read,
++        .llseek     = seq_lseek,
++        .release        = single_release_net,
++};
++
++static int attadev_init(struct net *net) {
++    int i;
++    attadev_t *p = &attadevs[0];
++
++    rwlock_init(&attadev_lock); /* for 3.4.11 */
++
++    /* init data structure */
++    for (i=0; i<MAX_ATTADEV_ENTRY; i++) {
++        (p+i)->sip = 0;
++        memset((p+i)->sha,'\0', 6);
++        (p+i)->flag = FLAG_INVALID;
++    }
++
++	proc_create("attadev", S_IRUGO, net->proc_net, &attadev_seq_fops);
++	proc_create("delatta", S_IRUGO, net->proc_net, &delatta_seq_fops);
++	
++    return 0;
++}
++
++static u32 attadev_hash(u32 *pkey)
++{
++        u32 hash_val;
++
++        hash_val = *(u32*)pkey;
++        hash_val ^= (hash_val>>16);
++        hash_val ^= hash_val>>8;
++        hash_val ^= hash_val>>3;
++        hash_val &= ATTADEV_HASHMASK;
++
++        return hash_val;
++}
++
++static int attadev_update(u32 sip, char *sha, struct net_device *dev) {
++//static int attadev_update(u32 sip, char *sha) {
++    int hash_id = attadev_hash(&sip);
++    int i;
++    i = hash_id;
++    attadev_t *p = &attadevs[0];
++
++    /* printk("sip=%08x, hashid = %d\n", sip, hash_id); */
++    write_lock_bh(&attadev_lock);
++    for(;;) {
++        if ((p+i)->flag == FLAG_INVALID || (p+i)->sip == sip) {
++            (p+i)->sip = sip;
++            (p+i)->flag = FLAG_VALID;
++            memcpy((p+i)->sha, sha, 6);
++            /* foxconn wklin modified start, 2010/06/15 @attach_dev */
++            if (dev && dev->name) {
++                strcpy((p+i)->ifname, dev->name);
++            }
++            /* foxconn wklin modified end, 2010/06/15 */
++            break;
++        }
++        i++;
++        if (i >= MAX_ATTADEV_ENTRY)
++            i = 0;
++        if (i == hash_id) {
++            /* printk("attadev table is full\n"); */
++            break;
++        }
++    }
++    write_unlock_bh(&attadev_lock);
++    return 0;
++}
++/*added by dennis start,01/02/2013,@ ap mode detection*/
++#ifdef INCLUDE_DETECT_AP_MODE
++static rwlock_t wandev_lock = RW_LOCK_UNLOCKED;
++static attadev_t wandevs[MAX_ATTADEV_ENTRY];
++
++static int wandev_del_info(struct seq_file *seq, void *v)
++{
++    attadev_t *p = &wandevs[0];
++    int i=0;
++
++    write_lock_bh(&wandev_lock);
++    for (i=0; i<MAX_ATTADEV_ENTRY; i++) {
++        (p+i)->sip = 0;
++        memset((p+i)->sha,'\0', 6);
++        (p+i)->flag = FLAG_INVALID;
++    }
++    write_unlock_bh(&wandev_lock);
++    return 0;
++}
++
++static int wandev_get_info(struct seq_file *seq, void *v)
++{
++    attadev_t *p = &wandevs[0];
++    int i, size, len=0;
++
++    read_lock_bh(&wandev_lock);
++    for (i=0; i<MAX_ATTADEV_ENTRY; i++) {
++        if ((p+i)->flag == FLAG_VALID) {
++			seq_printf(seq, "%08X %02X:%02X:%02X:%02X:%02X:%02X %s\n",
++                    ntohl((p+i)->sip),
++                    ((p+i)->sha)[0], ((p+i)->sha)[1], ((p+i)->sha)[2],
++                    ((p+i)->sha)[3], ((p+i)->sha)[4], ((p+i)->sha)[5], 
++                    (p+i)->ifname);
++        }
++    }
++    read_unlock_bh(&wandev_lock);
++	
++    return 0;
++}
++
++static int wandev_seq_open(struct inode *inode, struct file *file)
++{
++    return single_open_net(inode, file, wandev_get_info);
++}
++
++static int wandel_seq_open(struct inode *inode, struct file *file)
++{
++    return single_open_net(inode, file, wandev_del_info);
++}
++
++static const struct file_operations wandev_seq_fops = {
++        .owner          = THIS_MODULE,
++        .open       = wandev_seq_open,
++        .read       = seq_read,
++        .llseek     = seq_lseek,
++        .release        = single_release_net,
++};
++
++static const struct file_operations wandel_seq_fops = {
++        .owner          = THIS_MODULE,
++        .open       = wandel_seq_open,
++        .read       = seq_read,
++        .llseek     = seq_lseek,
++        .release        = single_release_net,
++};
++
++static int wandev_init(struct net *net) {
++    int i;    
++    attadev_t *p = &wandevs[0];
++
++    /* init data structure */
++    for (i=0; i<MAX_ATTADEV_ENTRY; i++) {
++        (p+i)->sip = 0;
++        memset((p+i)->sha,'\0', 6);
++        (p+i)->flag = FLAG_INVALID;
++    }
++        
++    /* create /proc/net/wandev for r/w */	
++	proc_create("wandev", S_IRUGO, net->proc_net, &wandev_seq_fops); //added by dennis,01/02/2013
++	proc_create("delwandev", S_IRUGO, net->proc_net, &wandel_seq_fops); //added by dennis,01/02/2013
++    return 0;
++}
++
++static int wandev_update(u32 sip, char *sha, struct net_device *dev) {
++    int hash_id = attadev_hash(&sip);
++    int i;
++    i = hash_id;
++    attadev_t *p = &wandevs[0];
++
++    /* printk("sip=%08x, hashid = %d\n", sip, hash_id); */
++    write_lock_bh(&wandev_lock);
++    for(;;) {
++        if ((p+i)->flag == FLAG_INVALID || (p+i)->sip == sip) {
++            (p+i)->sip = sip;
++            (p+i)->flag = FLAG_VALID;
++            memcpy((p+i)->sha, sha, 6);
++            /* foxconn wklin modified start, 2010/06/15 @attach_dev */
++            if (dev && dev->name) {
++                strcpy((p+i)->ifname, dev->name);
++            }
++            /* foxconn wklin modified end, 2010/06/15 */
++            break;
++        } 
++        i++;
++        if (i >= MAX_ATTADEV_ENTRY) /* foxconn wklin modified, 08/01/2007 */
++            i = 0;
++        if (i == hash_id) {
++            /* printk("attadev table is full\n"); */
++            break;
++        }
++    }
++    write_unlock_bh(&wandev_lock);
++    return 0;
++}
++#endif /*INCLUDE_DETECT_AP_MODE*/
++/*added by dennis end,01/02/2013,@ ap mode detection*/
++#endif
++#endif /*__FOXCONN_KERNEL_PORTING__*/
+Index: linux-3.10.102/include/uapi/linux/if_bridge.h
+===================================================================
+--- linux-3.10.102.orig/include/uapi/linux/if_bridge.h	2016-06-12 17:41:54.000000000 +0800
++++ linux-3.10.102/include/uapi/linux/if_bridge.h	2017-03-09 11:21:30.800645361 +0800
+@@ -42,6 +42,17 @@
+ #define BRCTL_SET_PORT_PRIORITY 16
+ #define BRCTL_SET_PATH_COST 17
+ #define BRCTL_GET_FDB_ENTRIES 18
++#ifdef __FOXCONN_KERNEL_PORTING__
++#ifdef MULTIPLE_SSID
++#define BRCTL_SET_MSSIDPROFILE 19   
++#define BRCTL_SET_5G_MSSIDPROFILE 20   
++#endif
++
++#ifdef INCLUDE_ACCESSCONTROL
++#define BRCTL_SET_ACCESS_CONTROL 21   
++#define BRCTL_SET_ACCESS_CONTROL_MODE 22   
++#endif
++#endif /*__FOXCONN_KERNEL_PORTING__*/
+ 
+ #define BR_STATE_DISABLED 0
+ #define BR_STATE_LISTENING 1
+Index: linux-3.10.102/net/bridge/br_forward.c
+===================================================================
+--- linux-3.10.102.orig/net/bridge/br_forward.c	2017-03-09 11:21:29.892645358 +0800
++++ linux-3.10.102/net/bridge/br_forward.c	2017-03-09 11:21:30.800645361 +0800
+@@ -49,6 +49,28 @@
+ EXPORT_SYMBOL(br_fwd_do_wave_wifi_proxyarp_hook);
+ #endif
+ 
++
++#ifdef __FOXCONN_KERNEL_PORTING__
++
++#ifdef MULTIPLE_SSID
++#include "../../../../../../ap/acos/multissidcontrol/MultiSsidControl.h"
++int (*br_insert_multissid_hook)(struct sk_buff *skb, struct net_bridge_port *dst)=NULL;
++extern T_MSsidCtlProfile *gProfile;
++extern int gProfilenum;
++extern T_MSsidCtlProfile *gProfile_5g;
++extern int gProfilenum_5g;
++#endif
++
++#endif /*__FOXCONN_KERNEL_PORTING__*/
++
++#ifdef INCLUDE_ACCESSCONTROL
++#include "../../../../../../ap/acos/access_control/AccessControl.h"
++int (*br_insert_accesscntl_hook)(struct sk_buff *skb, struct net_bridge_port *dst)=NULL;
++extern T_AccessControlTable *gAccessTable;
++extern int gAccessTablenum;
++#endif
++
++
+ static int deliver_clone(const struct net_bridge_port *prev,
+ 			 struct sk_buff *skb,
+ 			 void (*__packet_hook)(const struct net_bridge_port *p,
+@@ -58,6 +80,33 @@
+ static inline int should_deliver(const struct net_bridge_port *p,
+ 				 const struct sk_buff *skb)
+ {
++#ifdef __FOXCONN_KERNEL_PORTING__
++#ifdef MULTIPLE_SSID    
++	if(br_insert_multissid_hook)
++	{
++		int ret = 0;
++		
++		ret=br_insert_multissid_hook(skb, p);
++		
++		if (ret == 1) //Drop 
++		{
++		    //printk("<0>Drop! skbdev:%s,portname:%s\n",skb->dev->name,p->dev->name);
++		    return 0;
++		}
++	}
++#endif	 
++#endif /*__FOXCONN_KERNEL_PORTING__*/
++
++#ifdef INCLUDE_ACCESSCONTROL
++    if(br_insert_accesscntl_hook){
++        int ret = 0;
++
++        ret=br_insert_accesscntl_hook(skb, p);
++
++        if (ret == 1) //Drop
++            return 0;
++    }
++#endif
+ 	return (((p->flags & BR_HAIRPIN_MODE) || skb->dev != p->dev) &&
+ 		br_allowed_egress(p->br, nbp_get_vlan_info(p), skb) &&
+ 		p->state == BR_STATE_FORWARDING);
+@@ -385,3 +434,35 @@
+ 	br_multicast_flood(mdst, skb, skb2, __br_forward);
+ }
+ #endif
++
++#ifdef __FOXCONN_KERNEL_PORTING__
++#ifdef MULTIPLE_SSID
++void insert_msc_func_to_br(void *FUNC)
++{
++   br_insert_multissid_hook= FUNC;
++}
++
++void remove_msc_func_from_br(void)
++{
++   br_insert_multissid_hook= NULL;
++}
++
++EXPORT_SYMBOL(insert_msc_func_to_br);
++EXPORT_SYMBOL(remove_msc_func_from_br);
++
++#endif
++
++#endif /*__FOXCONN_KERNEL_PORTING__*/
++#ifdef INCLUDE_ACCESSCONTROL
++void insert_acs_func_to_br(void *FUNC)
++{
++   br_insert_accesscntl_hook= FUNC;
++}
++
++void remove_acs_func_from_br(void)
++{
++   br_insert_accesscntl_hook= NULL;
++}
++EXPORT_SYMBOL(insert_acs_func_to_br);
++EXPORT_SYMBOL(remove_acs_func_from_br);
++#endif
+Index: linux-3.10.102/net/bridge/br_ioctl.c
+===================================================================
+--- linux-3.10.102.orig/net/bridge/br_ioctl.c	2017-03-09 11:21:29.820645357 +0800
++++ linux-3.10.102/net/bridge/br_ioctl.c	2017-03-09 11:21:30.800645361 +0800
+@@ -20,7 +20,47 @@
+ #include <net/net_namespace.h>
+ #include <asm/uaccess.h>
+ #include "br_private.h"
++#ifdef __FOXCONN_KERNEL_PORTING__
+ 
++#ifdef MULTIPLE_SSID
++#include "../../../../../../ap/acos/multissidcontrol/MultiSsidControl.h" /* Foxconn add, Zz Shan@MutiSsidControl 03/13/2009*/
++
++T_MSsidCtlProfile *gProfile = NULL;
++int gProfilenum = 0;
++T_MSsidCtlProfile *gProfile_5g = NULL;
++int gProfilenum_5g = 0;
++
++EXPORT_SYMBOL(gProfile);
++EXPORT_SYMBOL(gProfilenum);
++
++EXPORT_SYMBOL(gProfile_5g);
++#ifdef INCLUDE_ACCESSCONTROL
++#include "../../../../../../ap/acos/access_control/AccessControl.h"
++T_AccessControlTable *gAccessTable = NULL;
++int gAccessControlMode = 0; /*0:access control disabled,1:access all new devices,2:block all new devices*/
++int gAccessTablenum = 0;
++EXPORT_SYMBOL(gAccessTable);
++EXPORT_SYMBOL(gAccessControlMode);
++EXPORT_SYMBOL(gAccessTablenum);
++#endif
++
++EXPORT_SYMBOL(gProfilenum_5g);
++
++void profileprint(void)
++{
++    int i = 0;
++    for (i = 0;i < gProfilenum;i++)
++    {
++        printk("<0>Profile[%d]:name:%s,enable:%d\n",i,gProfile[i].IfName,gProfile[i].enable);
++    }
++    for (i = 0;i < gProfilenum_5g;i++)
++    {
++        printk("<0>Profile_5g[%d]:name:%s,enable:%d\n",i,gProfile_5g[i].IfName,gProfile_5g[i].enable);
++    }
++}
++#endif
++
++#endif /*__FOXCONN_KERNEL_PORTING__*/
+ static int get_bridge_ifindices(struct net *net, int *indices, int num)
+ {
+ 	struct net_device *dev;
+@@ -445,6 +485,137 @@
+ 
+ 		return br_del_bridge(net, buf);
+ 	}
++#ifdef __FOXCONN_KERNEL_PORTING__
++#ifdef MULTIPLE_SSID	
++	case BRCTL_SET_MSSIDPROFILE:
++	{
++		unsigned long num = 0;
++
++		gProfilenum = 0;
++		if (gProfile)
++		{
++			kfree(gProfile);
++			gProfile = NULL;
++		}
++
++		if (copy_from_user(&num, (void __user *)args[1], sizeof(int)))
++			return -EFAULT;
++
++		if (num == 0)
++			return 0;
++
++		gProfilenum = num;
++		gProfile = (T_MSsidCtlProfile *)kmalloc(num*sizeof(T_MSsidCtlProfile),GFP_ATOMIC);
++		if (!gProfile)
++		{
++			gProfilenum = 0;
++			return -EFAULT;
++		}
++		if (copy_from_user(gProfile, (void __user *)args[2], num*sizeof(T_MSsidCtlProfile)))
++		{
++			gProfilenum = 0;
++			kfree(gProfile);
++			gProfile = NULL;
++			return -EFAULT;
++		}
++
++		//profileprint();
++
++		return 0;
++	}
++    /* For 5G guest network control */
++	case BRCTL_SET_5G_MSSIDPROFILE:
++	{
++		unsigned long num = 0;
++
++		gProfilenum_5g = 0;
++		if (gProfile_5g)
++		{
++			kfree(gProfile_5g);
++			gProfile_5g = NULL;
++		}
++
++		if (copy_from_user(&num, (void __user *)args[1], sizeof(int)))
++			return -EFAULT;
++
++		if (num == 0)
++			return 0;
++
++		gProfilenum_5g = num;
++		gProfile_5g = (T_MSsidCtlProfile *)kmalloc(num*sizeof(T_MSsidCtlProfile),GFP_ATOMIC);
++		if (!gProfile_5g)
++		{
++			gProfilenum_5g = 0;
++			return -EFAULT;
++		}
++		if (copy_from_user(gProfile_5g, (void __user *)args[2], num*sizeof(T_MSsidCtlProfile)))
++		{
++			gProfilenum_5g = 0;
++			kfree(gProfile_5g);
++			gProfile_5g = NULL;
++			return -EFAULT;
++		}
++
++		//profileprint();
++
++		return 0;
++	}
++#endif	
++
++#ifdef INCLUDE_ACCESSCONTROL
++    case BRCTL_SET_ACCESS_CONTROL:
++    {
++
++       unsigned long num = 0;
++       gAccessTablenum = 0;
++
++       if (gAccessTable)
++		{
++			kfree(gAccessTable);
++			gAccessTable = NULL;
++		}
++
++		if (copy_from_user(&num, (void __user *)args[1], sizeof(int)))
++			return -EFAULT;
++
++		if (num == 0)
++			return 0;
++
++		gAccessTablenum = num;
++		gAccessTable = (T_AccessControlTable *)kmalloc(num*sizeof(T_AccessControlTable),GFP_ATOMIC);
++		if (!gAccessTable)
++		{
++			gAccessTablenum = 0;
++			return -EFAULT;
++		}
++		if (copy_from_user(gAccessTable, (void __user *)args[2], num*sizeof(T_AccessControlTable)))
++		{
++			gAccessTablenum = 0;
++			kfree(gAccessTable);
++			gAccessTable = NULL;
++			return -EFAULT;
++		}       
++         
++       return 0;
++
++    }
++   case BRCTL_SET_ACCESS_CONTROL_MODE:
++   {
++        unsigned long mode = 0;
++        gAccessControlMode = 0;
++        
++
++        if (copy_from_user(&mode, (void __user *)args[1], sizeof(int)))
++			return -EFAULT;
++	printk("BRCTL_SET_ACCESS_CONTROL_MODE>> mode %d\n",mode);
++        gAccessControlMode = mode;
++        printk("BRCTL_SET_ACCESS_CONTROL_MODE>> gAccessControlMode  %d\n",gAccessControlMode);
++                  
++        return 0;
++
++   }
++#endif
++#endif /*__FOXCONN_KERNEL_PORTING__*/
+ 	}
+ 
+ 	return -EOPNOTSUPP;
+Index: linux-3.10.102/net/ipv6/addrconf.c
+===================================================================
+--- linux-3.10.102.orig/net/ipv6/addrconf.c	2017-03-09 11:21:22.704645330 +0800
++++ linux-3.10.102/net/ipv6/addrconf.c	2017-03-09 11:21:30.804645361 +0800
+@@ -5233,3 +5233,35 @@
+ 	del_timer(&addr_chk_timer);
+ 	rtnl_unlock();
+ }
++
++/* Foxconn added start pling 08/16/2010 */
++#ifdef __FOXCONN_KERNEL_PORTING__
++int restore_ipv6_forwarding(struct net_device *dev)
++{
++    struct inet6_dev *idev;
++    idev = ipv6_find_idev(dev);
++    if (idev)
++    {
++        ipv6_devconf.forwarding = 1;
++        idev->cnf.forwarding = 1;
++    }
++
++    return 0;
++}
++/* Foxconn added end pling 08/16/2010 */
++
++/* Foxconn added start 11/21/2014 */
++/* Export a function for IPv6 DNS hijack to use, to avoid kernel message */
++struct inet6_dev * ipv6_find_idev2(struct net_device *dev)
++{   
++    struct inet_dev *idev;
++
++    rtnl_lock();
++    idev = ipv6_find_idev(dev);
++    rtnl_unlock();
++
++    return idev;
++}
++EXPORT_SYMBOL(ipv6_find_idev2);
++#endif /* #ifdef __FOXCONN_KERNEL_PORTING__ */
++/* Foxconn added end 11/21/2014 */
+Index: linux-3.10.102/net/ipv4/ip_input.c
+===================================================================
+--- linux-3.10.102.orig/net/ipv4/ip_input.c	2017-03-09 11:21:29.556645356 +0800
++++ linux-3.10.102/net/ipv4/ip_input.c	2017-03-09 11:21:30.804645361 +0800
+@@ -148,6 +148,10 @@
+ #if defined(CONFIG_LTQ_PPA_API) || defined(CONFIG_LTQ_PPA_API_MODULE)
+   #include <net/ppa_api.h>
+ #endif
++
++/* Fxcn port-S Wins, 0714-09 */
++int (*ip_pre_insert_hook)(struct sk_buff *skb);//Foxconn add , Lewis Min, for UBD, 04/18/2008
++/* Fxcn port-E Wins, 0714-09 */
+ /*
+  *	Process Router Attention IP option (RFC 2113)
+  */
+@@ -392,6 +396,8 @@
+ 	return NET_RX_DROP;
+ }
+ 
++int (*br_pre_insert_hook)(struct sk_buff *skb);//Foxconn add , Lewis Min, for UBD, 04/18/2008
++/* Fxcn port-E Wins, 0714-09 */
+ /*
+  * 	Main IP Receive routine.
+  */
+@@ -436,6 +442,31 @@
+ 	if (!pskb_may_pull(skb, iph->ihl*4))
+ 		goto inhdr_error;
+ 
++/* Fxcn port-S Wins, 0714-09 */
++	//Foxconn add start, Lewis Min, for OpenDNS, 12/08/2008
++	if(NULL!=br_pre_insert_hook)
++	{
++		int ret;
++        
++		ret=br_pre_insert_hook(skb);
++
++		if((ret==NF_DROP)||(ret==NF_STOLEN))
++			return 0;
++	}
++	//Foxconn add end, Lewis Min, for OpenDNS, 12/08/2008
++		
++	//Foxconn add start, Lewis Min, for UBD, 04/18/2008
++	if(NULL!=ip_pre_insert_hook)
++	{
++		int ret;
++        
++		ret=ip_pre_insert_hook(skb);
++
++		if((ret==NF_DROP)||(ret==NF_STOLEN))
++			return 0;
++	}
++	//Foxconn add end, Lewis Min, for UBD, 04/18/2008
++/* Fxcn port-E Wins, 0714-09 */
+ 	iph = ip_hdr(skb);
+ 
+ #ifdef CONFIG_LTQ_TOE_DRIVER
+@@ -526,3 +557,35 @@
+ }
+ EXPORT_SYMBOL(ppa_sw_litepath_local_deliver);
+ #endif
++
++/* Fxcn port-S Wins, 0714-09 */
++//Foxconn add start, Tony W.Y. Wang, for UBD, 04/29/2009
++void insert_func_to_IP_PRE_ROUTE(void *FUNC)
++{
++   ip_pre_insert_hook= FUNC;
++}
++
++
++void remove_func_from_IP_PRE_ROUTE(void)
++{
++   ip_pre_insert_hook= NULL;
++}
++//Foxconn add end, Tony W.Y. Wang, for UBD, 04/29/2009
++//Foxconn add start, Lewis Min, for OpenDNS, 12/12/2008
++void insert_func_to_BR_PRE_ROUTE(void *FUNC)
++{
++   br_pre_insert_hook= FUNC;
++}
++
++
++void remove_func_from_BR_PRE_ROUTE(void)
++{
++   br_pre_insert_hook= NULL;
++}
++
++EXPORT_SYMBOL(insert_func_to_IP_PRE_ROUTE);
++EXPORT_SYMBOL(remove_func_from_IP_PRE_ROUTE);
++EXPORT_SYMBOL(remove_func_from_BR_PRE_ROUTE);
++EXPORT_SYMBOL(insert_func_to_BR_PRE_ROUTE);
++//Foxconn add end, Lewis Min, for OpenDNS, 12/12/2008
++/* Fxcn port-E Wins, 0714-09 */
+\ No newline at end of file
+Index: linux-3.10.102/net/ipv4/ip_output.c
+===================================================================
+--- linux-3.10.102.orig/net/ipv4/ip_output.c	2017-03-09 11:21:29.688645357 +0800
++++ linux-3.10.102/net/ipv4/ip_output.c	2017-03-09 11:21:30.804645361 +0800
+@@ -254,6 +254,10 @@
+ 	       skb_dst(skb)->dev->mtu : dst_mtu(skb_dst(skb));
+ }
+ 
++/* Fxcn port-S Wins, 0714-09 */
++int (*br_post_insert_hook)(struct sk_buff *skb);//Foxconn add , Lewis Min, for OpenDNS, 03/12/2009
++/* Fxcn port-E Wins, 0714-09 */
++
+ static int __ipt_optimized ip_finish_output(struct sk_buff *skb)
+ {
+ #if defined(CONFIG_NETFILTER) && defined(CONFIG_XFRM)
+@@ -263,6 +267,22 @@
+ 		return dst_output(skb);
+ 	}
+ #endif
++/* Fxcn port-S Wins, 0714-09 */
++    //Foxconn add start, Lewis Min, for OpenDNS, 03/12/2009
++	if(NULL!=br_post_insert_hook)
++	{
++        int ret;
++
++		ret = br_post_insert_hook(skb);
++		if((ret==NF_DROP)||(ret==NF_STOLEN))
++		{
++//			read_unlock(&br->lock);
++//            spin_unlock_bh(&br->lock);
++			return ret;
++		}
++	}
++    //Foxconn add end, Lewis Min, for OpenDNS, 03/12/2009
++/* Fxcn port-E Wins, 0714-09 */
+ 
+ #ifdef CONFIG_LANTIQ_IPQOS_MARK_SKBPRIO
+ 	skb_mark_priority(skb);
+@@ -1585,3 +1605,20 @@
+ 	igmp_mc_proc_init();
+ #endif
+ }
++/* Fxcn port-S Wins, 0714-09 */
++//Foxconn add start, Lewis Min, for OpenDNS, 12/12/2008
++void insert_func_to_BR_POST_ROUTE(void *FUNC)
++{
++   br_post_insert_hook= FUNC;
++}
++
++
++void remove_func_from_BR_POST_ROUTE(void)
++{
++   br_post_insert_hook= NULL;
++}
++
++EXPORT_SYMBOL(insert_func_to_BR_POST_ROUTE);
++EXPORT_SYMBOL(remove_func_from_BR_POST_ROUTE);
++//Foxconn add end, Lewis Min, for OpenDNS, 12/12/2008
++/* Fxcn port-E Wins, 0714-09 */
+\ No newline at end of file
+Index: linux-3.10.102/include/linux/netdevice.h
+===================================================================
+--- linux-3.10.102.orig/include/linux/netdevice.h	2017-03-09 11:21:30.776645361 +0800
++++ linux-3.10.102/include/linux/netdevice.h	2017-03-09 11:21:30.804645361 +0800
+@@ -1347,7 +1347,23 @@
+ 	int group;
+ 
+ 	struct pm_qos_request	pm_qos_req;
+-
++//#ifdef __FOXCONN_KERNEL_PORTING__
++    /* Foxconn porting start,Eva, 04/29/2011 */
++    /* foxconn wklin added start, 11/06/2008 */
++    #define NETIF_ACOSFLAGS_NATHOOK    1      /* an acos nat enabled if */
++    #define NETIF_ACOSFLAGS_WANHOOK    2      /* an acos nat enabled if */
++    #define NETIF_ACOSFLAGS_LANHOOK    4      /* an acos nat enabled if */
++    #define NETIF_ACOSFLAGS_PPPOE      8      /* wan protocol - pppoe */
++    #define NETIF_ACOSFLAGS_PPTP       16     /* wan protocol - pptp */
++    /* foxconn wklin added start, 02/08/2010 */
++    #define NETIF_ACOSFLAGS_TM_TX      32     /* monitor traffic meter tx direction */
++    #define NETIF_ACOSFLAGS_TM_RX      64     /* monitor traffic meter rx direction */
++    /* foxconn wklin added end, 02/08/2010 */
++    unsigned    acos_flags;
++    int traffic_meter_counter;      /*foxconn wklin added, 02/08/2010 */
++    /* foxconn wklin added end, 11/06/2008 */
++    /* Foxconn porting end,Eva, 04/29/2011 */
++//#endif /*__FOXCONN_KERNEL_PORTING__*/
+ };
+ #define to_net_dev(d) container_of(d, struct net_device, dev)
+ 
+Index: linux-3.10.102/net/ipv4/route.c
+===================================================================
+--- linux-3.10.102.orig/net/ipv4/route.c	2017-03-09 11:21:23.432645333 +0800
++++ linux-3.10.102/net/ipv4/route.c	2017-03-09 11:21:30.804645361 +0800
+@@ -2242,7 +2242,8 @@
+ 
+ 	return rt;
+ }
+-EXPORT_SYMBOL_GPL(ip_route_output_flow);
++EXPORT_SYMBOL(ip_route_output_flow);    /* Foxconn modified */
++//EXPORT_SYMBOL_GPL(ip_route_output_flow);
+ 
+ static int rt_fill_info(struct net *net,  __be32 dst, __be32 src,
+ 			struct flowi4 *fl4, struct sk_buff *skb, u32 portid,
+Index: linux-3.10.102/net/ipv6/ndisc.c
+===================================================================
+--- linux-3.10.102.orig/net/ipv6/ndisc.c	2016-06-12 17:41:54.000000000 +0800
++++ linux-3.10.102/net/ipv6/ndisc.c	2017-03-09 11:21:30.808645361 +0800
+@@ -1525,6 +1525,15 @@
+ 	kfree_skb(skb);
+ }
+ 
++/*Foxconn porting start, Mos 05/18/2011 */
++#ifdef __FOXCONN_KERNEL_PORTING__
++/* foxconn added start Bob, 08/13/2009, workaround to pass hop limit to since socket option hoplimit is not working */
++int hop_limit_tmp;
++EXPORT_SYMBOL(hop_limit_tmp);
++/* foxconn added end Bob, 08/13/2009 */
++#endif
++/*Foxconn porting end, Mos 05/18/2011 */
++
+ int ndisc_rcv(struct sk_buff *skb)
+ {
+ 	struct nd_msg *msg;
+@@ -1536,6 +1545,12 @@
+ 
+ 	__skb_push(skb, skb->data - skb_transport_header(skb));
+ 
++/*Foxconn porting start, Mos 05/18/2011 */
++#ifdef __FOXCONN_KERNEL_PORTING__
++    hop_limit_tmp = ipv6_hdr(skb)->hop_limit;   /* foxconn added Bob, 08/13/2009 */
++#endif
++/*Foxconn porting end, Mos 05/18/2011 */
++
+ 	if (ipv6_hdr(skb)->hop_limit != 255) {
+ 		ND_PRINTK(2, warn, "NDISC: invalid hop-limit: %d\n",
+ 			  ipv6_hdr(skb)->hop_limit);
+Index: linux-3.10.102/arch/mips/kernel/Makefile
+===================================================================
+--- linux-3.10.102.orig/arch/mips/kernel/Makefile	2017-03-09 11:21:30.488645360 +0800
++++ linux-3.10.102/arch/mips/kernel/Makefile	2017-03-09 11:21:30.808645361 +0800
+@@ -4,6 +4,11 @@
+ 
+ extra-y		:= head.o vmlinux.lds
+ 
++### Foxconn added start
++obj-$(CONFIG_CEVT_GPTC) += wps_led.o
++obj-$(CONFIG_CEVT_GPTC) += gpio_drv.o
++### Foxconn added end
++
+ obj-y		+= cpu-probe.o branch.o entry.o genex.o idle.o irq.o process.o \
+ 		   prom.o ptrace.o reset.o setup.o signal.o syscall.o \
+ 		   time.o topology.o traps.o unaligned.o watch.o vdso.o segment.o
+Index: linux-3.10.102/arch/mips/kernel/cevt-gptc.c
+===================================================================
+--- linux-3.10.102.orig/arch/mips/kernel/cevt-gptc.c	2017-03-09 11:21:28.772645353 +0800
++++ linux-3.10.102/arch/mips/kernel/cevt-gptc.c	2017-03-09 11:21:30.808645361 +0800
+@@ -19,6 +19,11 @@
+ static u32 gptc_timer[NR_CPUS] = {0, 0, 2, 4};
+ static u32 gptc_irq[NR_CPUS] = {168, 126, 170, 172};
+ 
++/* Foxconn added start */
++#include <linux/gpio.h>
++#include <linux/gpio_drv.h>
++/* Foxconn added end */
++
+ /**
+  * struct gptc_timer - This definition defines local timer structure
+  *
+@@ -63,6 +68,10 @@
+ 	struct gptc_clockevent *gptce = dev_id;
+ 	struct gptc_timer *timer = &gptce->gptc;
+ 
++    /* Foxconn added start */
++    ///
++    /* Foxconn added end */
++
+ 	/*spin_lock(&cevt_gptc_lock);*/
+ 	__raw_writel(BIT(timer->timer), timer->base_addr + GPTU_CLKSRC_IRNCR);
+ 	/*spin_unlock(&cevt_gptc_lock);*/
+Index: linux-3.10.102/arch/mips/kernel/gpio_drv.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-3.10.102/arch/mips/kernel/gpio_drv.c	2017-03-09 11:42:23.302558169 +0800
+@@ -0,0 +1,824 @@
++/***************************************************************************
++***
++***    Copyright 2017  Hon Hai Precision Ind. Co. Ltd.
++***    All Rights Reserved.
++***    No portions of this material shall be reproduced in any form without the
++***    written permission of Hon Hai Precision Ind. Co. Ltd.
++***
++***    All information contained in this document is Hon Hai Precision Ind.  
++***    Co. Ltd. company private, proprietary, and trade secret property and 
++***    are protected by international intellectual property laws and treaties.
++***
++****************************************************************************/
++
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/mm.h>
++#include <linux/vmalloc.h>
++#include <linux/slab.h>
++#include <linux/fs.h>
++#include <linux/kernel.h>
++#include <linux/miscdevice.h>
++#include <asm/uaccess.h>
++#include <linux/gpio_drv.h>
++#include <linux/timer.h>
++#include <linux/jiffies.h>
++#include <linux/gpio.h>
++#include <linux/netdevice.h>
++#include <linux/version.h>
++#include <linux/ethtool.h>
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,29)
++#include <net/net_namespace.h>
++#endif
++
++#define _DEBUG
++
++struct led_data {
++    struct timer_list led_timer; 
++    uint32_t status;
++};
++
++struct led_data *led_info;
++#define DELAY (5) 
++#define LED_BLINK_BASE 5
++#define LED_BLINK_WAIT 8
++#define LED_BLINK_MASK 0x00000007
++#define LED_TIMER_COUNT 8
++
++#define DEV_GPIO_DRV_MAJOR_NUM      124
++
++#define LED_ON          0
++#define LED_OFF         1
++#define STB_LED_ON      1
++#define STB_LED_OFF     0
++#define WPS_LED_ON      0
++#define WPS_LED_OFF     1
++
++#define LED_BLINK_RATE  1
++#define PWR_LED_BLINK_RATE_NORMAL   1
++#define SACN_RATE   5
++#define LED_BLINK_RATE_NORMAL   2
++#define LED_BLINK_RATE_USB      1
++#define WPS_RATE    5
++
++int wps_led_pattern = 0;
++#define LED_BLINK_RATE_NORMAL_WPS   2
++#define LED_BLINK_RATE_QUICK_WPS    1
++static int wps_led_is_on = 0;
++static int wps_led_state_old = 0;
++
++int led_control_settings_smp = 2;    /* 1=enable_blink, 2=disable_blink, 3=turn_off */
++int wifi_2g_led_state_smp=-1;
++int wifi_5g_led_state_smp=-1;
++
++int usb_enable_flag=1;
++int dsl_led_blink = 0;
++int pwr_led_blink = 0;
++int pwr_amber_led_blink = 0;
++int Te_test_flag = 0;
++int system_ready_flag = 0;
++int wps_led_state = 0;
++int is_wl_secu_mode = 0;
++
++int usb1_pkt_cnt=0;
++int usb2_pkt_cnt=0;
++int usb1_pkt_cnt_smp=0;
++int usb2_pkt_cnt_smp=0;
++
++int usb_led_state = 0;
++int usb_is_attached = 0;
++int current_usb_attached_index_a=0;  /* for USB : sad-1 , sdb-2 , sdc-4, sdd-8, sde-16, sdf-32 */
++int current_usb_attached_index_b=0;
++int current_usb_removed_index_a=0;  /* for USB : sad-1 , sdb-2 , sdc-4, sdd-8, sde-16, sdf-32 */
++int current_usb_removed_index_b=0;
++
++int current_usb_port=0;
++int current_usb_port_a=0;   /* USB2.0 - 1 , USB3.0 - 2 */
++int current_usb_port_b=0;
++
++int usb_1_led_state = 0;
++int usb_2_led_state = 0;
++
++//// LED related funtions 
++static void led_output(int gpio, int state)
++{
++    gpio_set_value(gpio, state);
++}
++
++int gpio_led_on_off(int gpio_num, int on_off)
++{
++	if (gpio_num == WPS_LED_GPIO)
++		wps_led_is_on = !on_off;
++	
++    led_output(gpio_num, on_off);     
++    return 0;
++}
++
++static int dsl_led_normal_blink(void)
++{
++    static int interrupt_count = 0;
++    
++    interrupt_count++;
++    
++    if ( dsl_led_blink == 1 )
++    {
++        if (interrupt_count == LED_BLINK_RATE_NORMAL/2)
++            led_output(GPIO_XDSL1_LED, LED_OFF);
++    }
++
++    if (interrupt_count < LED_BLINK_RATE_NORMAL)       
++        return 0;
++        
++    interrupt_count = 0;
++    led_output(GPIO_XDSL1_LED, LED_ON);
++
++    return 0;
++}
++
++static int pwr_led_normal_blink(void)
++{
++    static int interrupt_count = 0;
++    
++    interrupt_count++;
++    
++    if ( pwr_led_blink == 1 )
++    {
++        if (interrupt_count == PWR_LED_BLINK_RATE_NORMAL/2)
++            led_output(GPIO_POWER_GREEN_LED, LED_OFF);
++    }
++
++    if (interrupt_count < PWR_LED_BLINK_RATE_NORMAL)       
++        return 0;
++        
++    interrupt_count = 0;
++    led_output(GPIO_POWER_GREEN_LED, LED_ON);
++
++    return 0;
++}
++
++static void pwr_amber_led_normal_blink(void)
++{
++    int blink_interval = 1000;
++    static int interrupt_count = -1;
++
++    led_output(GPIO_POWER_GREEN_LED, 1);
++    interrupt_count++;
++    if (interrupt_count == blink_interval)
++        interrupt_count = 0;
++
++    if (interrupt_count == 0)
++        led_output(GPIO_POWER_RED_LED, 0);
++    else if (interrupt_count == 250)
++        led_output(GPIO_POWER_RED_LED, 1);
++}
++
++static void wps_quick_blink2(void)
++{
++    static int interrupt_count = -1;
++
++    interrupt_count++;
++    if (interrupt_count == LED_BLINK_RATE_QUICK_WPS * 2)
++        interrupt_count = 0;
++    
++    if (interrupt_count == 0)
++        led_output(WPS_LED_GPIO, WPS_LED_ON);
++    else if (interrupt_count == LED_BLINK_RATE_QUICK_WPS)
++        led_output(WPS_LED_GPIO, WPS_LED_OFF);
++}
++
++static void wps_quick_blink(void)
++{
++    static int blink_interval = 500; /* 5 seconds */
++    static int interrupt_count = -1;
++
++    blink_interval--;
++    interrupt_count++;
++    if (interrupt_count == LED_BLINK_RATE_QUICK_WPS * 2)
++        interrupt_count = 0;
++    
++    if (interrupt_count == 0)
++        led_output(WPS_LED_GPIO, WPS_LED_ON);
++    else if (interrupt_count == LED_BLINK_RATE_QUICK_WPS)
++        led_output(WPS_LED_GPIO, WPS_LED_OFF);
++        
++    if ( blink_interval <= 0 )
++    {
++        blink_interval = 500;
++        wps_led_state = 0;
++    }
++}
++
++static int wps_normal_blink(void)
++{
++    static int interrupt_count = -1;
++
++    interrupt_count++;
++    if (interrupt_count == LED_BLINK_RATE_NORMAL_WPS * 2)
++        interrupt_count = 0;
++    
++    if (interrupt_count == 0)
++        led_output(WPS_LED_GPIO, WPS_LED_ON); //on
++    else if (interrupt_count == LED_BLINK_RATE_NORMAL_WPS)
++        led_output(WPS_LED_GPIO, WPS_LED_OFF); //off
++
++    return 0;
++}
++
++static int wps_ap_lockdown_blink(void)
++{
++    static int interrupt_count = -1;
++
++    interrupt_count++;
++    if (interrupt_count == LED_BLINK_RATE_QUICK_WPS * 10)
++        interrupt_count = 0;
++    
++    if (interrupt_count == 0)
++        led_output(WPS_LED_GPIO, WPS_LED_ON);
++    else if (interrupt_count == LED_BLINK_RATE_QUICK_WPS)
++        led_output(WPS_LED_GPIO, WPS_LED_OFF);
++
++    return 0;
++}
++
++static void wps_led_action(void)
++{
++    switch(wps_led_state)
++    {
++        case 0:
++        {    
++            if (is_wl_secu_mode )
++                gpio_led_on_off(WPS_LED_GPIO, WPS_LED_ON);
++            else
++                gpio_led_on_off(WPS_LED_GPIO, WPS_LED_OFF);
++            break;
++        }
++        case 1:
++        {
++            wps_normal_blink();
++            break;
++        }
++        case 2:
++        {
++            wps_quick_blink();
++            break;
++        }
++        case 3:
++        {
++            wps_quick_blink2();
++            break;
++        }
++        case 4:
++        {
++            wps_ap_lockdown_blink();
++            break;
++        }
++        default:
++            break;
++    }
++       
++    wps_led_state_old = wps_led_state; 
++}
++
++static void dsl_led_action(void)
++{
++    if ( dsl_led_blink == 1 )
++        dsl_led_normal_blink();
++    else if ( dsl_led_blink == 2 ) // LED ON
++        led_output(GPIO_XDSL1_LED, LED_ON);
++    else if ( dsl_led_blink == 3 ) // LED OFF
++        led_output(GPIO_XDSL1_LED, LED_OFF);
++}
++
++static void pwr_led_action(void)
++{
++    if ( pwr_led_blink == 1 )
++        pwr_led_normal_blink();
++
++    if ( pwr_amber_led_blink == 1 )
++        pwr_amber_led_normal_blink();
++}
++
++void wifi_normal_blink_smp(void)
++{
++    struct net_device *net_dev;
++    //static int interrupt_wifi_count = -1;
++static __u64 wifi_2g_tx_cnt_old_smp=0;
++static __u64 wifi_2g_rx_cnt_old_smp=0;
++static __u64 wifi_5g_tx_cnt_old_smp=0;
++static __u64 wifi_5g_rx_cnt_old_smp=0;
++	struct rtnl_link_stats64 temp;
++	const struct rtnl_link_stats64 *stats;
++	//static int repeat_2g=4,repeat_5g=4;
++	static __u32 wifi_24g_loop=LED_BLINK_BASE;
++	static __u32 wifi_5g_loop=LED_BLINK_BASE;
++	static __u32 wifi_24g_count=0;
++	static __u32 wifi_5g_count=0;
++	int blink=0;
++	int packets_temp=0;
++	int led_on;
++	int led_off;
++	led_on = (led_control_settings_smp == 3) ? 1 : 0;
++	led_off = (led_control_settings_smp == 2) ? 0 : 1;
++
++    //interrupt_wifi_count++;
++
++    //if (interrupt_wifi_count == (LED_BLINK_RATE * 2))
++        //interrupt_wifi_count = 0;
++    /* not blink during LED_BLINK_WAIT time */
++    if(wifi_24g_count >= wifi_24g_loop + LED_BLINK_WAIT)
++    {
++        wifi_24g_count = 0;
++    }
++    if(wifi_5g_count >= wifi_5g_loop + LED_BLINK_WAIT)
++    {
++        wifi_5g_count = 0;
++    }
++    /* wifi_24g_loop != 0 means no packets grows, no need to blink */
++    if (((wifi_24g_count & 1) == 0) || (wifi_24g_count >= wifi_24g_loop))
++    {	
++        led_output(GPIO_24G_LED, led_on);   
++    }
++    else if(wifi_2g_led_state_smp == 1 && wifi_24g_loop != 0)
++    {
++        led_output(GPIO_24G_LED, led_off);
++    }
++
++    if(wifi_24g_count == 0)
++    {
++      if(wifi_2g_led_state_smp==1)
++        {
++            net_dev = dev_get_by_name(&init_net, "wlan0");
++            if(net_dev)
++            {
++    	        stats = dev_get_stats(net_dev, &temp);
++                if((wifi_2g_tx_cnt_old_smp!=stats->tx_packets) || (wifi_2g_rx_cnt_old_smp!=stats->rx_packets))
++                {
++                    blink=1;
++                    /* blink during LED_BLINK_BASE + packets_temp time,packets_temp need less then 7 */
++                    packets_temp = wifi_2g_tx_cnt_old_smp - stats->tx_packets;
++                    packets_temp = packets_temp & LED_BLINK_MASK;
++                    wifi_24g_loop = packets_temp + LED_BLINK_BASE;
++                    
++                    wifi_2g_tx_cnt_old_smp=stats->tx_packets;
++                    wifi_2g_rx_cnt_old_smp=stats->rx_packets;
++                    //repeat_2g=0;    
++                }
++                else
++                    wifi_24g_loop = 0;
++                /*else if( repeat_2g <4)
++                 *{
++                 *   blink=1;
++                 *   repeat_2g++;
++                 *   led_output(GPIO_24G_LED, led_off);
++                 *}
++                 */
++                dev_put(net_dev);
++            }
++        }
++    }
++
++    if(((wifi_5g_count & 1) == 0) || (wifi_5g_count >= wifi_5g_loop))
++    {
++        led_output(GPIO_5G_LED, led_on);   
++    }
++    else if(wifi_5g_led_state_smp == 1 && wifi_5g_loop != 0)
++    {
++        led_output(GPIO_5G_LED, led_off);
++    }
++
++    if(wifi_24g_count == 0)
++    {
++        if(wifi_5g_led_state_smp==1)
++        {
++          	net_dev = dev_get_by_name(&init_net, "wlan1");
++            if(net_dev)
++            {
++    	        stats = dev_get_stats(net_dev, &temp);
++                if((wifi_5g_tx_cnt_old_smp!=stats->tx_packets) || (wifi_5g_rx_cnt_old_smp!=stats->rx_packets))
++                {
++					blink=1;
++                    /* blink during LED_BLINK_BASE + packets_temp time,packets_temp need less then 7 */
++                    packets_temp = wifi_5g_tx_cnt_old_smp - stats->tx_packets;
++                    packets_temp = packets_temp & LED_BLINK_MASK;
++                    wifi_5g_loop = packets_temp + LED_BLINK_BASE;
++
++                    wifi_5g_tx_cnt_old_smp=stats->tx_packets;
++    				wifi_5g_rx_cnt_old_smp=stats->rx_packets;
++    				//repeat_5g=0;
++                }
++                else
++                    wifi_5g_loop=0;
++                /*else if( repeat_5g <4)
++                 *{
++                 *   repeat_5g++;
++                 *   blink=1;
++                 *   led_output(GPIO_5G_LED, led_off);
++                 *}
++                 */
++            	dev_put(net_dev);
++            }    
++        }
++    }
++    wifi_24g_count++;
++    wifi_5g_count++;
++    if ( wifi_2g_led_state_smp==0 )
++        led_output(GPIO_24G_LED, 1);   
++
++    if ( wifi_5g_led_state_smp==0 )
++        led_output(GPIO_5G_LED, 1);   
++}
++
++void disable_usb_led(void)
++{
++    printk(">>> disable_usb_led (%d/%d)\n", current_usb_port_a, current_usb_port_b);
++	if ( current_usb_removed_index_a > 0 )
++	{
++	    if ( current_usb_port_a == 1 )
++	        led_output(GPIO_USB1_LED, LED_OFF);
++	    else
++	        led_output(GPIO_USB2_LED, LED_OFF);
++	    
++	    current_usb_port_a = 0;
++	}
++	else if ( current_usb_removed_index_b > 0 )
++	{
++	    if ( current_usb_port_b == 1 )
++	        led_output(GPIO_USB1_LED, LED_OFF);
++	    else
++	        led_output(GPIO_USB2_LED, LED_OFF);
++	        
++	    current_usb_port_b = 0;
++	}
++}
++
++void enable_usb_led(void)
++{
++    int led_on;
++    printk(">>> enable_usb_led (%d/%d)\n", current_usb_port_a, current_usb_port_b);
++    led_on = (led_control_settings_smp == 3) ? 1 : 0;
++	if ( current_usb_attached_index_a > 0 )
++	{
++	    if ( current_usb_port_a == 1 )
++	        led_output(GPIO_USB1_LED, led_on);
++	    else
++	        led_output(GPIO_USB2_LED, led_on);
++	}
++	else if ( current_usb_attached_index_b > 0 )
++	{
++	    if ( current_usb_port_b == 1 )
++	        led_output(GPIO_USB1_LED, led_on);
++	    else
++	        led_output(GPIO_USB2_LED, led_on);
++	}
++}
++
++static int usb1_normal_blink_smp(void)
++{
++    static int interrupt_count1 = -1;
++    static int usb1_pkt_cnt_old_smp = 0;
++    int led_on, led_off;
++    led_on = (led_control_settings_smp == 3) ? 1 : 0;
++	led_off = (led_control_settings_smp == 2) ? 0 : 1;
++
++    interrupt_count1++;
++    if (interrupt_count1 == (LED_BLINK_RATE_USB * 2))
++    {
++        interrupt_count1 = 0;
++    }    
++    if (interrupt_count1 == 0)
++    {
++        led_output(GPIO_USB1_LED, led_on);
++    }
++    else if (interrupt_count1 == LED_BLINK_RATE_USB)
++    {
++        if (usb1_pkt_cnt_smp != usb1_pkt_cnt_old_smp) 
++        {
++            usb1_pkt_cnt_old_smp = usb1_pkt_cnt_smp;
++            led_output(GPIO_USB1_LED, led_off);
++        }
++    }
++
++    return 0;
++}
++
++static int usb2_normal_blink_smp(void)
++{
++    static int interrupt_count1 = -1;
++    static int usb2_pkt_cnt_old_smp = 0;
++    int led_on, led_off;
++    led_on = (led_control_settings_smp == 3) ? 1 : 0;
++	led_off = (led_control_settings_smp == 2) ? 0 : 1;
++
++    interrupt_count1++;
++    if (interrupt_count1 == (LED_BLINK_RATE_USB * 2))
++    {
++        interrupt_count1 = 0;
++    }    
++    if (interrupt_count1 == 0)
++    {
++        led_output(GPIO_USB2_LED, led_on);
++    }
++    else if (interrupt_count1 == LED_BLINK_RATE_USB)
++    {
++        if (usb2_pkt_cnt_smp != usb2_pkt_cnt_old_smp) 
++        {
++            usb2_pkt_cnt_old_smp = usb2_pkt_cnt_smp;
++            led_output(GPIO_USB2_LED, led_off);
++        }
++    }
++
++    return 0;
++}
++
++static void usb_led_action(void)
++{
++    if( current_usb_port_a==1 || current_usb_port_b == 1 )
++        usb1_normal_blink_smp();
++    else if ( current_usb_port_a == 2 || current_usb_port_b == 2 )
++        usb2_normal_blink_smp();
++//    else
++//        printk("%s(%d) (%d %d)\n", __FUNCTION__, __LINE__, current_usb_port_a, current_usb_port_b);
++
++}
++//// LED functions end
++
++static void usb_port_control (int value)
++{
++    gpio_direction_output(2, 0);
++    gpio_set_value (2, value);
++}
++
++static void d7000v2_gpio_init(int pin, char *label)
++{
++    int err;
++	if (pin < 0)
++		return;
++
++	err = gpio_is_valid(pin);
++	if (!err)
++	{
++		printk("%s: gpio pin %d is invalid\n", __func__, pin);
++		return;
++	}
++
++	err = gpio_request(pin, label);
++	if (err)
++	{
++		printk("?%s: can't request gpio %d\n", __func__, pin);
++		return;
++	}
++
++    if ( pin == 33 )
++        gpio_direction_input(pin);
++        
++	//gpio_direction_output(pin, 1);    
++}
++
++static void gpio_control(int gpio, int value)
++{
++    gpio_direction_output(gpio, 1);    
++    gpio_set_value (gpio, value);
++}
++
++static int
++gpio_drv_open(struct inode *inode, struct file * file)
++{
++    //MOD_INC_USE_COUNT;
++    return 0;
++}
++
++static int
++gpio_drv_release(struct inode *inode, struct file * file)
++{
++    //MOD_DEC_USE_COUNT;
++    return 0;
++}
++
++static long
++gpio_drv_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
++{
++    int ret = 0;
++    GPIO_IOCTL_PARMS ctrlParms;
++
++    switch (cmd)
++    {
++        case IOCTL_SYS_READY_FLAG:
++            system_ready_flag = (int)arg;
++#ifdef _DEBUG
++            printk("%s: system_ready_flag = 0x%x\n", __FUNCTION__, system_ready_flag);
++#endif
++        break;
++        case IOCTL_SET_TE_TEST_FLAG:
++            Te_test_flag = (int)arg;
++#ifdef _DEBUG
++            printk("%s: Te_test_flag = 0x%x\n", __FUNCTION__, Te_test_flag);
++#endif
++        break;
++        case IOCTL_WPS_LED_STATE:
++            wps_led_state = (int)arg;
++#ifdef _DEBUG
++            printk("%s: wps_led_state = 0x%x\n", __FUNCTION__, wps_led_state);
++#endif
++            break;
++        case IOCTL_PWR_BLINK:
++            pwr_led_blink = (int)arg;
++#ifdef _DEBUG
++            printk("%s: pwr_led_blink = 0x%x\n", __FUNCTION__, pwr_led_blink);
++#endif
++            break;
++        case IOCTL_PWR_AMBER_BLINK:
++            pwr_amber_led_blink = (int)arg;
++#ifdef _DEBUG
++            printk("%s: pwr_amber_led_blink = 0x%x\n", __FUNCTION__, pwr_amber_led_blink);
++#endif
++            break;
++        case IOCTL_DSL_BLINK:
++            dsl_led_blink = (int)arg;
++#ifdef _DEBUG
++            printk("%s: dsl_led_blink = 0x%x\n", __FUNCTION__, dsl_led_blink);
++#endif
++            break;
++
++        case IOCTL_USB_SDA_COUNT:
++        {
++            int val;
++            val = current_usb_attached_index_a;
++            printk("%s: current_usb_attached_index_a = 0x%x\n", __FUNCTION__, current_usb_attached_index_a);
++            copy_to_user((int *)arg, &val, sizeof(int));
++            break;
++        }
++        case IOCTL_USB_SDB_COUNT:
++        {
++            int val;
++            val = current_usb_attached_index_b;
++            printk("%s: current_usb_attached_index_b = 0x%x\n", __FUNCTION__, current_usb_attached_index_b);
++            copy_to_user((int *)arg, &val, sizeof(int));
++            break;
++        }
++        case IOCTL_USB_SDA_REMOVED_FLAG:
++        {
++            int val;
++            val = current_usb_removed_index_a;
++            copy_to_user((int *)arg, &val, sizeof(int));
++            printk("%s: current_usb_removed_index_a = 0x%x\n", __FUNCTION__, current_usb_removed_index_a);
++            current_usb_removed_index_a = 0;
++            break;
++        }
++        case IOCTL_USB_SDB_REMOVED_FLAG:
++        {
++            int val;
++            val = current_usb_removed_index_b;
++            copy_to_user((int *)arg, &val, sizeof(int));
++            printk("%s: current_usb_removed_index_b = 0x%x\n", __FUNCTION__, current_usb_removed_index_b);
++            current_usb_removed_index_b = 0;
++            break;
++        }
++        case IOCTL_USB_ENABLE:
++        {
++            usb_enable_flag = (int)arg;
++            usb_port_control(usb_enable_flag);
++#ifdef _DEBUG
++            printk("%s: usb_enable_flag = 0x%x\n", __FUNCTION__, usb_enable_flag);
++#endif
++            break;
++        }
++        case IOCTL_SET_GPIO:
++        {
++            if (copy_from_user((void*)&ctrlParms, (void*)arg, sizeof(ctrlParms)) == 0) {
++                
++                gpio_control(ctrlParms.gpio, ctrlParms.value);
++                ret = 0;
++#ifdef _DEBUG
++                //printk("%s gpio=%d, value=%d\n", __FUNCTION__, ctrlParms.gpio, ctrlParms.value);
++#endif
++            }
++            else {
++                ret = -EFAULT;
++            }
++            break;
++        }
++        case IOCTL_GET_GPIO:
++        {
++            if (copy_from_user((void*)&ctrlParms, (void*)arg, sizeof(ctrlParms)) == 0) {
++                ctrlParms.result = gpio_get_value(ctrlParms.gpio);
++                __copy_to_user((GPIO_IOCTL_PARMS*)arg, &ctrlParms, sizeof(GPIO_IOCTL_PARMS));
++                ret = 0;
++            }
++            else {
++                ret = -EFAULT;
++            }
++            break;
++        }
++        default:
++            break;
++    }
++
++    return ret;
++
++}
++
++void led_timer_fn(unsigned long arg)
++{
++    struct led_data *led_info = (struct led_data *) arg;
++    unsigned long j = jiffies;
++    static int count=0;
++
++    if ( (Te_test_flag != 1) && (system_ready_flag==1) )
++    {
++        wifi_normal_blink_smp();
++        if(count == LED_TIMER_COUNT)
++            count = 0;
++        if(count == 0)
++        {
++            /* for LED blinking : 2.4/5GHz , USB , LAN */
++            pwr_led_action();
++
++            dsl_led_action();
++
++            usb_led_action();
++        
++            /* WPS LED*/
++            wps_led_action();      
++        }
++        count++;
++    }
++    led_info->led_timer.expires = j + DELAY;
++    add_timer(&led_info->led_timer);
++}
++
++void gpio_led_init(void)
++{
++    d7000v2_gpio_init(8, "pwr-green");
++    
++    d7000v2_gpio_init(9, "internet-ok");
++    d7000v2_gpio_init(10, "internet-fail");
++    d7000v2_gpio_init(32, "dsl-led");
++    d7000v2_gpio_init(28, "24g-led");
++    d7000v2_gpio_init(29, "5g-led");
++    d7000v2_gpio_init(1, "usb20-led");
++    d7000v2_gpio_init(31, "usb30-led");
++    d7000v2_gpio_init(11, "lan1-giga");
++    d7000v2_gpio_init(15, "lan1-fast");
++    d7000v2_gpio_init(21, "lan2-giga");
++    d7000v2_gpio_init(22, "lan2-fast");
++    d7000v2_gpio_init(35, "lan3-giga");
++    d7000v2_gpio_init(36, "lan3-fast");
++    d7000v2_gpio_init(42, "lan4-giga");
++    d7000v2_gpio_init(43, "lan4-fast");
++    d7000v2_gpio_init(6, "wifi-led");
++    d7000v2_gpio_init(4, "wps-led");
++    d7000v2_gpio_init(34, "pwr-amber");
++    
++    d7000v2_gpio_init(33, "wifi-btn");
++    //d7000v2_gpio_init(2, "usb-enable");
++
++    gpio_control (21, 1);
++    gpio_control (22, 1);
++    gpio_control (28, 1);
++    gpio_control (29, 1); 
++    gpio_control (31, 1);   
++    gpio_control (35, 1);
++    gpio_control (36, 1);
++}
++
++static struct file_operations gpio_drv_fops = {
++    .owner =      THIS_MODULE,
++    .open =       gpio_drv_open,
++    .release =    gpio_drv_release,
++    .unlocked_ioctl =      gpio_drv_ioctl,
++};
++
++static int __init
++gpio_drv_init(void)
++{
++    int ret_val;
++    unsigned long j = jiffies;
++        
++    if ((ret_val = register_chrdev(DEV_GPIO_DRV_MAJOR_NUM, DEV_GPIO_DRV, &gpio_drv_fops)) < 0)
++    {
++        printk("Failed to register dev '%s'\n", DEV_GPIO_DRV);
++        return ret_val;
++    }
++    printk("\n[gpio_drv_init]\n");
++    gpio_led_init();
++    
++    led_info = (struct led_data *)kmalloc(sizeof(struct led_data), GFP_KERNEL);
++
++    init_timer(&led_info->led_timer);
++    led_info->led_timer.expires = j + DELAY;
++    led_info->led_timer.function = led_timer_fn;
++    led_info->led_timer.data = (unsigned long) led_info;
++    led_info->status = 0;
++    add_timer(&led_info->led_timer);  
++
++    return 0;
++}
++
++static void __exit
++gpio_drv_exit(void)
++{
++    unregister_chrdev(DEV_GPIO_DRV_MAJOR_NUM, DEV_GPIO_DRV);
++}
++
++module_init(gpio_drv_init);
++module_exit(gpio_drv_exit);
+Index: linux-3.10.102/arch/mips/kernel/wps_led.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-3.10.102/arch/mips/kernel/wps_led.c	2017-03-09 11:21:30.808645361 +0800
+@@ -0,0 +1,179 @@
++/***************************************************************************
++***
++***    Copyright 2008  Hon Hai Precision Ind. Co. Ltd.
++***    All Rights Reserved.
++***    No portions of this material shall be reproduced in any form without the
++***    written permission of Hon Hai Precision Ind. Co. Ltd.
++***
++***    All information contained in this document is Hon Hai Precision Ind.  
++***    Co. Ltd. company private, proprietary, and trade secret property and 
++***    are protected by international intellectual property laws and treaties.
++***
++****************************************************************************/
++
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/fs.h>
++#include <linux/miscdevice.h>
++#include <asm/uaccess.h>
++#include <linux/wps_led.h>
++
++/*#define _DEBUG*/
++
++
++#ifdef CONFIG_DEVFS_FS
++static int wps_led_major;
++devfs_handle_t wps_leddev_handle;
++#endif /* CONFIG_DEVFS_FS */
++
++extern int wps_led_pattern;
++extern int wps_led_state;
++extern int is_wl_secu_mode;
++extern int wifi_2g_led_state_smp;
++extern int wifi_5g_led_state_smp;
++extern int led_control_settings_smp;
++
++
++static int
++wps_led_open(struct inode *inode, struct file * file)
++{
++    //MOD_INC_USE_COUNT;
++    return 0;
++}
++
++static int
++wps_led_release(struct inode *inode, struct file * file)
++{
++    //MOD_DEC_USE_COUNT;
++    return 0;
++}
++
++static long
++wps_led_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
++{
++    if (arg)
++        is_wl_secu_mode = 1;
++    else
++        is_wl_secu_mode = 0;
++
++    switch (cmd)
++    {
++        case WPS_LED_BLINK_NORMAL:
++            wps_led_state = 1;
++#ifdef _DEBUG
++            printk("%s: blink normal\n", __FUNCTION__);
++#endif
++            break;
++
++        case WPS_LED_BLINK_QUICK:
++            wps_led_state = 2;
++#ifdef _DEBUG
++            printk("%s: blink WPS\n", __FUNCTION__);
++#endif
++            break;
++
++        case WPS_LED_BLINK_OFF:
++            /* wps_led_state will change to 0 automatically after
++             * blinking a few seconds if it's 2 currently
++             */
++            if (wps_led_state != 2)
++                wps_led_state = 0;
++#ifdef _DEBUG
++            printk("%s: blink OFF\n", __FUNCTION__);
++#endif
++            break;
++
++        case WPS_LED_CHANGE_GREEN:
++            break;
++
++        case WPS_LED_CHANGE_AMBER:
++            break;
++
++        case WPS_LED_BLINK_QUICK2:
++            wps_led_state = 3;
++            break;
++            
++        case WPS_LED_BLINK_AP_LOCKDOWN:
++            wps_led_state = 4;
++            break;
++
++        case LED_CONTROL_ENABLE_BLINK:
++            led_control_settings_smp = 1;
++            printk("%s: led_control_settings_smp = 0x%x\n", __FUNCTION__, led_control_settings_smp);
++            break;
++
++        case LED_CONTROL_DISABLE_BLINK:
++            led_control_settings_smp = 2;
++            printk("%s: led_control_settings_smp = 0x%x\n", __FUNCTION__, led_control_settings_smp);
++            break;
++
++        case LED_CONTROL_TURN_OFF:
++            led_control_settings_smp = 3;		
++            printk("%s: led_control_settings_smp = 0x%x\n", __FUNCTION__, led_control_settings_smp);	
++            break;
++        default:
++            break;
++    }
++
++    if (cmd == WLAN_N_RADIO_ON)
++    {
++        printk("%s: WLAN_N_RADIO_ON \n", __FUNCTION__);
++    	wifi_2g_led_state_smp=1;
++    	return 0;
++    }        
++    else if(cmd == WLAN_N_RADIO_OFF)
++    {
++        printk("%s: WLAN_N_RADIO_OFF \n", __FUNCTION__);
++    	wifi_2g_led_state_smp=0;
++    	return 0;
++    }
++    else if(cmd == WLAN_G_RADIO_ON)
++    {
++        printk("%s: WLAN_G_RADIO_ON \n", __FUNCTION__);
++    	wifi_5g_led_state_smp=1;
++    	return 0;
++    }
++    else if(cmd == WLAN_G_RADIO_OFF)
++    {
++        printk("%s: WLAN_G_RADIO_OFF \n", __FUNCTION__);
++    	wifi_5g_led_state_smp=0;
++    	return 0;
++    }
++    return 0;
++}
++
++static struct file_operations wps_led_fops = {
++    .owner      = THIS_MODULE,
++    .open       = wps_led_open,
++    .release    = wps_led_release,
++    .unlocked_ioctl      = wps_led_ioctl,
++};
++
++static int __init
++wps_led_init(void)
++{
++    int ret_val;
++    /*
++    * Register the character device (atleast try)
++    */
++    ret_val = register_chrdev(WPS_LED_MAJOR_NUM, "wps_led", &wps_led_fops);
++    /*
++    * Negative values signify an error
++    */
++    if (ret_val < 0) 
++    {
++        printk("%s failed with %d\n","Sorry, registering the character device wps_led", ret_val);
++        return ret_val;
++    } 
++
++    return 0;
++}
++
++static void __exit
++wps_led_exit(void)
++{
++    unregister_chrdev(WPS_LED_MAJOR_NUM, "wps_led");
++}
++
++module_init(wps_led_init);
++module_exit(wps_led_exit);
+Index: linux-3.10.102/include/uapi/linux/gpio_drv.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-3.10.102/include/uapi/linux/gpio_drv.h	2017-03-09 11:21:30.808645361 +0800
+@@ -0,0 +1,92 @@
++/***************************************************************************
++***
++***    Copyright 2017  Hon Hai Precision Ind. Co. Ltd.
++***    All Rights Reserved.
++***    No portions of this material shall be reproduced in any form without the
++***    written permission of Hon Hai Precision Ind. Co. Ltd.
++***
++***    All information contained in this document is Hon Hai Precision Ind.  
++***    Co. Ltd. company private, proprietary, and trade secret property and 
++***    are protected by international intellectual property laws and treaties.
++***
++****************************************************************************/
++
++#ifndef __GPIO_DRV_H__
++#define __GPIO_DRV_H__
++
++#define DEV_GPIO_DRV        "gpio_drv"
++
++#define GPIO_IOCTL_NUM   'W'
++
++#define IOCTL_SET_TE_TEST_FLAG      _IOWR(GPIO_IOCTL_NUM, 1, int *)
++#define IOCTL_LAN_LED_STATE         _IOWR(GPIO_IOCTL_NUM, 2, int *)
++#define IOCTL_WPS_LED_STATE         _IOWR(GPIO_IOCTL_NUM, 3, int *)
++#define IOCTL_WAN_LED_STATE         _IOWR(GPIO_IOCTL_NUM, 4, int *)
++
++#define IOCTL_INTERNET_LED_STATE    _IOWR(GPIO_IOCTL_NUM, 5, int *)
++
++#define IOCTL_PWR_BLINK             _IOWR(GPIO_IOCTL_NUM, 6, int *) 
++#define IOCTL_PWR_AMBER_BLINK       _IOWR(GPIO_IOCTL_NUM, 7, int *)
++
++#define LED_CONTROL_ENABLE_BLINK    _IOWR(GPIO_IOCTL_NUM, 8, int *)
++#define LED_CONTROL_DISABLE_BLINK   _IOWR(GPIO_IOCTL_NUM, 9, int *)
++#define LED_CONTROL_TURN_OFF        _IOWR(GPIO_IOCTL_NUM, 10, int *)
++
++#define IOCTL_USB_1_LED_STATE       _IOWR(GPIO_IOCTL_NUM, 11, int *)
++#define IOCTL_USB_2_LED_STATE       _IOWR(GPIO_IOCTL_NUM, 12, int *)
++#define IOCTL_USB_1_BLINK           _IOWR(GPIO_IOCTL_NUM, 13, int *) 
++#define IOCTL_USB_2_BLINK           _IOWR(GPIO_IOCTL_NUM, 14, int *) 
++
++#define IOCTL_USB_SDA_COUNT         _IOWR(GPIO_IOCTL_NUM, 15, int *)
++#define IOCTL_USB_SDB_COUNT         _IOWR(GPIO_IOCTL_NUM, 16, int *)
++#define IOCTL_USB_SDA_REMOVED_FLAG  _IOWR(GPIO_IOCTL_NUM, 17, int *)
++#define IOCTL_USB_SDB_REMOVED_FLAG  _IOWR(GPIO_IOCTL_NUM, 18, int *)
++
++#define IOCTL_24G_BLINK             _IOWR(GPIO_IOCTL_NUM, 19, int *) 
++#define IOCTL_5G_BLINK              _IOWR(GPIO_IOCTL_NUM, 20, int *) 
++
++#define IOCTL_SYS_READY_FLAG        _IOWR(GPIO_IOCTL_NUM, 21, int *)
++#define IOCTL_DSL_BLINK             _IOWR(GPIO_IOCTL_NUM, 22, int *) 
++#define IOCTL_USB_ENABLE            _IOWR(GPIO_IOCTL_NUM, 23, int *) 
++#define IOCTL_SET_GPIO              _IOWR(GPIO_IOCTL_NUM, 24, GPIO_IOCTL_PARMS) 
++#define IOCTL_GET_GPIO              _IOWR(GPIO_IOCTL_NUM, 25, GPIO_IOCTL_PARMS) 
++
++typedef struct gpioIoctParms
++{
++    int gpio;
++    int value;
++    int result;
++} GPIO_IOCTL_PARMS;
++
++#define GPIO_USB1_LED           1  /* 2.0 */
++#define GPIO_USB2_LED           31  /* 3.0 */
++#define GPIO_USB1_LED_STR       "1"
++#define GPIO_USB2_LED_STR       "31"
++
++#define GPIO_INTERNET_ACT_LED   10   
++#define GPIO_INTERNET_FAIL_LED  9  
++
++#define GPIO_POWER_GREEN_LED    34
++#define GPIO_POWER_LED_GREEN_STR    "34"
++#define GPIO_POWER_RED_LED      8
++#define GPIO_POWER_LED_AMBER_STR    "8"
++
++#define GPIO_XDSL1_LED          32
++#define GPIO_24G_LED            28
++#define GPIO_5G_LED             29
++#define WPS_LED_GPIO            4
++#define GPIO_WIFI_LED           6
++#define GPIO_WIFI_BUTTON_LED    6
++
++#define GPIO_FE_LAN1            11
++#define GPIO_GIGA_LAN1          15
++#define GPIO_FE_LAN2            21
++#define GPIO_GIGA_LAN2          22
++#define GPIO_FE_LAN3            35
++#define GPIO_GIGA_LAN3          36
++#define GPIO_FE_LAN4            42
++#define GPIO_GIGA_LAN4          43
++
++
++#endif  /* __GPIO_DRV_H__ */
++
+Index: linux-3.10.102/include/uapi/linux/wps_led.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-3.10.102/include/uapi/linux/wps_led.h	2017-03-09 11:21:30.808645361 +0800
+@@ -0,0 +1,57 @@
++/***************************************************************************
++***
++***    Copyright 2007  Hon Hai Precision Ind. Co. Ltd.
++***    All Rights Reserved.
++***    No portions of this material shall be reproduced in any form without the
++***    written permission of Hon Hai Precision Ind. Co. Ltd.
++***
++***    All information contained in this document is Hon Hai Precision Ind.  
++***    Co. Ltd. company private, proprietary, and trade secret property and 
++***    are protected by international intellectual property laws and treaties.
++***
++****************************************************************************/
++
++#ifndef __WPS_LED_H__
++#define __WPS_LED_H__
++
++#define WPS_LED_MAJOR_NUM       255
++
++#define DEV_WPS_LED             "/dev/wps_led"
++#define WPS_LED_IOCTL_NUM       'W'
++
++#define WPS_LED_BLINK_NORMAL   _IOWR(WPS_LED_IOCTL_NUM, 0, int *)
++#define WPS_LED_BLINK_QUICK    _IOWR(WPS_LED_IOCTL_NUM, 1, int *)
++#define WPS_LED_BLINK_OFF      _IOWR(WPS_LED_IOCTL_NUM, 2, int *)
++#define WPS_LED_CHANGE_GREEN   _IOWR(WPS_LED_IOCTL_NUM, 3, int *)
++#define WPS_LED_CHANGE_AMBER   _IOWR(WPS_LED_IOCTL_NUM, 4, int *)
++#define WPS_LED_BLINK_QUICK2   _IOWR(WPS_LED_IOCTL_NUM, 5, int *)
++
++#define WLAN_N_RADIO_ON        _IOWR(WPS_LED_IOCTL_NUM, 6, int *)
++#define WLAN_N_RADIO_OFF       _IOWR(WPS_LED_IOCTL_NUM, 7, int *)
++#define WLAN_G_RADIO_ON        _IOWR(WPS_LED_IOCTL_NUM, 8, int *)
++#define WLAN_G_RADIO_OFF       _IOWR(WPS_LED_IOCTL_NUM, 9, int *)
++
++#define USB_LED_STATE_ON       _IOWR(WPS_LED_IOCTL_NUM, 10, int *)
++#define USB_LED_STATE_OFF      _IOWR(WPS_LED_IOCTL_NUM, 11, int *)
++
++#define DOME_N_RADIO_ON        _IOWR(WPS_LED_IOCTL_NUM, 12, int *)
++#define DOME_N_RADIO_OFF       _IOWR(WPS_LED_IOCTL_NUM, 13, int *)
++#define DOME_G_RADIO_ON        _IOWR(WPS_LED_IOCTL_NUM, 14, int *)
++#define DOME_G_RADIO_OFF       _IOWR(WPS_LED_IOCTL_NUM, 15, int *)
++#define WPS_LED_BLINK_AP_LOCKDOWN   _IOWR(WPS_LED_IOCTL_NUM, 18, int *)
++#define LED_CONTROL_ENABLE_BLINK    _IOWR(WPS_LED_IOCTL_NUM, 19, int *)
++#define LED_CONTROL_DISABLE_BLINK   _IOWR(WPS_LED_IOCTL_NUM, 20, int *)
++#define LED_CONTROL_TURN_OFF        _IOWR(WPS_LED_IOCTL_NUM, 21, int *)
++
++#define WPS_LED_STOP_NO         (0)
++#define WPS_LED_STOP_RADIO_OFF  (1)
++#define WPS_LED_STOP_DISABLED   (2)
++
++#define GPIO_24G_LED            28
++#define GPIO_5G_LED             29
++#define WPS_LED_GPIO            4
++#define GPIO_WIFI_LED           6
++#define GPIO_WIFI_BUTTON_LED    6
++
++
++#endif
+Index: linux-3.10.102/block/partitions/check.c
+===================================================================
+--- linux-3.10.102.orig/block/partitions/check.c	2016-06-12 17:41:54.000000000 +0800
++++ linux-3.10.102/block/partitions/check.c	2017-03-09 11:21:30.808645361 +0800
+@@ -171,7 +171,7 @@
+ 	}
+ 	if (res > 0) {
+ 		printk(KERN_INFO "%s", state->pp_buf);
+-
++printk("%s(%d) (%s)\n", __FUNCTION__, __LINE__, state->pp_buf); /*  foxconn added */
+ 		free_page((unsigned long)state->pp_buf);
+ 		return state;
+ 	}
+Index: linux-3.10.102/block/partitions/check.h
+===================================================================
+--- linux-3.10.102.orig/block/partitions/check.h	2016-06-12 17:41:54.000000000 +0800
++++ linux-3.10.102/block/partitions/check.h	2017-03-09 11:21:30.808645361 +0800
+@@ -2,6 +2,15 @@
+ #include <linux/blkdev.h>
+ #include <linux/genhd.h>
+ 
++
++/* foxconn added start */
++extern int current_usb_attached_index_a; /* for USB : sad-1 , sdb-2 */
++extern int current_usb_attached_index_b;
++extern int current_usb_port;
++extern int current_usb_port_a;   /* USB2.0 - 1 , USB3.0 - 2 */
++extern int current_usb_port_b;
++/* foxconn added end */
++
+ /*
+  * add_gd_partition adds a partitions details to the devices partition
+  * description.
+@@ -47,6 +56,23 @@
+ 		p->parts[n].size = size;
+ 		snprintf(tmp, sizeof(tmp), " %s%d", p->name, n);
+ 		strlcat(p->pp_buf, tmp, PAGE_SIZE);
++		
++		/* foxconn added start */
++		if ( strcmp("sda", p->name) == 0 )
++		{
++		    current_usb_attached_index_a++;
++		    
++		    current_usb_port_a = current_usb_port;
++		}
++		else 
++		{
++		    current_usb_attached_index_b++;
++		    current_usb_port_b = current_usb_port;
++		}
++		current_usb_port = 0;
++		printk("%s(%d) sda_partitions=%d, sdb_partitions=%d\n", __FUNCTION__, __LINE__, current_usb_attached_index_a, current_usb_attached_index_b); 
++		printk("%s(%d) current_usb_port_a=%d, current_usb_port_b=%d\n", __FUNCTION__, __LINE__, current_usb_port_a, current_usb_port_b); 
++		/* foxconn added end */
+ 	}
+ }
+ 
+Index: linux-3.10.102/drivers/scsi/sd.c
+===================================================================
+--- linux-3.10.102.orig/drivers/scsi/sd.c	2016-06-12 17:41:54.000000000 +0800
++++ linux-3.10.102/drivers/scsi/sd.c	2017-03-09 11:21:30.812645361 +0800
+@@ -98,6 +98,20 @@
+ #define SD_MINORS	0
+ #endif
+ 
++/*Foxconn porting start */
++#ifdef __FOXCONN_KERNEL_PORTING__
++static int connected_usb = 0;
++extern int usb_1_led_blink;
++extern void disable_usb_led();
++extern void enable_usb_led();
++extern usb_is_attached;
++extern int current_usb_attached_index_a; /* for USB : sad-1 , sdb-2 , sdc-4, sdd-8, sde-16, sdf-32 */
++extern int current_usb_attached_index_b;
++extern int current_usb_removed_index_a;
++extern int current_usb_removed_index_b;
++#endif
++/*Foxconn porting end */
++
+ static void sd_config_discard(struct scsi_disk *, unsigned int);
+ static void sd_config_write_same(struct scsi_disk *);
+ static int  sd_revalidate_disk(struct gendisk *);
+@@ -2823,7 +2837,7 @@
+ 	gd->major = sd_major((index & 0xf0) >> 4);
+ 	gd->first_minor = ((index & 0xf) << 4) | (index & 0xfff00);
+ 	gd->minors = SD_MINORS;
+-
++printk(">> major: %x, first_minor: %x, minor: %x\n", gd->major, gd->first_minor, gd->minors);
+ 	gd->fops = &sd_fops;
+ 	gd->private_data = &sdkp->driver;
+ 	gd->queue = sdkp->device->request_queue;
+@@ -2858,6 +2872,12 @@
+ 		sd_dif_config_host(sdkp);
+ 
+ 	sd_revalidate_disk(gd);
++    /* foxconn added start */
++    connected_usb ++;
++    usb_is_attached++;
++    printk(">>> host_no=%d disk_name=%s (connected usb=%d)\n", sdp->host->host_no, (sdkp)->disk->disk_name, connected_usb);
++    enable_usb_led();
++    /* foxconn added end */
+ 
+ 	sd_printk(KERN_NOTICE, sdkp, "Attached SCSI %sdisk\n",
+ 		  sdp->removable ? "removable " : "");
+@@ -2994,6 +3014,17 @@
+ 	device_del(&sdkp->dev);
+ 	del_gendisk(sdkp->disk);
+ 	sd_shutdown(dev);
++    /* foxconn added start */
++    connected_usb --;
++    usb_is_attached--;
++    printk(">>sd_remove disk_name=(%s) (connected_usb=%d)\n", (sdkp)->disk->disk_name, connected_usb);
++    
++    if ( strcmp("sda", (sdkp)->disk->disk_name) == 0 )
++        current_usb_removed_index_a = 1;
++    else
++        current_usb_removed_index_b = 1;
++    disable_usb_led();
++    /* foxconn added end */
+ 
+ 	mutex_lock(&sd_ref_mutex);
+ 	dev_set_drvdata(dev, NULL);
+Index: linux-3.10.102/drivers/usb/core/hub.c
+===================================================================
+--- linux-3.10.102.orig/drivers/usb/core/hub.c	2017-03-09 11:21:26.768645346 +0800
++++ linux-3.10.102/drivers/usb/core/hub.c	2017-03-09 11:21:30.812645361 +0800
+@@ -33,6 +33,10 @@
+ 
+ #include "hub.h"
+ 
++/* Foxconn added start */
++extern int current_usb_port;    /* USB2.0 - 1 , USB3.0 - 2 */
++/* Foxconn added end */
++
+ /* if we are in debug mode, always announce new devices */
+ #ifdef DEBUG
+ #ifndef CONFIG_USB_ANNOUNCE_NEW_DEVICES
+@@ -2159,6 +2163,14 @@
+ 	show_string(udev, "Product", udev->product);
+ 	show_string(udev, "Manufacturer", udev->manufacturer);
+ 	show_string(udev, "SerialNumber", udev->serial);
++
++    /* foxconn added start */
++	printk(">>bus_num: %d\n", ((struct usb_bus*)(udev->bus))->busnum ); 
++	if ( ((struct usb_bus*)(udev->bus))->busnum == 1 )
++	    current_usb_port = 1;
++	else
++	    current_usb_port = 2;
++	/* foxconn added end */
+ }
+ #else
+ static inline void announce_device(struct usb_device *udev) { }
+Index: linux-3.10.102/drivers/usb/storage/transport.c
+===================================================================
+--- linux-3.10.102.orig/drivers/usb/storage/transport.c	2016-06-12 17:41:54.000000000 +0800
++++ linux-3.10.102/drivers/usb/storage/transport.c	2017-03-09 11:21:30.812645361 +0800
+@@ -63,6 +63,12 @@
+ #include <linux/blkdev.h>
+ #include "../../scsi/sd.h"
+ 
++/* Foxconn added start */
++extern int usb1_pkt_cnt;
++extern int usb2_pkt_cnt;
++extern int usb1_pkt_cnt_smp;
++extern int usb2_pkt_cnt_smp;
++/* Foxconn added end */ 
+ 
+ /***********************************************************************
+  * Data transfer routines
+@@ -419,11 +425,29 @@
+ 		unsigned int *act_len)
+ {
+ 	int result;
++    
++    /* Foxconn added start */
++    int busnum;
++    /* Foxconn added end */ 
+ 
+ 	/* don't submit s-g requests during abort processing */
+ 	if (test_bit(US_FLIDX_ABORTING, &us->dflags))
+ 		return USB_STOR_XFER_ERROR;
+ 
++	/* Foxconn added start */
++    busnum = ((struct usb_bus*)(us->pusb_dev->bus))->busnum;
++    if ( busnum == 1 )
++    {
++        usb1_pkt_cnt++;
++        usb1_pkt_cnt_smp++;
++    }
++    else
++    {
++        usb2_pkt_cnt++;
++        usb2_pkt_cnt_smp++;
++    }
++    /* Foxconn added end */ 
++
+ 	/* initialize the scatter-gather request block */
+ 	usb_stor_dbg(us, "xfer %u bytes, %d entries\n", length, num_sg);
+ 	result = usb_sg_init(&us->current_sg, us->pusb_dev, pipe, 0,
+Index: linux-3.10.102/drivers/usb/storage/usb.c
+===================================================================
+--- linux-3.10.102.orig/drivers/usb/storage/usb.c	2016-06-12 17:41:54.000000000 +0800
++++ linux-3.10.102/drivers/usb/storage/usb.c	2017-03-09 11:21:30.812645361 +0800
+@@ -992,6 +992,7 @@
+ 		goto BadDevice;
+ 	snprintf(us->scsi_name, sizeof(us->scsi_name), "usb-storage %s",
+ 					dev_name(&us->pusb_intf->dev));
++    printk(">> %s\n", dev_name(&us->pusb_intf->dev)); //foxconn
+ 	result = scsi_add_host(us_to_host(us), dev);
+ 	if (result) {
+ 		dev_warn(dev,

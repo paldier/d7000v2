@@ -1,0 +1,47 @@
+From 675b4decc1c0e671f11dccba61e906e14a6598aa Mon Sep 17 00:00:00 2001
+From: Tomas Winkler <tomas.winkler@intel.com>
+Date: Mon, 12 May 2014 12:19:40 +0300
+Subject: [PATCH] mei: me: drop harmful wait optimization
+
+commit 07cd7be3d92eeeae1f92a017f2cfe4fdd9256526 upstream.
+
+It my take time till ME_RDY will be cleared after the reset,
+so we cannot check the bit before we got the interrupt
+
+Signed-off-by: Tomas Winkler <tomas.winkler@intel.com>
+Signed-off-by: Alexander Usyskin <alexander.usyskin@intel.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+(cherry picked from commit b6ac0f888ae9b06b3d4092b8252d493b059d1ded)
+
+Signed-off-by: Nagaraj S <sivasankaranx.nagaraj@intel.com>
+---
+ drivers/misc/mei/hw-me.c |    4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/drivers/misc/mei/hw-me.c b/drivers/misc/mei/hw-me.c
+index d4e72fc..f67c37e 100644
+--- a/drivers/misc/mei/hw-me.c
++++ b/drivers/misc/mei/hw-me.c
+@@ -186,6 +186,7 @@ static int mei_me_hw_reset(struct mei_device *dev, bool intr_enable)
+ 	else
+ 		hcsr &= ~H_IE;
+ 
++	dev->recvd_hw_ready = false;
+ 	mei_me_reg_write(hw, H_CSR, hcsr);
+ 
+ 	if (intr_enable == false)
+@@ -237,10 +238,7 @@ static bool mei_me_hw_is_ready(struct mei_device *dev)
+ static int mei_me_hw_ready_wait(struct mei_device *dev)
+ {
+ 	int err;
+-	if (mei_me_hw_is_ready(dev))
+-		return 0;
+ 
+-	dev->recvd_hw_ready = false;
+ 	mutex_unlock(&dev->device_lock);
+ 	err = wait_event_interruptible_timeout(dev->wait_hw_ready,
+ 			dev->recvd_hw_ready,
+-- 
+1.7.9.5
+

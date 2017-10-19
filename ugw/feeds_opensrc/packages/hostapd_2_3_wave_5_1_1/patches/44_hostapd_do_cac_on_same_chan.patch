@@ -1,0 +1,81 @@
+diff -Npur hostapd_orig/src/ap/dfs.c hapd-repeat_cac/src/ap/dfs.c
+--- hostapd_orig/src/ap/dfs.c	2016-03-16 18:45:34.000000000 +0200
++++ hapd-repeat_cac/src/ap/dfs.c	2016-03-16 18:15:22.000000000 +0200
+@@ -18,6 +18,13 @@
+ #include "drivers/driver.h"
+ #include "dfs.h"
+ 
++/* Must be aligned with driver structure */
++struct vendor_cac_data
++{
++	int chan_width;
++	int cf1;
++	int cf2;
++};
+ 
+ static int dfs_get_used_n_chans(struct hostapd_iface *iface, int *seg1)
+ {
+@@ -739,6 +746,23 @@ int hostapd_handle_dfs(struct hostapd_if
+ 	return 0;
+ }
+ 
++int chan_width_enum_to_freq(enum chan_width width)
++{
++	switch (width) {
++	case CHAN_WIDTH_20_NOHT:
++	case CHAN_WIDTH_20:
++		return 20;
++	case CHAN_WIDTH_40:
++		return 40;
++	case CHAN_WIDTH_80:
++	case CHAN_WIDTH_80P80:
++		return 80;
++	case CHAN_WIDTH_160:
++		return 160;
++	default:
++		return 0;
++	}
++}
+ 
+ int hostapd_dfs_complete_cac(struct hostapd_iface *iface, int success, int freq,
+ 			     int ht_enabled, int chan_offset, int chan_width,
+@@ -749,12 +773,27 @@ int hostapd_dfs_complete_cac(struct host
+ 		success, freq, ht_enabled, chan_offset, chan_width, cf1, cf2);
+ 
+ 	if (success) {
++		struct vendor_cac_data chan_data;
++		chan_data.chan_width = chan_width_enum_to_freq(chan_width);
++		chan_data.cf1 = cf1;
++		chan_data.cf2 = cf2;
++
+ 		/* Complete iface/ap configuration */
+ 		set_dfs_state(iface, freq, ht_enabled, chan_offset,
+ 			      chan_width, cf1, cf2,
+ 			      HOSTAPD_CHAN_DFS_AVAILABLE);
+ 		iface->cac_started = 0;
+ 		hostapd_setup_interface_complete(iface, 0);
++
++		/* Set state back to usable to be able do the CAC again on the same channel */
++		set_dfs_state(iface, freq, ht_enabled, chan_offset,
++			      chan_width, cf1, cf2,
++			      HOSTAPD_CHAN_DFS_USABLE);
++
++		/* Notify driver that all vaps are set up after CAC and can change dfs flags */
++		if (hostapd_drv_vendor_cmd(iface->bss[0], OUI_LTQ, LTQ_NL80211_VENDOR_SUBCMD_CAC_COMPLETE,
++			      (const u8*)&chan_data, sizeof(chan_data), NULL))
++			wpa_printf(MSG_WARNING, "Failed to send driver vendor command LTQ_NL80211_VENDOR_SUBCMD_CAC_COMPLETE");
+ 	}
+ 
+ 	return 0;
+
+diff -Npur hostapd_orig/src/common/ltq-vendor.h hapd-repeat_cac/src/common/ltq-vendor.h
+--- hostapd_orig/src/common/ltq-vendor.h	2016-03-02 10:40:06.000000000 +0200
++++ hapd-repeat_cac/src/common/ltq-vendor.h	2016-03-02 10:44:21.000000000 +0200
+@@ -37,6 +37,7 @@ enum ltq_nl80211_vendor_subcmds {
+ 	LTQ_NL80211_VENDOR_SUBCMD_COUNTRY_CODE = 4,
+ 	LTQ_NL80211_VENDOR_SUBCMD_SYNC_DONE = 5,
+ 	LTQ_NL80211_VENDOR_SUBCMD_DFS_DEBUG = 6,
++	LTQ_NL80211_VENDOR_SUBCMD_CAC_COMPLETE = 7,
+ };
+ 
+ enum ltq_nl80211_vendor_events {

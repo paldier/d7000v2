@@ -1,0 +1,28 @@
+diff -Npur hostap-724fce8-orig/src/ap/hw_features.c hostap-724fce8-modif/src/ap/hw_features.c
+--- hostap-724fce8-orig/src/ap/hw_features.c	2016-01-21 12:57:52.000000000 +0200
++++ hostap-724fce8-modif/src/ap/hw_features.c	2016-01-21 17:04:06.000000000 +0200
+@@ -647,12 +647,19 @@ static void ieee80211n_scan_channels_5g(
+ 		return;
+ 
+ 	pri_freq = hostapd_hw_get_freq(iface->bss[0], iface->conf->channel);
+-	if (iface->conf->secondary_channel > 0) {
+-		affected_start = pri_freq - 10;
+-		affected_end = pri_freq + 30;
++  /* If VHT channel used, trigger scan for all channels in chanwidth to calibrate all those channels */
++	if (iface->conf->ieee80211ac && iface->conf->vht_oper_chwidth == VHT_CHANWIDTH_80MHZ) {
++		int low_freq = hostapd_hw_get_freq(iface->bss[0], iface->conf->vht_oper_centr_freq_seg0_idx - 6);
++		affected_start = low_freq - 10;
++		affected_end = low_freq + 70;
+ 	} else {
+-		affected_start = pri_freq - 30;
+-		affected_end = pri_freq + 10;
++		if (iface->conf->secondary_channel > 0) {
++			affected_start = pri_freq - 10;
++			affected_end = pri_freq + 30;
++		} else {
++			affected_start = pri_freq - 30;
++			affected_end = pri_freq + 10;
++		}
+ 	}
+ 	wpa_printf(MSG_DEBUG, "40 MHz affected channel range: [%d,%d] MHz",
+ 		   affected_start, affected_end);

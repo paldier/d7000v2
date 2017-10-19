@@ -1,0 +1,54 @@
+From 8a60def6475795d7e70653ca05eeaf1cffb1ddb9 Mon Sep 17 00:00:00 2001
+From: Peter Hurley <peter@hurleysoftware.com>
+Date: Thu, 16 Oct 2014 13:46:38 -0400
+Subject: [PATCH] serial: Fix divide-by-zero fault in uart_get_divisor()
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+commit 547039ec502076e60034eeb79611df3433a99b7d upstream.
+
+uart_get_baud_rate() will return baud == 0 if the max rate is set
+to the "magic" 38400 rate and the SPD_* flags are also specified.
+On the first iteration, if the current baud rate is higher than the
+max, the baud rate is clamped at the max (which in the degenerate
+case is 38400). On the second iteration, the now-"magic" 38400 baud
+rate selects the possibly higher alternate baud rate indicated by
+the SPD_* flag. Since only two loop iterations are performed, the
+loop is exited, a kernel WARNING is generated and a baud rate of
+0 is returned.
+
+Reproducible with:
+ setserial /dev/ttyS0 spd_hi base_baud 38400
+
+Only perform the "magic" 38400 -> SPD_* baud transform on the first
+loop iteration, which prevents the degenerate case from recognizing
+the clamped baud rate as the "magic" 38400 value.
+
+Reported-by: Robert Święcki <robert@swiecki.net>
+Signed-off-by: Peter Hurley <peter@hurleysoftware.com>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+(cherry picked from commit e3a0b124c0b78fd18093225bf346ea53baebf811)
+
+Signed-off-by: Brett T. Warden <brett.t.warden@intel.com>
+---
+ drivers/tty/serial/serial_core.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/tty/serial/serial_core.c b/drivers/tty/serial/serial_core.c
+index 25b8f68..27b5554 100644
+--- a/drivers/tty/serial/serial_core.c
++++ b/drivers/tty/serial/serial_core.c
+@@ -353,7 +353,7 @@ uart_get_baud_rate(struct uart_port *port, struct ktermios *termios,
+ 		 * The spd_hi, spd_vhi, spd_shi, spd_warp kludge...
+ 		 * Die! Die! Die!
+ 		 */
+-		if (baud == 38400)
++		if (try == 0 && baud == 38400)
+ 			baud = altbaud;
+ 
+ 		/*
+-- 
+1.7.9.5
+

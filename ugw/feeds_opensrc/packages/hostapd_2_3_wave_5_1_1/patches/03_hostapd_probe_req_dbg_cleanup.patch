@@ -1,0 +1,17 @@
+# HG changeset patch
+# Parent 881fb57d858c81632a7ef80b72b46a47ee46914c
+
+diff --git a/src/ap/drv_callbacks.c b/src/ap/drv_callbacks.c
+--- a/src/ap/drv_callbacks.c
++++ b/src/ap/drv_callbacks.c
+@@ -877,7 +877,9 @@
+ 		    WLAN_FC_GET_STYPE(fc) == WLAN_FC_STYPE_PROBE_REQ)
+ 			level = MSG_EXCESSIVE;
+ 	}
+-
++	if (event == EVENT_RX_PROBE_REQ) {
++		level = MSG_MSGDUMP;
++	}
+ 	wpa_dbg(hapd->msg_ctx, level, "Event %s (%d) received",
+ 		event_to_string(event), event);
+ #endif /* CONFIG_NO_STDOUT_DEBUG */

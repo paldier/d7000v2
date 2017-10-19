@@ -1,0 +1,13 @@
+diff -Naur iproute2-2.6.39/lib/rt_names.c iproute2-2.6.39.new/lib/rt_names.c
+--- iproute2-2.6.39/lib/rt_names.c	2011-06-30 04:31:48.000000000 +0530
++++ iproute2-2.6.39.new/lib/rt_names.c	2011-10-19 14:44:17.644638564 +0530
+@@ -326,7 +326,8 @@
+ static void rtnl_rttable_initialize(void)
+ {
+ 	rtnl_rttable_init = 1;
+-	rtnl_hash_initialize("/etc/iproute2/rt_tables",
++	//rtnl_hash_initialize("/etc/iproute2/rt_tables",
++	rtnl_hash_initialize("/ramdisk/etc/iproute2/rt_tables",
+ 			     rtnl_rttable_hash, 256);
+ }
+ 

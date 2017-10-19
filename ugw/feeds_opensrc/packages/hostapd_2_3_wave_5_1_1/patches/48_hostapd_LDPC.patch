@@ -1,0 +1,29 @@
+diff --exclude 'msvc*' -Npur hostap-724fce8-orig/src/ap/ieee802_11_ht.c hostap-724fce8-modif/src/ap/ieee802_11_ht.c
+--- hostap-724fce8-orig/src/ap/ieee802_11_ht.c	2016-05-21 10:46:56.000000000 +0300
++++ hostap-724fce8-modif/src/ap/ieee802_11_ht.c	2016-05-21 11:06:52.000000000 +0300
+@@ -513,6 +513,10 @@ void hostapd_get_ht_capab(struct hostapd
+ 	if (!(hapd->iconf->ht_capab & HT_CAP_INFO_TX_STBC))
+ 		cap &= ~HT_CAP_INFO_RX_STBC_MASK;
+ 
++	/* if we don't support RX LDPC, mask out LDPC for TX in the STA's HT caps */
++	if (!(hapd->iconf->ht_capab & HT_CAP_INFO_LDPC_CODING_CAP))
++		cap &= ~HT_CAP_INFO_LDPC_CODING_CAP;
++
+ 	neg_ht_cap->ht_capabilities_info = host_to_le16(cap);
+ 
+ 	/* mask out supported MCS set vs our own MCS set */
+diff --exclude 'msvc*' -Npur hostap-724fce8-orig/src/ap/ieee802_11_vht.c hostap-724fce8-modif/src/ap/ieee802_11_vht.c
+--- hostap-724fce8-orig/src/ap/ieee802_11_vht.c	2016-05-21 10:46:56.000000000 +0300
++++ hostap-724fce8-modif/src/ap/ieee802_11_vht.c	2016-05-21 11:12:39.000000000 +0300
+@@ -214,6 +214,10 @@ void hostapd_get_vht_capab(struct hostap
+ 	if (!(own_cap & VHT_CAP_TXSTBC))
+ 		cap &= ~VHT_CAP_RXSTBC_MASK;
+ 
++	/* if we don't support RX LDPC, mask out LDPC for TX in the STA's VHT caps */
++	if (!(own_cap & VHT_CAP_RXLDPC))
++		cap &= ~VHT_CAP_RXLDPC;
++
+ 	neg_vht_cap->vht_capabilities_info = host_to_le32(cap);
+ 
+ 	/* mask out supported MCS set vs our own MCS set */
+

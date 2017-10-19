@@ -1,0 +1,354 @@
+diff -Nur hostapd20-02/src/drivers/driver_mtlk.c hostapd20/src/drivers/driver_mtlk.c
+--- hostapd20-02/src/drivers/driver_mtlk.c	2013-04-23 15:46:44.000000000 +0300
++++ hostapd20/src/drivers/driver_mtlk.c	2013-04-23 15:48:36.000000000 +0300
+@@ -17,6 +17,10 @@
+ #include <sys/ioctl.h>
+ #include <net/if_arp.h>
+ 
++#include <netlink/netlink.h>
++#include <netlink/genl/genl.h>
++#include <netlink/genl/ctrl.h>
++
+ #include "common.h"
+ #include "driver.h"
+ #include "driver_wext.h"
+@@ -24,12 +28,62 @@
+ #include "common/ieee802_11_defs.h"
+ #include "linux_wext.h"
+ 
+-#include "priv_netlink.h"
+ #include "netlink.h"
+ #include "l2_packet/l2_packet.h"
+ #include "radius/radius.h"
+ 
+ 
++//#define MTLK_DEBUG_DRIVER
++#ifdef MTLK_DEBUG_DRIVER
++#define MTLK_PRINT(fmt, args...) do { printf("%s(): ", __func__); printf(fmt, ##args); } while (0)
++#else
++#define MTLK_PRINT(fmt, args...)
++#endif
++
++/* The following definitions and structs are taken from the mtlk IRB layout.
++* It is used for communication between the driver and userspace apps
++* using generic netlink library.
++* The Simple Config message is handled differently than other IRB
++* messages sent by the driver.
++*/
++#define NETLINK_USERSOCK 2
++#define MTLK_GENL_FAMILY_NAME    "MTLK_WLS"
++#define NL_DRV_CMD_MAN_FRAME 4
++#define NETLINK_SIMPLE_CONFIG_GROUP 1
++
++typedef void (*mtlk_netlink_callback_t)(void* ctx, void* data);
++
++typedef struct _mtlk_nlink_socket_t
++{
++  int family;
++  struct nl_handle *sock;
++  mtlk_netlink_callback_t receive_callback;
++  void* receive_callback_ctx;
++} mtlk_nlink_socket_t;
++
++struct mtlk_nl_msghdr {
++  char fingerprint[4]; // "mtlk"
++  __u8  proto_ver;
++  __u8  cmd_id;
++  __u16 data_len;
++} __attribute__ ((aligned(1), packed));
++
++/* attributes of the family */
++enum {
++        MTLK_GENL_ATTR_UNSPEC,
++        MTLK_GENL_ATTR_EVENT,
++        __MTLK_GENL_ATTR_MAX,
++};
++#define MTLK_GENL_ATTR_MAX (__MTLK_GENL_ATTR_MAX -1)
++
++/* supported commands, genl commands, not mtlk commands (arp, wd, rmmod) */
++enum {
++        MTLK_GENL_CMD_UNSPEC,
++        MTLK_GENL_CMD_EVENT,
++        __MTLK_GENL_CMD_MAX,
++};
++
++
+ enum ietypes {
+ 	IE_WSC_BEACON     = 0,
+ 	IE_WSC_PROBE_REQ  = 1,
+@@ -47,6 +101,7 @@
+ 	struct l2_packet_data *sock_recv;	/* raw packet recv socket */
+ 	int	ioctl_sock;			/* socket for ioctl() use */
+ 	struct netlink_data *netlink;
++	mtlk_nlink_socket_t *nlink_socket;
+ 	int	we_version;
+ 	u8	acct_mac[ETH_ALEN];
+ 	struct hostap_sta_driver_data acct_data;
+@@ -530,6 +585,231 @@
+ }
+ 
+ 
++
++/**
++*  mtlk_recv_probe_req:
++*  Registered as a callback handler for the netlink event.
++* It gets the data from the socket.
++*/
++static void mtlk_recv_probe_req(int sock, void *eloop_ctx, void *handle)
++{
++    mtlk_nlink_socket_t *nl_socket = eloop_ctx;
++
++    MTLK_PRINT("gnl debug: mtlk_recv_probe_req, handle=0x%p \n",handle);
++    nl_recvmsgs_default(handle);
++}
++
++
++/**
++*  mtlk_nlink_parse_msg:
++*  Parse the message arrived.
++*  Use proprietary 'struct mtlk_nl_msghdr' to validate message is from mtlk driver.
++* 
++*  phdr data is built from:
++*   -------------------------
++*  \                        \
++*  \  struct mtlk_nl_msghdr \
++*  ---------------------------
++*  \                        \
++*  \ struct ieee80211_mgmt  \
++*  ---------------------------
++*  \                        \
++*  \ ie                     \
++*  \                        \
++*  \________________________\
++*/
++static int
++mtlk_nlink_parse_msg(mtlk_nlink_socket_t* nlink_socket, struct mtlk_nl_msghdr *phdr, int len, struct mtlk_driver_data *drv)
++{
++  static const char mtlk_fingerprint[] = { 'm', 't', 'l', 'k' };
++  static const char supported_protocol_version = 1;
++  union wpa_event_data event;
++  const struct ieee80211_mgmt *mgmt;
++  unsigned char* data_ptr;
++
++  /* Silently ignore packets from other applications */
++  if (memcmp(phdr->fingerprint, mtlk_fingerprint, sizeof(mtlk_fingerprint))) {
++    return 0;
++  }
++
++  /* Silently ignore non-management frame */
++  MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - got cmd_id %d\n",phdr->cmd_id);
++  if (phdr->cmd_id != NL_DRV_CMD_MAN_FRAME) {
++    MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - return 0\n");
++    return 0;
++  }
++
++  if (phdr->proto_ver != supported_protocol_version) {
++    MTLK_PRINT("Version mismatch: got %u, expected %u",
++      phdr->proto_ver, supported_protocol_version);
++    return 0;
++  }
++
++  data_ptr = (char *)phdr;
++  MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - data_ptr before=0x%p\n",data_ptr);
++  data_ptr +=NLMSG_ALIGN(sizeof(struct mtlk_nl_msghdr));
++  MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - data_ptr after=0x%p\n",data_ptr);
++  mgmt = (const struct ieee80211_mgmt *)data_ptr;
++
++  /*Call hostapd probe request event
++  */
++  event.rx_probe_req.sa = mgmt->sa;
++  event.rx_probe_req.da = mgmt->da;
++  event.rx_probe_req.bssid = mgmt->bssid;
++  event.rx_probe_req.ie = mgmt->u.probe_req.variable;
++  event.rx_probe_req.ie_len =
++        phdr->data_len - (IEEE80211_HDRLEN + sizeof(mgmt->u.probe_req));
++  wpa_supplicant_event(drv->hapd, EVENT_RX_PROBE_REQ, &event);
++
++  return 0;
++}
++
++
++/**
++*  mtlk_wireless_event_probe_req()
++*  Callback handler, called by netlink when data is read from socket
++*  (by nl_recvmsgs_default()).
++*/
++static int mtlk_wireless_event_probe_req(struct nl_msg *msg, void *arg)
++{
++    struct mtlk_driver_data *drv = (struct mtlk_driver_data *)arg;
++    mtlk_nlink_socket_t *nl_socket = drv->nlink_socket;    
++    struct nlmsghdr *gnlh = nlmsg_hdr(msg);
++    struct nlattr *attrs[MTLK_GENL_ATTR_MAX + 1];
++    static struct nla_policy mtlk_genl_policy[MTLK_GENL_ATTR_MAX + 1] = 
++    {
++      [MTLK_GENL_ATTR_EVENT] = { .type = NLA_UNSPEC, 
++                                 .minlen = sizeof(struct mtlk_nl_msghdr), 
++                                 .maxlen = 0 },
++    };
++
++    MTLK_PRINT("gnl debug: in mtlk_wireless_event_probe_req\n");
++    /* if not our family - do nothing */
++    if (gnlh->nlmsg_type != nl_socket->family) {
++      MTLK_PRINT("gnl debug: mtlk_wireless_event_probe_req, != nl_socket->family, gnlh->nlmsg_type=%d\n",gnlh->nlmsg_type);
++      return NL_SKIP;
++    }
++
++    /* Validate message and parse attributes */
++    if (genlmsg_parse(gnlh, 0, attrs, MTLK_GENL_ATTR_MAX, mtlk_genl_policy) < 0) {
++      MTLK_PRINT("gnl debug: mtlk_wireless_event_probe_req, fail in genlmsg_parse\n");
++      return NL_SKIP;
++    }
++
++    /* Call the mtlk message parsing function */
++    if (attrs[MTLK_GENL_ATTR_EVENT])
++      mtlk_nlink_parse_msg(nl_socket,
++        (struct mtlk_nl_msghdr *) nla_data(attrs[MTLK_GENL_ATTR_EVENT]), gnlh->nlmsg_len, drv);
++    else
++      MTLK_PRINT("gnl debug: mtlk_wireless_event_probe_req, fail in attrs\n");
++
++    return NL_OK;
++}
++
++
++/**
++* mtlk_nlink_init - create and register the mtlk genl netlink socket used for probe
++* request messages. Register callback to process probe request.
++* This code is based on the mtlk IRB implementation.
++*/
++int mtlk_nlink_init(mtlk_nlink_socket_t *nlink_socket, struct mtlk_driver_data *drv)
++{
++    int broadcast_group;
++    int enabled=1;
++    int res=0;
++
++
++    MTLK_PRINT("gnl debug: In mtlk_nlink_init\n");
++
++    nlink_socket->sock = nl_handle_alloc();
++    if (NULL == nlink_socket->sock) {
++      MTLK_PRINT("Generic netlink socket allocation failed");
++      res = -1;
++      goto end;
++    }
++    MTLK_PRINT("gnl debug: mtlk_nlink_init - nlink_socket->sock=0x%p",nlink_socket->sock);
++
++  /* Connect to generic netlink socket on kernel side */
++  if (genl_connect(nlink_socket->sock) < 0) {
++    MTLK_PRINT("Connect to generic netlink controller failed");
++    res = -1;
++    goto err_dealloc;
++  }
++
++  /* Ask kernel to resolve family name to family id */
++  nlink_socket->family = genl_ctrl_resolve(nlink_socket->sock, MTLK_GENL_FAMILY_NAME);
++  if (nlink_socket->family < 0) {
++    MTLK_PRINT("Cannot get Generic Netlink family identifier.");
++    res = -1;
++    goto err_dealloc;
++  }
++
++  /* use family id as the base for broadcast group */
++  broadcast_group =  nlink_socket->family + NETLINK_SIMPLE_CONFIG_GROUP - 1;
++
++  /* register to receive messsages from interested group */
++  if (nl_socket_add_membership(nlink_socket->sock, broadcast_group) < 0) {
++    MTLK_PRINT("Cannot add membership in %d group.", broadcast_group);
++    res = -1;
++    goto err_dealloc;
++  }
++
++  /* This socket have to process all messages and not 
++     only explicitly requested as it is should be in 
++     event processing */
++  nl_disable_sequence_check(nlink_socket->sock);
++  
++  MTLK_PRINT("gnl debug: mtlk_nlink_init, use nl_socket_modify_cb\n");
++  /* set callback for all valid messages */
++  nl_socket_modify_cb(nlink_socket->sock, NL_CB_VALID, NL_CB_CUSTOM, mtlk_wireless_event_probe_req, drv);
++  goto end;
++
++err_dealloc:
++  nl_close(nlink_socket->sock);
++  nl_handle_destroy(nlink_socket->sock);
++end:
++  return res;
++}
++
++
++/**
++* mtlk_nlink_deinit - unregister the mtlk netlink socket used for probe request messages
++*/
++void mtlk_nlink_deinit(mtlk_nlink_socket_t *netlink)
++{
++    MTLK_PRINT("gnl debug: In mtlk_nlink_deinit\n");
++	if (netlink == NULL)
++		return;
++	if (netlink->sock >= 0) {
++		eloop_unregister_read_sock(nl_socket_get_fd(netlink->sock));
++		close(nl_socket_get_fd(netlink->sock)); //TODO: should replace by nl_close with address
++	}
++	os_free(netlink);
++}
++
++
++static int
++mtlk_receive_probe_req_init(struct mtlk_driver_data *drv)
++{
++	mtlk_nlink_socket_t *nl_socket;
++    MTLK_PRINT("gnl debug: mtlk_receive_probe_req_init, sizeof(*nl_socket)=%d\n",sizeof(nl_socket));
++
++	nl_socket = os_zalloc(sizeof(nl_socket));
++	if (nl_socket == NULL)
++		return -1;
++
++	if (mtlk_nlink_init(nl_socket, drv) == -1) {
++		os_free(nl_socket);
++        MTLK_PRINT("gnl debug: mtlk_receive_probe_req_init - error in netlink_init\n");
++		return -1;
++	}
++    drv->nlink_socket = nl_socket;
++
++    MTLK_PRINT("gnl debug: mtlk_receive_probe_req_init - finished\n");
++	return 0;
++}
++
++
+ static int
+ mtlk_wireless_event_init(struct mtlk_driver_data *drv)
+ {
+@@ -600,12 +880,14 @@
+ 			   len - sizeof(struct l2_ethhdr));
+ }
+ 
++
+ static void *
+ mtlk_init(struct hostapd_data *hapd, struct wpa_init_params *params)
+ {
+ 	struct mtlk_driver_data *drv;
+ 	struct ifreq ifr;
+ 	struct iwreq iwr;
++    mtlk_nlink_socket_t *nl_socket;
+ 
+ 	drv = os_zalloc(sizeof(struct mtlk_driver_data));
+ 	if (drv == NULL) {
+@@ -663,6 +945,12 @@
+ 	if (mtlk_wireless_event_init(drv))
+ 		goto bad;
+ 
++	if (mtlk_receive_probe_req_init(drv))
++		goto bad;
++    nl_socket = drv->nlink_socket;
++	
++	eloop_register_read_sock(nl_socket_get_fd(nl_socket->sock), mtlk_recv_probe_req, nl_socket, nl_socket->sock);
++
+ 	return drv;
+ bad:
+ 	if (drv->sock_xmit != NULL)
+@@ -681,6 +969,7 @@
+ 	struct mtlk_driver_data *drv = priv;
+ 
+ 	netlink_deinit(drv->netlink);
++	mtlk_nlink_deinit(drv->nlink_socket);
+ 	(void) mtlk_set_iface_flags(drv, 0);
+ 	if (drv->ioctl_sock >= 0)
+ 		close(drv->ioctl_sock);

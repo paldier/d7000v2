@@ -1,0 +1,718 @@
+diff -Nur hostapd20-07/src/drivers/driver_mtlk.c hostapd20/src/drivers/driver_mtlk.c
+--- hostapd20-07/src/drivers/driver_mtlk.c	2013-05-19 13:53:40.000000000 +0300
++++ hostapd20/src/drivers/driver_mtlk.c	2013-05-19 17:00:04.000000000 +0300
+@@ -49,8 +49,20 @@
+ #define NETLINK_USERSOCK 2
+ #define MTLK_GENL_FAMILY_NAME    "MTLK_WLS"
+ #define NL_DRV_CMD_MAN_FRAME 4
++#define NL_DRV_CMD_RCVRY_STARTED 6
++#define NL_DRV_CMD_RCVRY_CONFIG 7
+ #define NETLINK_SIMPLE_CONFIG_GROUP 1
+ 
++/* API Wrapper related definitions:*/
++#define SEND_API 1
++#define RE_SEND_API 2
++#define FW_CRASH_DETECT 3
++#define MAX_RETRY_DETECT 4
++#define DONE_ERROR_HANDLING 5
++#define MTLK_IWPRIV_SUB_CMD_RCVRY 0x8000
++#define MTLK_IWPRIV_CMD_REAL 0x8be5
++#define MTLK_DEFAULT_MAX_RETRY 4
++
+ typedef void (*mtlk_netlink_callback_t)(void* ctx, void* data);
+ 
+ typedef struct _mtlk_nlink_socket_t
+@@ -62,7 +74,7 @@
+ } mtlk_nlink_socket_t;
+ 
+ struct mtlk_nl_msghdr {
+-  char fingerprint[4]; // "mtlk"
++  char fingerprint[4]; /* "mtlk" */
+   __u8  proto_ver;
+   __u8  cmd_id;
+   __u16 data_len;
+@@ -119,6 +131,289 @@
+ 	return buf;
+ }
+ 
++/*
++ * Private ioctl interface information - use it for more than one iwpriv
++ */
++typedef struct _iw_priv_args
++{
++    unsigned int       cmd; /* ioctl subcommand, can also be the real command */
++    unsigned int       cmd_real; /* ioctl real command */
++    unsigned short       get_args; /* Type and number of args */
++    char        name[IFNAMSIZ];	/* Name of the extension */
++}iw_priv_args;
++
++/* Always fill in cmd and cmd_real (also if the same).
++ * gFWRecovery is an exception to other iwprivs. It has its command fixed (0x8000).
++ * In order to support more ioctls need to change code:
++ * 	- read all ioctls to dynamic struct type iw_priv_args
++ * 	- use iwpriv string to search it's code, then use the code.
++ * 	Only 'get' is implemented.
++*/
++iw_priv_args iwpriv_args_get[] = {
++	/* cmd,					cmd_real,				get_args		name*/
++	{MTLK_IWPRIV_SUB_CMD_RCVRY,	MTLK_IWPRIV_CMD_REAL,	sizeof(unsigned int)*5,	"gFWRecovery"},
++	{0,						0,						0,				""}
++};
++
++unsigned int num_fw_fails[] = {0,0};
++unsigned int api_resend_max[] = {MTLK_DEFAULT_MAX_RETRY,MTLK_DEFAULT_MAX_RETRY};
++
++static int
++get_ioctl_index(unsigned int command)
++{
++	int i = 0;
++	for (i=0; i<sizeof(iwpriv_args_get)/sizeof(iw_priv_args) ; i++) {
++		if (iwpriv_args_get[i].cmd = command) {
++			return i;
++		}
++	}
++	return -1;
++}
++
++static int
++mtlk_get_priv_size(int index_command)
++{
++	return iwpriv_args_get[index_command].get_args;
++}
++
++/* mtlk_iwpriv_get() - get iwpriv data from driver
++*  It uses internal iwpriv table and not get info from driver in order to minimize ioctls
++* OPEN- does the get also can fail in case of FW crash? Deos driver holds this ioctl when recover fw?
++*/
++static int
++mtlk_iwpriv_get(struct mtlk_driver_data *drv, unsigned int cmd, unsigned char **pbuf)
++{
++	struct iwreq iwr;
++	int minlen;
++	unsigned char *range;
++	int i = 0, index_command = 0;
++	int	offset = 0;
++	int subcmd = 0;
++
++    MTLK_PRINT("drv->ioctl_sock=%d, cmd=0x%x, interface=%s, sizeof(iwr)=%d\n",drv->ioctl_sock, cmd, drv->iface,sizeof(iwr));
++
++	range=malloc(4096);
++	if (range == NULL)
++		return -1;
++	memset(&iwr, 0, sizeof(iwr));
++	strncpy(iwr.ifr_name, drv->iface, IFNAMSIZ);
++
++	if (index_command = get_ioctl_index(cmd) == -1) {
++		wpa_printf(MSG_ERROR, "ERROR getting index to iwpriv");
++		free(range);
++		return -1;
++	}
++	iwr.u.data.length = 0;
++
++	/* Test for sub-ioctl: */
++	if (cmd < SIOCDEVPRIVATE) {
++		/* Reserve one int (simplify alignment issues) */
++		offset = sizeof(__u32);
++		subcmd = iwpriv_args_get[index_command].cmd;
++		MTLK_PRINT("subcmd for this ioctl is 0x%x\n",subcmd);
++	}
++
++	/* Proper struct fields setting is according to ioctl data type: */
++	if (mtlk_get_priv_size(index_command) <= IFNAMSIZ) {
++		/* GET args fit within wrq */
++		if (offset)
++			iwr.u.mode = subcmd;
++	} else {
++		/* args won't fit in wrq, or variable number of args */
++		iwr.u.data.pointer = (caddr_t) range;
++		iwr.u.data.flags = subcmd;
++	}
++
++    MTLK_PRINT("Exec ioctl: iwpriv_args_get[%d].cmd_real=0x%x, flags=0x%x, mode=0x%x\n",index_command,iwpriv_args_get[index_command].cmd_real,iwr.u.data.flags,iwr.u.mode);
++	if (ioctl(drv->ioctl_sock, iwpriv_args_get[index_command].cmd_real, &iwr) < 0) {
++		perror("ioctl of iwpriv");
++		return -1;
++	} else if (iwr.u.data.length >= 0) {
++		MTLK_PRINT("iwr.u.data.length=%d\n",iwr.u.data.length); 
++		/* Return the data */
++		*pbuf=range;
++		MTLK_PRINT("fast=%d, full=%d, complete=%d, time=%d, dump=%d\n"
++					,((unsigned int *)*pbuf)[0]
++					,((unsigned int *)*pbuf)[1]
++					,((unsigned int *)*pbuf)[2]
++					,((unsigned int *)*pbuf)[3]
++					,((unsigned int *)*pbuf)[4]); 
++	} else {
++		MTLK_PRINT("no data\n"); 
++	}
++
++	return 0;
++}
++
++/* mtlk_get_physical_index() - return index to interface,
++ * if vap returns index to parent interface
++*/
++int
++mtlk_get_physical_index(const char* ifname)
++{
++	static const char mtlk_if_0[] = { 'w', 'l', 'a', 'n', '0' };
++
++	if (memcmp(ifname, mtlk_if_0, sizeof(mtlk_if_0)) == 0) {
++		MTLK_PRINT("match wlan0\n");
++		/* wlan0: */
++		return 0;
++	}
++	MTLK_PRINT("match wlan1\n");
++	/* wlan1: */
++	return 1;
++}
++
++/* mtlk_get_index() - return index if physical, else erro (-1)
++*  if length > sizeof(wlanX), then it is vap (wlanX.Y)
++*/
++int
++mtlk_get_index(const char* ifname)
++{
++	if (strlen(ifname) > sizeof("wlanX")) {
++		MTLK_PRINT("match VAP\n");
++		return -1;
++	}
++	/* Not VAP, return index */
++	return mtlk_get_physical_index(ifname);
++}
++
++void
++mtlk_get_resend_max(struct mtlk_driver_data *drv)
++{
++	unsigned char *buf;
++	int index;
++
++	index = mtlk_get_index(drv->iface);
++	/* config max retry from iwpriv (gFWRecovery)
++	 * If VAP (index=-1), do nothing
++	*/
++	if (index == -1) {
++		MTLK_PRINT("index == -1, return (VAP?)\n");
++		return;
++	}
++	if (mtlk_iwpriv_get(drv, MTLK_IWPRIV_SUB_CMD_RCVRY, &buf) != 0) {
++		MTLK_PRINT("ERROR in IWPRIV gFWRecovery, use default api_resend_max\n");
++	}
++	else {
++		/* Parameter format: <fast> <full> <complete> <time> <dump>
++		   api_resend_max = fast + full
++		*/
++		api_resend_max[index] = ((unsigned int *)buf)[0] + ((unsigned int *)buf)[1];
++	}
++
++	MTLK_PRINT("api_resend_max[%d]=%d\n",index,api_resend_max[index]);
++
++    if(buf)
++      free(buf);
++}
++
++/*  mtlk_ioctl_wrapper: ioctl wrapper.
++*  Implement safe API transmit against FW Crash event (retransmit API, rely on firmware recovery mechanism).
++*  TODO: are all comamnds interface related ?
++*/
++int
++mtlk_ioctl_wrapper(struct mtlk_driver_data *drv, unsigned int cmd, void *ptr_struct)
++{
++	int ret=0, count_errors=0, ret_host_api;
++	unsigned char error_cause[32];
++	int fw_fails_before=0, fw_fails=0;
++	int sm_state=SEND_API;
++	int fw_crash=0, end_loop=0;
++	char *pos;
++	int index;
++
++    MTLK_PRINT("drv->ioctl_sock=%d, cmd=0x%x, interface=%s\n",drv->ioctl_sock,cmd,drv->iface);
++
++	ret=ioctl(drv->ioctl_sock, cmd, ptr_struct);
++
++	if (ret == 0) {
++		/* API success */
++		return 0;
++	}
++	MTLK_PRINT("ioctl ERROR\n");
++
++	/*########################################################
++	# ERROR HANDLING
++	########################################################*/
++
++	/*########################################
++	* Pre SM
++	*/
++	count_errors+=1;
++
++	if (count_errors > api_resend_max[index]) {
++		/* Exit (DONE_ERROR_HANDLING), re-send command is not allowed */
++		strncpy(error_cause, "ERR_UNKNOWN", sizeof("ERR_UNKNOWN"));
++		sm_state=DONE_ERROR_HANDLING;
++	}
++
++	index = mtlk_get_physical_index(drv->iface);
++	fw_fails_before = num_fw_fails[index];
++
++	/*########################################
++	* Start State Machine
++	*/
++
++	while ( ! end_loop ) {
++		switch (sm_state) {
++			case SEND_API:
++				MTLK_PRINT("SEND_API\n");
++				sm_state=DONE_ERROR_HANDLING;
++				/* Resend API */
++				if (ret=ioctl(drv->ioctl_sock, cmd, ptr_struct) != 0) {
++					count_errors+=1;
++					MTLK_PRINT("ERROR send API\n");
++					sm_state=RE_SEND_API;
++				}
++			break;
++			case RE_SEND_API:
++				MTLK_PRINT("RE_SEND_API\n");
++				sm_state=DONE_ERROR_HANDLING;
++				/* Resend API */
++				if (ret=ioctl(drv->ioctl_sock, cmd, ptr_struct) != 0) {
++					count_errors+=1;
++					MTLK_PRINT("ERROR Resend API\n");
++					sm_state=FW_CRASH_DETECT;
++				}
++			break;
++			case FW_CRASH_DETECT:
++				MTLK_PRINT("FW_CRASH_DETECT\n");
++				fw_crash=0;
++				/* Read numFwFails */
++				fw_fails = num_fw_fails[index];
++
++				sm_state=MAX_RETRY_DETECT;
++				if (fw_fails_before == fw_fails) {
++					/* Configuration error detected. Exit, make sure to report error type before */
++					fw_crash=1;
++					strncpy(error_cause, "CONFIGURATION", sizeof("CONFIGURATION"));
++					sm_state=DONE_ERROR_HANDLING;
++				}
++			break;
++			case MAX_RETRY_DETECT:
++				MTLK_PRINT("MAX_RETRY_DETECT\n");
++				fw_fails_before=fw_fails;
++				sm_state=SEND_API;
++				if (count_errors > api_resend_max[index]) {
++					/* Exit, make sure to report error type before */
++					strncpy(error_cause, "FW_CRASH", sizeof("FW_CRASH"));
++					sm_state=DONE_ERROR_HANDLING;
++				}
++			break;
++			case DONE_ERROR_HANDLING:
++				MTLK_PRINT("DONE_ERROR_HANDLING\n");
++				if (strncmp(error_cause, "FW_CRASH", sizeof("FW_CRASH")) == 0) {
++					wpa_printf(MSG_ERROR, "ERROR Resend API:  '%s' error detected",error_cause);
++				}
++				end_loop=1;
++			break;
++		}
++	}
++
++	return ret;
++}
++
++
+ int
+ mtlk_set_iface_flags(void *priv, int dev_up)
+ {
+@@ -133,7 +428,7 @@
+ 	memset(&ifr, 0, sizeof(ifr));
+ 	snprintf(ifr.ifr_name, IFNAMSIZ, "%s", drv->iface);
+ 
+-	if (ioctl(drv->ioctl_sock, SIOCGIFFLAGS, &ifr) != 0) {
++	if (mtlk_ioctl_wrapper(drv, SIOCGIFFLAGS, &ifr) != 0) {
+ 		perror("ioctl[SIOCGIFFLAGS]");
+ 		return -1;
+ 	}
+@@ -143,7 +438,7 @@
+ 	else
+ 		ifr.ifr_flags &= ~IFF_UP;
+ 
+-	if (ioctl(drv->ioctl_sock, SIOCSIFFLAGS, &ifr) != 0) {
++	if (mtlk_ioctl_wrapper(drv, SIOCSIFFLAGS, &ifr) != 0) {
+ 		perror("ioctl[SIOCSIFFLAGS]");
+ 		return -1;
+ 	}
+@@ -209,8 +504,7 @@
+ 			__func__, alg);
+ 		return -1;
+ 	}
+-
+-	if (ioctl(drv->ioctl_sock, SIOCSIWENCODEEXT, &iwr) < 0) {
++	if (mtlk_ioctl_wrapper(drv, SIOCSIWENCODEEXT, &iwr) < 0) {
+ 		ret = errno == EOPNOTSUPP ? -2 : -1;
+ 		perror("ioctl[SIOCSIWENCODEEXT]");
+ 	}
+@@ -244,7 +538,7 @@
+ 	    memcmp(addr, "\xff\xff\xff\xff\xff\xff", ETH_ALEN) == 0)
+ 		iwr.u.encoding.flags |= IW_ENCODE_EXT_GROUP_KEY;
+ 
+-	if (ioctl(drv->ioctl_sock, SIOCGIWENCODEEXT, &iwr) < 0) {
++	if (mtlk_ioctl_wrapper(drv, SIOCGIWENCODEEXT, &iwr) < 0) {
+ 		ret = errno == EOPNOTSUPP ? -2 : -1;
+ 		perror("ioctl[SIOCGIWENCODEEXT]");
+ 		goto err;
+@@ -284,7 +578,7 @@
+ 	iwr.u.data.pointer = (caddr_t) ie;
+ 	iwr.u.data.length = ie_len;
+ 
+-	if (ioctl(drv->ioctl_sock, SIOCSIWGENIE, &iwr) < 0) {
++	if (mtlk_ioctl_wrapper(drv, SIOCSIWGENIE, &iwr) < 0) {
+ 		perror("ioctl[SIOCSIWGENIE]");
+ 		ret = -1;
+ 	}
+@@ -310,7 +604,7 @@
+ 	iwr.u.data.pointer = (caddr_t) &mlme;
+ 	iwr.u.data.length = sizeof(mlme);
+ 
+-	if (ioctl(drv->ioctl_sock, SIOCSIWMLME, &iwr) < 0) {
++	if (mtlk_ioctl_wrapper(drv, SIOCSIWMLME, &iwr) < 0) {
+ 		perror("ioctl[SIOCSIWMLME]");
+ 		ret = -1;
+ 	}
+@@ -570,7 +864,7 @@
+ 	minlen = ((char *) &range->enc_capa) - (char *) range +
+ 		sizeof(range->enc_capa);
+ 
+-	if (ioctl(drv->ioctl_sock, SIOCGIWRANGE, &iwr) < 0) {
++	if (mtlk_ioctl_wrapper(drv, SIOCGIWRANGE, &iwr) < 0) {
+ 		perror("ioctl[SIOCGIWRANGE]");
+ 		free(range);
+ 		return -1;
+@@ -590,37 +884,53 @@
+ 
+ 
+ 
+-/**
+-*  mtlk_recv_probe_req:
++/*
++*  mtlk_netlink_recv_msg:
+ *  Registered as a callback handler for the netlink event.
+ * It gets the data from the socket.
+ */
+-static void mtlk_recv_probe_req(int sock, void *eloop_ctx, void *handle)
++static void mtlk_netlink_recv_msg(int sock, void *eloop_ctx, void *handle)
+ {
+     mtlk_nlink_socket_t *nl_socket = eloop_ctx;
+ 
+-    MTLK_PRINT("gnl debug: mtlk_recv_probe_req, handle=0x%p \n",handle);
++    MTLK_PRINT("gnl debug: handle=0x%p \n",handle);
+     nl_recvmsgs_default(handle);
+ }
+ 
+ 
+-/**
++/*
+ *  mtlk_nlink_parse_msg:
+ *  Parse the message arrived.
+ *  Use proprietary 'struct mtlk_nl_msghdr' to validate message is from mtlk driver.
+ * 
+-*  phdr data is built from:
++*  phdr data is built according to event:
++*
++*  Probe_req:
+ *   -------------------------
+-*  \                        \
+ *  \  struct mtlk_nl_msghdr \
+ *  ---------------------------
+-*  \                        \
+ *  \ struct ieee80211_mgmt  \
+ *  ---------------------------
+-*  \                        \
+ *  \ ie                     \
+-*  \                        \
+ *  \________________________\
++*
++*  FW Crash:
++*   -------------------------
++*  \  struct mtlk_nl_msghdr \
++*  ---------------------------
++*  \ wlanX data             \
++*  \________________________\
++*
++*  FW Recovery:
++*   -------------------------
++*  \  struct mtlk_nl_msghdr \
++*  ---------------------------
++*  \ wlanX data             \
++*  \________________________\
++*
++* where date:
++* FW Crash: string=fw_crash
++* FW Recovery: string with iwpriv gFWRecovery configuration (full fast complete time dumps)
+ */
+ static int
+ mtlk_nlink_parse_msg(mtlk_nlink_socket_t* nlink_socket, struct mtlk_nl_msghdr *phdr, int len, struct mtlk_driver_data *drv)
+@@ -630,22 +940,22 @@
+   union wpa_event_data event;
+   const struct ieee80211_mgmt *mgmt;
+   unsigned char* data_ptr;
++  char *interface;
++  char *netlink_data;
++  int index;
+ 
+   /* Silently ignore packets from other applications */
+   if (memcmp(phdr->fingerprint, mtlk_fingerprint, sizeof(mtlk_fingerprint))) {
+     return 0;
+   }
+-
+-  /* Silently ignore non-management frame */
+-  MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - got cmd_id %d\n",phdr->cmd_id);
+-  if (phdr->cmd_id != NL_DRV_CMD_MAN_FRAME) {
+-    MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - return 0\n");
++  /* Silently ignore not relevant frame */
++  if ((phdr->cmd_id != NL_DRV_CMD_MAN_FRAME) && (phdr->cmd_id != NL_DRV_CMD_RCVRY_STARTED) && (phdr->cmd_id != NL_DRV_CMD_RCVRY_CONFIG)){
++    MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - return 0 (cmd_id=%d)\n",phdr->cmd_id);
+     return 0;
+   }
+-
+   if (phdr->proto_ver != supported_protocol_version) {
+     MTLK_PRINT("Version mismatch: got %u, expected %u",
+-      phdr->proto_ver, supported_protocol_version);
++    phdr->proto_ver, supported_protocol_version);
+     return 0;
+   }
+ 
+@@ -653,7 +963,37 @@
+   MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - data_ptr before=0x%p\n",data_ptr);
+   data_ptr +=NLMSG_ALIGN(sizeof(struct mtlk_nl_msghdr));
+   MTLK_PRINT("gnl debug: mtlk_nlink_parse_msg - data_ptr after=0x%p\n",data_ptr);
+-  mgmt = (const struct ieee80211_mgmt *)data_ptr;
++  if (phdr->cmd_id == NL_DRV_CMD_MAN_FRAME) {
++    mgmt = (const struct ieee80211_mgmt *)data_ptr;
++  } else {
++    /* Parameter format: <interface> <netlink_data>
++   interface="wlanX" (where X=0/1)
++   netlink_data- two data types are expected:
++         event (string) = "fw_crash"
++         fw recovery configuration (int vector) = full fast complete time dumps
++    */
++    interface = strtok (data_ptr, " ");
++    index = mtlk_get_physical_index(interface);
++
++    if (phdr->cmd_id == NL_DRV_CMD_RCVRY_STARTED) {
++      netlink_data = strtok (NULL, " ");
++      MTLK_PRINT("num_fw_fails[%d]=%d\n",index,num_fw_fails[index]);
++      /* TODO- add validation over string event
++      if (strcmp(..."fw_crash"...))
++      */
++      num_fw_fails[index] += 1;
++    } else {
++      /* cmd_id -> NL_DRV_CMD_RCVRY_CONFIG*/
++      netlink_data = strtok (NULL, " ");
++      api_resend_max[index] = atoi(netlink_data);
++      netlink_data = strtok (NULL, " ");
++      api_resend_max[index] += atoi(netlink_data);
++      MTLK_PRINT("api_resend_max[%d]=%d\n",index,api_resend_max[index]);
++    }
++    /* Finished - can return for both events
++    */
++    return 0;
++  }
+ 
+   /*Call hostapd probe request event
+   */
+@@ -669,12 +1009,12 @@
+ }
+ 
+ 
+-/**
+-*  mtlk_wireless_event_probe_req()
++/*
++*  mtlk_wireless_netlink_event()
+ *  Callback handler, called by netlink when data is read from socket
+ *  (by nl_recvmsgs_default()).
+ */
+-static int mtlk_wireless_event_probe_req(struct nl_msg *msg, void *arg)
++static int mtlk_wireless_netlink_event(struct nl_msg *msg, void *arg)
+ {
+     struct mtlk_driver_data *drv = (struct mtlk_driver_data *)arg;
+     mtlk_nlink_socket_t *nl_socket = drv->nlink_socket;    
+@@ -687,16 +1027,15 @@
+                                  .maxlen = 0 },
+     };
+ 
+-    MTLK_PRINT("gnl debug: in mtlk_wireless_event_probe_req\n");
+     /* if not our family - do nothing */
+     if (gnlh->nlmsg_type != nl_socket->family) {
+-      MTLK_PRINT("gnl debug: mtlk_wireless_event_probe_req, != nl_socket->family, gnlh->nlmsg_type=%d\n",gnlh->nlmsg_type);
++      MTLK_PRINT("gnl debug: != nl_socket->family, gnlh->nlmsg_type=%d\n",gnlh->nlmsg_type);
+       return NL_SKIP;
+     }
+ 
+     /* Validate message and parse attributes */
+     if (genlmsg_parse(gnlh, 0, attrs, MTLK_GENL_ATTR_MAX, mtlk_genl_policy) < 0) {
+-      MTLK_PRINT("gnl debug: mtlk_wireless_event_probe_req, fail in genlmsg_parse\n");
++      MTLK_PRINT("gnl debug: fail in genlmsg_parse\n");
+       return NL_SKIP;
+     }
+ 
+@@ -704,16 +1043,17 @@
+     if (attrs[MTLK_GENL_ATTR_EVENT])
+       mtlk_nlink_parse_msg(nl_socket,
+         (struct mtlk_nl_msghdr *) nla_data(attrs[MTLK_GENL_ATTR_EVENT]), gnlh->nlmsg_len, drv);
+-    else
+-      MTLK_PRINT("gnl debug: mtlk_wireless_event_probe_req, fail in attrs\n");
++    else {
++      MTLK_PRINT("gnl debug: fail in attrs\n");
++	}
+ 
+     return NL_OK;
+ }
+ 
+ 
+-/**
++/*
+ * mtlk_nlink_init - create and register the mtlk genl netlink socket used for probe
+-* request messages. Register callback to process probe request.
++* request messages as well as other events. Register callback to process netlink messaages.
+ * This code is based on the mtlk IRB implementation.
+ */
+ int mtlk_nlink_init(mtlk_nlink_socket_t *nlink_socket, struct mtlk_driver_data *drv)
+@@ -723,15 +1063,13 @@
+     int res=0;
+ 
+ 
+-    MTLK_PRINT("gnl debug: In mtlk_nlink_init\n");
+-
+     nlink_socket->sock = nl_handle_alloc();
+     if (NULL == nlink_socket->sock) {
+       MTLK_PRINT("Generic netlink socket allocation failed");
+       res = -1;
+       goto end;
+     }
+-    MTLK_PRINT("gnl debug: mtlk_nlink_init - nlink_socket->sock=0x%p",nlink_socket->sock);
++    MTLK_PRINT("gnl debug: nlink_socket->sock=0x%p",nlink_socket->sock);
+ 
+   /* Connect to generic netlink socket on kernel side */
+   if (genl_connect(nlink_socket->sock) < 0) {
+@@ -763,9 +1101,9 @@
+      event processing */
+   nl_disable_sequence_check(nlink_socket->sock);
+   
+-  MTLK_PRINT("gnl debug: mtlk_nlink_init, use nl_socket_modify_cb\n");
++  MTLK_PRINT("gnl debug: use nl_socket_modify_cb\n");
+   /* set callback for all valid messages */
+-  nl_socket_modify_cb(nlink_socket->sock, NL_CB_VALID, NL_CB_CUSTOM, mtlk_wireless_event_probe_req, drv);
++  nl_socket_modify_cb(nlink_socket->sock, NL_CB_VALID, NL_CB_CUSTOM, mtlk_wireless_netlink_event, drv);
+   goto end;
+ 
+ err_dealloc:
+@@ -776,8 +1114,9 @@
+ }
+ 
+ 
+-/**
++/*
+ * mtlk_nlink_deinit - unregister the mtlk netlink socket used for probe request messages
++* as we ll as other messages (fw crash, etc.).
+ */
+ void mtlk_nlink_deinit(mtlk_nlink_socket_t *netlink)
+ {
+@@ -786,17 +1125,17 @@
+ 		return;
+ 	if (netlink->sock >= 0) {
+ 		eloop_unregister_read_sock(nl_socket_get_fd(netlink->sock));
+-		close(nl_socket_get_fd(netlink->sock)); //TODO: should replace by nl_close with address
++		close(nl_socket_get_fd(netlink->sock)); /* TODO: should replace by nl_close with address */
+ 	}
+ 	os_free(netlink);
+ }
+ 
+ 
+ static int
+-mtlk_receive_probe_req_init(struct mtlk_driver_data *drv)
++mtlk_receive_netlink_init(struct mtlk_driver_data *drv)
+ {
+ 	mtlk_nlink_socket_t *nl_socket;
+-    MTLK_PRINT("gnl debug: mtlk_receive_probe_req_init, sizeof(*nl_socket)=%d\n",sizeof(nl_socket));
++    MTLK_PRINT("gnl debug: sizeof(*nl_socket)=%d\n",sizeof(nl_socket));
+ 
+ 	nl_socket = os_zalloc(sizeof(nl_socket));
+ 	if (nl_socket == NULL)
+@@ -804,12 +1143,12 @@
+ 
+ 	if (mtlk_nlink_init(nl_socket, drv) == -1) {
+ 		os_free(nl_socket);
+-        MTLK_PRINT("gnl debug: mtlk_receive_probe_req_init - error in netlink_init\n");
++        MTLK_PRINT("gnl debug: error in netlink_init\n");
+ 		return -1;
+ 	}
+     drv->nlink_socket = nl_socket;
+ 
+-    MTLK_PRINT("gnl debug: mtlk_receive_probe_req_init - finished\n");
++    MTLK_PRINT("gnl debug: finished\n");
+ 	return 0;
+ }
+ 
+@@ -909,7 +1248,11 @@
+ 
+ 	memset(&ifr, 0, sizeof(ifr));
+ 	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", drv->iface);
+-	if (ioctl(drv->ioctl_sock, SIOCGIFINDEX, &ifr) != 0) {
++
++	/* issue iwpriv ioctl to get FwRecovery configuration (ioctl wrapper related): */
++	mtlk_get_resend_max(drv);
++
++	if (mtlk_ioctl_wrapper(drv, SIOCGIFINDEX, &ifr) != 0) {
+ 		perror("ioctl(SIOCGIFINDEX)");
+ 		goto bad;
+ 	}
+@@ -938,8 +1281,8 @@
+ 
+ 	iwr.u.mode = IW_MODE_MASTER;
+ 
+-	if (ioctl(drv->ioctl_sock, SIOCSIWMODE, &iwr) < 0) {
+-		perror("ioctl[SIOCSIWMODE]");
++	if (mtlk_ioctl_wrapper(drv, SIOCSIWMODE, &iwr) < 0) {
++		perror("ioctl(SIOCSIWMODE)");
+ 		wpa_printf(MSG_ERROR, "Could not set interface to master mode!\n");
+ 		goto bad;
+ 	}
+@@ -949,11 +1292,11 @@
+ 	if (mtlk_wireless_event_init(drv))
+ 		goto bad;
+ 
+-	if (mtlk_receive_probe_req_init(drv))
++	if (mtlk_receive_netlink_init(drv))
+ 		goto bad;
+     nl_socket = drv->nlink_socket;
+ 	
+-	eloop_register_read_sock(nl_socket_get_fd(nl_socket->sock), mtlk_recv_probe_req, nl_socket, nl_socket->sock);
++	eloop_register_read_sock(nl_socket_get_fd(nl_socket->sock), mtlk_netlink_recv_msg, nl_socket, nl_socket->sock);
+ 
+ 	return drv;
+ bad:
+@@ -996,7 +1339,7 @@
+ 	iwr.u.essid.pointer = (caddr_t) buf;
+ 	iwr.u.essid.length = len + 1;
+ 
+-	if (ioctl(drv->ioctl_sock, SIOCSIWESSID, &iwr) < 0) {
++	if (mtlk_ioctl_wrapper(drv, SIOCSIWESSID, &iwr) < 0) {
+ 		perror("ioctl[SIOCSIWESSID]");
+ 		wpa_printf(MSG_ERROR, "len=%d\n", len);
+ 		return -1;
+@@ -1016,7 +1359,7 @@
+ 	iwr.u.essid.pointer = (caddr_t) buf;
+ 	iwr.u.essid.length = len + 1;
+ 
+-	if (ioctl(drv->ioctl_sock, SIOCGIWESSID, &iwr) < 0) {
++	if (mtlk_ioctl_wrapper(drv, SIOCGIWESSID, &iwr) < 0) {
+ 		perror("ioctl[SIOCGIWESSID]");
+ 		ret = -1;
+ 	} else
+@@ -1045,7 +1388,7 @@
+ 	iwr.u.data.length = ie_len;
+ 	iwr.u.data.flags = ie_type;
+ 
+-	if (ioctl(drv->ioctl_sock, SIOCSIWGENIE, &iwr) < 0) {
++	if (mtlk_ioctl_wrapper(drv, SIOCSIWGENIE, &iwr) < 0) {
+ 		perror("ioctl[SIOCSIWGENIE]");
+ 		ret = -1;
+ 	}

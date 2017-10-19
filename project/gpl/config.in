@@ -1,0 +1,107 @@
+#
+# Copyright 2016  Hon Hai Precision Ind. Co. Ltd.
+# All Rights Reserved.
+# No portions of this material shall be reproduced in any form without the
+# written permission of Hon Hai Precision Ind. Co. Ltd.
+#
+# All information contained in this document is Hon Hai Precision Ind.
+# Co. Ltd. company private, proprietary, and trade secret property and
+# are protected by international intellectual property laws and treaties.
+#
+# $Id$
+#
+#
+#
+
+### For Intel Solution.
+include $(TOPDIR)/rules.mk
+
+#CONFIG_UCLIBC=n
+#CONFIG_GLIBC=y
+
+#
+# Paths
+#
+
+
+#
+# Environment
+#
+PLATFORM=mips-openwrt
+LINUXDIR=$(COMMON_KERNELPATH)
+LIBDIR=$(TOOLCHAIN)/lib
+USRLIBDIR=$(TOOLCHAIN)/usr/lib
+
+#
+# Cross-compile environment variables
+#
+
+# Build platform
+export BUILD := x86_64-unknown-linux-gnu
+export HOSTCC := gcc
+
+CFLAGS += -Os
+
+
+ifeq ($(PLATFORM),arm-openwrt)
+export CROSS_COMPILE := arm-openwrt-linux-uclibcgnueabi-
+export CONFIGURE := ./configure arm-linux --build=$(BUILD)
+export TOOLCHAIN := $(shell cd $(dir $(shell which $(CROSS_COMPILE)gcc))/.. && pwd -P)
+endif
+
+ifeq ($(PLATFORM),mips-openwrt)
+export CONFIGURE := ./configure --target=mips-openwrt-linux --host=mips-openwrt-linux --build=x86_64-linux-gnu --program-prefix= --program-suffix= --prefix=/usr --exec-prefix=/usr --bindir=/usr/bin --sbindir=/usr/sbin --libexecdir=/usr/lib --sysconfdir=/etc --datadir=/usr/share --localstatedir=/var
+endif
+
+ifeq ($(CONFIG_BCMWPA2),y)
+export CFLAGS += -DBCMWPA2
+endif
+
+export AS		= $(TARGET_CROSS)as
+export LD		= $(TARGET_CROSS)ld
+export CC		= $(TARGET_CROSS)gcc
+export CPP		= $(CC) -E
+export AR		= $(TARGET_CROSS)ar
+export NM		= $(TARGET_CROSS)nm
+export STRIP		= $(TARGET_CROSS)strip
+export OBJCOPY		= $(TARGET_CROSS)objcopy
+export OBJDUMP		= $(TARGET_CROSS)objdump
+export RANLIB := $(TARGET_CROSS)ranlib
+export SIZE := $(TARGET_CROSS)size
+
+#
+# Install and target directories
+#
+# reference qsdk/rules.mk
+BUILD_DIR_BASE:=$(TOPDIR)/build_dir
+BUILD_DIR_HOST:=$(BUILD_DIR_BASE)/host
+
+BOARD:=ipq806x
+BUILD_DIR:=$(BUILD_DIR_BASE)/$(TARGET_DIR_NAME)
+
+export INSTALL_DIR:=$(TARGET_DIR)
+export TARGETDIR:=$(TARGET_DIR)
+
+GPLTOPDIR= $(SRCBASE)/ap/gpl
+export GPLTOPDIR
+
+#Foxconn added by Kathy, 04/03/2014 @ xAgent_cloud 
+ifeq ($(CONFIG_CLOUD_XAGENT_CONF),y)
+CFLAGS += -DXAGENT_CLOUD_SUPPORT
+endif
+export CFLAGS
+
+ifeq ($(PROFILE),D7000v2)
+CFLAGS += -DD7000v2
+CFLAGS += -DCONFIG_INTEL_SDK
+endif
+
+ifeq ($(PROFILE),D6220v2)
+CFLAGS += -DD6220v2
+CFLAGS += -DCONFIG_INTEL_SDK
+endif
+
+ifeq ($(CONFIG_OPENDNS),y)
+CFLAGS += -DOPENDNS_PARENTAL_CONTROL
+endif
+

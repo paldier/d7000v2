@@ -1,0 +1,15 @@
+# HG changeset patch
+# Parent c70cc3bc0be2d8685da3584fe7fa81d847c97fb6
+
+diff --git a/arch/x86/include/asm/fpu-internal.h b/arch/x86/include/asm/fpu-internal.h
+--- a/arch/x86/include/asm/fpu-internal.h
++++ b/arch/x86/include/asm/fpu-internal.h
+@@ -571,7 +571,7 @@ static inline int fpu_alloc(struct fpu *
+ {
+ 	if (fpu_allocated(fpu))
+ 		return 0;
+-	fpu->state = kmem_cache_alloc(task_xstate_cachep, GFP_KERNEL);
++	fpu->state = kmem_cache_alloc(task_xstate_cachep, GFP_ATOMIC);
+ 	if (!fpu->state)
+ 		return -ENOMEM;
+ 	WARN_ON((unsigned long)fpu->state & 15);

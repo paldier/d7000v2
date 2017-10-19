@@ -1,0 +1,280 @@
+From a79cca6a1570b15186cfcf50073e4d02b3aff206 Mon Sep 17 00:00:00 2001
+From: Nagaraj S <sivasankaranx.nagaraj@intel.com>
+Date: Thu, 18 Feb 2016 17:43:29 -0800
+Subject: [PATCH] OS: HECI causes kernel crash when CSE is enabled
+
+Change-Id: I9dad36764b21c102731fc518583ee891fff18ac7
+IssueID:   HSD# 243900
+IssueType: Defect
+Symptom:   HECI causes kernel crash when CSE is enabled.
+RootCause: HECI ISH driver is map to device id (2b98)
+Resolution: Added new txe driver (from GMIN) to enable CSE and updated device id to txe driver.
+Test:      Ran a test to verify boot behavior and Txe driver.
+Reviewer:  Warden Brett T
+ReviewID:  CCID-126571
+---
+ drivers/misc/heci/pci-ish.c |    2 +-
+ drivers/misc/mei/client.c   |   76 +++++++++++++++++++++++++++++++------------
+ drivers/misc/mei/client.h   |   18 ----------
+ drivers/misc/mei/hbm.c      |    2 +-
+ drivers/misc/mei/init.c     |    8 +++++
+ drivers/misc/mei/nfc.c      |   11 +++----
+ drivers/misc/mei/pci-txe.c  |    1 +
+ 7 files changed, 71 insertions(+), 47 deletions(-)
+
+diff --git a/drivers/misc/heci/pci-ish.c b/drivers/misc/heci/pci-ish.c
+index 6331baa..6cc70440 100644
+--- a/drivers/misc/heci/pci-ish.c
++++ b/drivers/misc/heci/pci-ish.c
+@@ -62,7 +62,7 @@ MODULE_PARM_DESC(nomsi, "don't use msi (default = false)");
+ static struct pci_dev *heci_pci_device;
+ 
+ static DEFINE_PCI_DEVICE_TABLE(ish_pci_tbl) = {
+-	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x2B98)},
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x22D8)},
+ 	{0, }
+ };
+ 
+diff --git a/drivers/misc/mei/client.c b/drivers/misc/mei/client.c
+index ae73ddd2..36c0296 100644
+--- a/drivers/misc/mei/client.c
++++ b/drivers/misc/mei/client.c
+@@ -72,23 +72,69 @@ int mei_me_cl_by_id(struct mei_device *dev, u8 client_id)
+ 
+ 
+ /**
+- * mei_io_list_flush - removes list entry belonging to cl.
++ * mei_cl_cmp_id - tells if the clients are the same
+  *
+- * @list:  An instance of our list structure
+- * @cl: host client
++ * @cl1: host client 1
++ * @cl2: host client 2
++ *
++ * returns true  - if the clients has same host and me ids
++ *         false - otherwise
++ */
++static inline bool mei_cl_cmp_id(const struct mei_cl *cl1,
++				const struct mei_cl *cl2)
++{
++	return cl1 && cl2 &&
++		(cl1->host_client_id == cl2->host_client_id) &&
++		(cl1->me_client_id == cl2->me_client_id);
++}
++
++/**
++ * mei_io_list_flush - removes cbs belonging to cl.
++ *
++ * @list:  an instance of our list structure
++ * @cl:    host client, can be NULL for flushing the whole list
++ * @free:  whether to free the cbs
+  */
+-void mei_io_list_flush(struct mei_cl_cb *list, struct mei_cl *cl)
++static void __mei_io_list_flush(struct mei_cl_cb *list,
++				struct mei_cl *cl, bool free)
+ {
+ 	struct mei_cl_cb *cb;
+ 	struct mei_cl_cb *next;
+ 
++	/* enable removing everything if no cl is specified */
+ 	list_for_each_entry_safe(cb, next, &list->list, list) {
+-		if (cb->cl && mei_cl_cmp_id(cl, cb->cl))
++		if (!cl || (cb->cl && mei_cl_cmp_id(cl, cb->cl))) {
+ 			list_del(&cb->list);
++			if (free)
++				mei_io_cb_free(cb);
++		}
+ 	}
+ }
+ 
+ /**
++ * mei_io_list_flush - removes list entry belonging to cl.
++ *
++ * @list:  An instance of our list structure
++ * @cl: host client
++ */
++static inline void mei_io_list_flush(struct mei_cl_cb *list, struct mei_cl *cl)
++{
++	__mei_io_list_flush(list, cl, false);
++}
++
++
++/**
++ * mei_io_list_free - removes cb belonging to cl and free them
++ *
++ * @list:  An instance of our list structure
++ * @cl: host client
++ */
++static inline void mei_io_list_free(struct mei_cl_cb *list, struct mei_cl *cl)
++{
++	__mei_io_list_flush(list, cl, true);
++}
++
++/**
+  * mei_io_cb_free - free mei_cb_private related memory
+  *
+  * @cb: mei callback struct
+@@ -194,8 +240,8 @@ int mei_cl_flush_queues(struct mei_cl *cl)
+ 
+ 	cl_dbg(dev, cl, "remove list entry belonging to cl\n");
+ 	mei_io_list_flush(&cl->dev->read_list, cl);
+-	mei_io_list_flush(&cl->dev->write_list, cl);
+-	mei_io_list_flush(&cl->dev->write_waiting_list, cl);
++	mei_io_list_free(&cl->dev->write_list, cl);
++	mei_io_list_free(&cl->dev->write_waiting_list, cl);
+ 	mei_io_list_flush(&cl->dev->ctrl_wr_list, cl);
+ 	mei_io_list_flush(&cl->dev->ctrl_rd_list, cl);
+ 	mei_io_list_flush(&cl->dev->amthif_cmd_list, cl);
+@@ -1016,20 +1062,8 @@ void mei_cl_all_wakeup(struct mei_device *dev)
+  */
+ void mei_cl_all_write_clear(struct mei_device *dev)
+ {
+-	struct mei_cl_cb *cb, *next;
+-	struct list_head *list;
+-
+-	list = &dev->write_list.list;
+-	list_for_each_entry_safe(cb, next, list, list) {
+-		list_del(&cb->list);
+-		mei_io_cb_free(cb);
+-	}
+-
+-	list = &dev->write_waiting_list.list;
+-	list_for_each_entry_safe(cb, next, list, list) {
+-		list_del(&cb->list);
+-		mei_io_cb_free(cb);
+-	}
++	mei_io_list_free(&dev->write_list, NULL);
++	mei_io_list_free(&dev->write_waiting_list, NULL);
+ }
+ 
+ 
+diff --git a/drivers/misc/mei/client.h b/drivers/misc/mei/client.h
+index 257aa5f..96d5de0 100644
+--- a/drivers/misc/mei/client.h
++++ b/drivers/misc/mei/client.h
+@@ -45,8 +45,6 @@ static inline void mei_io_list_init(struct mei_cl_cb *list)
+ {
+ 	INIT_LIST_HEAD(&list->list);
+ }
+-void mei_io_list_flush(struct mei_cl_cb *list, struct mei_cl *cl);
+-
+ /*
+  * MEI Host Client Functions
+  */
+@@ -61,22 +59,6 @@ int mei_cl_unlink(struct mei_cl *cl);
+ int mei_cl_flush_queues(struct mei_cl *cl);
+ struct mei_cl_cb *mei_cl_find_read_cb(struct mei_cl *cl);
+ 
+-/**
+- * mei_cl_cmp_id - tells if file private data have same id
+- *
+- * @fe1: private data of 1. file object
+- * @fe2: private data of 2. file object
+- *
+- * returns true  - if ids are the same and not NULL
+- */
+-static inline bool mei_cl_cmp_id(const struct mei_cl *cl1,
+-				const struct mei_cl *cl2)
+-{
+-	return cl1 && cl2 &&
+-		(cl1->host_client_id == cl2->host_client_id) &&
+-		(cl1->me_client_id == cl2->me_client_id);
+-}
+-
+ 
+ int mei_cl_flow_ctrl_creds(struct mei_cl *cl);
+ 
+diff --git a/drivers/misc/mei/hbm.c b/drivers/misc/mei/hbm.c
+index d81800d..b9a4bb5 100644
+--- a/drivers/misc/mei/hbm.c
++++ b/drivers/misc/mei/hbm.c
+@@ -654,7 +654,7 @@ int mei_hbm_dispatch(struct mei_device *dev, struct mei_msg_hdr *hdr)
+ 	 */
+ 	if (dev->hbm_state == MEI_HBM_IDLE) {
+ 		dev_dbg(&dev->pdev->dev, "hbm: state is idle ignore spurious messages\n");
+-		return;
++		return 0;
+ 	}
+ 
+ 	switch (mei_msg->hbm_cmd) {
+diff --git a/drivers/misc/mei/init.c b/drivers/misc/mei/init.c
+index 0e40ecc..04fd306 100644
+--- a/drivers/misc/mei/init.c
++++ b/drivers/misc/mei/init.c
+@@ -93,6 +93,13 @@ int mei_reset(struct mei_device *dev)
+ 	interrupts_enabled = state != MEI_DEV_POWER_DOWN;
+ 	dev->dev_state = MEI_DEV_RESETTING;
+ 
++	dev->reset_count++;
++	if (dev->reset_count > MEI_MAX_CONSEC_RESET) {
++		dev_err(&dev->pdev->dev, "reset: reached maximal consecutive resets: disabling the device\n");
++		dev->dev_state = MEI_DEV_DISABLED;
++		return -ENODEV;
++	}
++
+ 	ret = mei_hw_reset(dev, interrupts_enabled);
+ 	/* fall through and remove the sw state even if hw reset has failed */
+ 
+@@ -355,6 +362,7 @@ void mei_device_init(struct mei_device *dev, const struct mei_cfg *cfg)
+ 	init_waitqueue_head(&dev->wait_recvd_msg);
+ 	init_waitqueue_head(&dev->wait_stop_wd);
+ 	dev->dev_state = MEI_DEV_INITIALIZING;
++	dev->reset_count = 0;
+ 
+ 	mei_io_list_init(&dev->read_list);
+ 	mei_io_list_init(&dev->write_list);
+diff --git a/drivers/misc/mei/nfc.c b/drivers/misc/mei/nfc.c
+index 3095fc5..5ccc23b 100644
+--- a/drivers/misc/mei/nfc.c
++++ b/drivers/misc/mei/nfc.c
+@@ -342,9 +342,10 @@ static int mei_nfc_send(struct mei_cl_device *cldev, u8 *buf, size_t length)
+ 	ndev = (struct mei_nfc_dev *) cldev->priv_data;
+ 	dev = ndev->cl->dev;
+ 
++	err = -ENOMEM;
+ 	mei_buf = kzalloc(length + MEI_NFC_HEADER_SIZE, GFP_KERNEL);
+ 	if (!mei_buf)
+-		return -ENOMEM;
++		goto out;
+ 
+ 	hdr = (struct mei_nfc_hci_hdr *) mei_buf;
+ 	hdr->cmd = MEI_NFC_CMD_HCI_SEND;
+@@ -354,12 +355,9 @@ static int mei_nfc_send(struct mei_cl_device *cldev, u8 *buf, size_t length)
+ 	hdr->data_size = length;
+ 
+ 	memcpy(mei_buf + MEI_NFC_HEADER_SIZE, buf, length);
+-
+ 	err = __mei_cl_send(ndev->cl, mei_buf, length + MEI_NFC_HEADER_SIZE);
+ 	if (err < 0)
+-		return err;
+-
+-	kfree(mei_buf);
++		goto out;
+ 
+ 	if (!wait_event_interruptible_timeout(ndev->send_wq,
+ 				ndev->recv_req_id == ndev->req_id, HZ)) {
+@@ -368,7 +366,8 @@ static int mei_nfc_send(struct mei_cl_device *cldev, u8 *buf, size_t length)
+ 	} else {
+ 		ndev->req_id++;
+ 	}
+-
++out:
++	kfree(mei_buf);
+ 	return err;
+ }
+ 
+diff --git a/drivers/misc/mei/pci-txe.c b/drivers/misc/mei/pci-txe.c
+index 88a3d2b..2192246 100644
+--- a/drivers/misc/mei/pci-txe.c
++++ b/drivers/misc/mei/pci-txe.c
+@@ -38,6 +38,7 @@
+ static const struct pci_device_id mei_txe_pci_tbl[] = {
+ 	{MEI_PCI_DEVICE(0x0F18, mei_txe_cfg)}, /* Baytrail */
+ 	{MEI_PCI_DEVICE(0x2298, mei_txe_cfg)}, /* Cherrytrail */
++	{MEI_PCI_DEVICE(0x2B98, mei_txe_cfg)}, /* Cougar mountain */
+ 	{0, }
+ };
+ MODULE_DEVICE_TABLE(pci, mei_txe_pci_tbl);
+-- 
+1.7.9.5
+

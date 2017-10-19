@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="<%13%>">	
+	<script src="script/script.js"></script>
+	<title>NETGEAR Genie</title>
+	
+	
+</head>
+<script >
+var mode = <%2470%>
+var OSType = detectOS();
+
+function goGenieDownloadPage()
+{
+    if(OSType != "Win" && OSType != "Mac")
+        window.location.href='genie_download_skip.htm';
+    else
+        window.location.href='genie_download.htm';
+       
+    return false;
+}
+
+function submit()
+{
+    document.forms["target"].submit();
+}
+
+function clickHere()
+{
+    var mode = <%2189%>;
+    if(mode == "1"){
+        window.open ('start.htm','_blank','fullscreen=yes,toolbar=yes,locaiton=yes');
+    }else{
+        if(parent.$("#BasicTab").hasClass('current')){
+            parent.loadPage("WLG_wireless_dual_band.htm");
+        }else{
+            parent.loadPage2("WLG_wireless_dual_band.htm");
+        }        	
+    }
+
+}
+</script>
+<body style="background-color:#ffffff">
+<form id="target"  name="formname" method="POST" action="congratulations.cgi" target="_parent">
+	<table border="0" cellpadding="0" cellspacing="3"  width="99%">
+	<tr style="height:10px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td>&nbsp;</td><td class="centerTd"><h2><%2473%></h2></td><td>&nbsp;</td>
+        <tr>
+	<tr>
+		<td>&nbsp;</td><td class="textRow centerTd"><%2838%></td><td>&nbsp;</td>
+        </tr>
+	<tr style="height:10px">
+		<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+	</tr>
+        <tr>
+		<td>&nbsp;</td>
+                <td class="textRow centerTd" style="<%2190%>"><span><%2832%></span><span style="text-decoration:underline;font-weight:bold;cursor:pointer;" onClick="window.open ('genie_redirect_successpage2.htm','_blank','');return false;"><%2833%></span><span><%2834%></span></td>
+                <td>&nbsp;</td>
+        <tr>
+        <tr>
+		<td>&nbsp;</td><td class="textRow centerTd" style="<%2191%>"><%2835%><span title="<%2836%>" style="text-decoration:underline;"><%2837%></span>.</td><td>&nbsp;</td>
+        <tr>
+	<tr>
+		<td>&nbsp;</td><td></td><td>&nbsp;</td>
+        </tr>
+	<tr>
+        	<td>&nbsp;</td><td class="textRow centerTd"><span style="display:-moz-inline-box;display:inline-block;width:300px;">2.4GHz <%2479%>:</span><span ><b><%1423%></span></b></td><td>&nbsp;</td>
+	</tr>	
+	<%2192%>
+	<tr>
+        	<td>&nbsp;</td>
+		<td class="textRow centerTd"><span style="display:-moz-inline-box;display:inline-block;width:300px;">5GHz <%2479%>:</span><span><b><%2193%></b></span>
+		</td><td>&nbsp;</td>
+	</tr>
+        <%2194%>	
+	<tr>	
+		<td>&nbsp;</td>	
+		<td class="textRow centerTd" style="<%2191%>"><span style="display:-moz-inline-box;display:inline-block;width:300px;"><%2480%><span title="<%2195%>" style="text-decoration:underline;"> 2.4G  <%2481%>:</span></span><span><b><%2196%></span></b></td>
+		<td>&nbsp;</td>
+	</tr>
+	<%2192%>
+	<tr>
+                <td>&nbsp;</td>
+                <td class="textRow centerTd" style="<%2197%>"><span style="display:-moz-inline-box;display:inline-block;width:300px;"><%2480%><span title="<%2195%>" style="text-decoration:underline;"> 5G  <%2481%>:</span></span><span><b><%2198%></span></b></td>
+                 <td>&nbsp;</td>
+	</tr>
+	<%2194%> 
+    <tr>
+		<td>&nbsp;</td><td class="textRow centerTd" style="visibility:hidden">&nbsp;</td><td>&nbsp;</td>
+	</tr>
+        <tr>
+		<td>&nbsp;</td>
+        	<td class="textRow centerTd">		
+			<button class = "purpleBtn2"  onclick="window.location.href='genie_redirect_successpage.htm';return false;"><span><%2225%>&nbsp;&nbsp;&nbsp;</span></button>
+			<span style="display:-moz-inline-box;display:inline-block;width:300px;"></span>
+<button class = "purpleBtn2"  onclick="goGenieDownloadPage();return false;"><span><%2839%>&nbsp;&nbsp;&nbsp;</span></button>
+		</td>
+		<td>&nbsp;</td>
+	</tr>
+</form>
+</body>
+</html>

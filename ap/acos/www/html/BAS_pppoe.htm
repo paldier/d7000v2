@@ -1,0 +1,1600 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR Router <%55%></title>
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+    classes.num.all.fontFamily = "Courier";
+    classes.num.all.fontSize = "10pt" ;
+</style>
+<%12%>
+
+
+<script language="javascript" type="text/javascript">
+<!-- 
+var DisableFixedIP = false;
+var DisableFixedDNS = false;
+var DisableFixedMAC = false;
+var MacAddress;
+var DodDisable = false;
+var DodIndex = <%502%>;
+
+
+    $(document).ready(function()
+    {	
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+    function setHelpIframeVisible(){
+        $('.bas-help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("up")>=0)
+        {
+            $(".bas-help-frame-div").show();
+            window.frames["helpframe"].$('#content').jScrollPane({showArrows:true});
+            imgSrc.src="img/helparrowdown-icon.gif";
+        }
+        else
+        {
+            $(".bas-help-frame-div").hide();
+            imgSrc.src="img/helparrowup-icon.gif";
+            setTimeout(setHelpIframeVisible,500);
+        }
+        if((navigator.appName.indexOf("Internet Explorer")==-1) ||
+           (navigator.appVersion.indexOf("MSIE 9")==-1))
+             change_size();
+
+    }
+
+    function moveToHTMLend()
+    {
+        window.location.href='#helpframe-anchor';
+        setHelpIframeVisible();
+    }
+
+
+    function loadhelp(fname,anchname)
+    {
+                var pane = window.frames["helpframe"].$('#content');
+                var imgSrc=document.getElementById('help-button');
+                if(imgSrc.src.search("up")<0)
+                {
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+
+                        if ((loadhelp.arguments.length == 1 ) || (anchname == "" ))
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm";
+                                $(".help-frame-div").show();
+                        }
+                        else
+                        {
+                                window.frames["helpframe"].location.href=fname+"_h.htm#" + anchname;
+                                $(".help-frame-div").show();
+                        }
+
+                        $(".help-frame-div").show();
+                        pane.jScrollPane({showArrows:true});
+
+                }
+    }
+
+ 
+var autoconn_flag=("<%9%>" == "German") ? 1 : 0;
+if(autoconn_flag == 1)
+{
+	var sSpan ; 
+	var sDiv ; 
+	var sUl ; 
+	var sLi ; 
+	var slt; 
+	var optLen ;
+	var tmp;  
+	var zQuery=function(ele,tagName,className){ //core object 
+    if ( window == this ) return new zQuery(ele,tagName,className); 
+    if(!arr){var arr=new Array;} 
+    if(ele){ 
+        if(ele.constructor!=zQuery){ 
+            var elem=typeof(ele)=="object"?ele:document.getElementById(ele); 
+            if(!tagName){ 
+                arr.push(elem); 
+            }else{ 
+                //var tags=elem.all&&(!(window.opera?(tagName=="*"?elem.all:elem.all.tags(tagName)):(elem.getElementsByTagName(tagName)))); 
+                var tags=elem.all&&!window.opera?tagName=="*"?elem.all:elem.all.tags(tagName):elem.getElementsByTagName(tagName); 
+                if(!className){ 
+                    for(var i=0, l=tags.length; i<l; i++){ 
+                        arr.push(tags[i]); 
+                    } 
+                }else{ 
+                    var reClassName=RegExp("(^|\\s+)"+className+"(|\\s+)"); 
+                    for(var i=0, l=tags.length; i<l; i++){ 
+                        if(reClassName.test(tags[i].className)){ 
+                            arr.push(tags[i]); 
+                        } 
+                    } 
+                } 
+            } 
+        }else{ 
+            for(var i=0, l=ele.length; i<l; i++){ 
+                arr=arr.concat(Array.prototype.slice.call(zQuery(ele[i],tagName,className))); 
+            } 
+        } 
+    } 
+    return this.setArray(arr);  
+} 
+zQuery.prototype.setArray = function( arr ) { 
+    this.length = 0; 
+    Array.prototype.push.apply( this, arr );  
+    return this; 
+} 
+zQuery.fn=zQuery.prototype; 
+//var =zQuery; 
+
+//obtain the absolute position of select 
+function Offset(obj){ 
+    var t = obj.offsetTop; 
+    var l = obj.offsetLeft; 
+    var w = obj.offsetWidth; 
+    var h = obj.offsetHeight-2; 
+    //var h=obj.style.height; 
+    while(obj=obj.offsetParent) 
+    { 
+        t+=obj.offsetTop; 
+        l+=obj.offsetLeft; 
+    } 
+    return { 
+        top : t, 
+        left : l, 
+        width : w, 
+        height : h 
+    } 
+}
+
+//simulation select 
+
+function getEvent(){ 
+     //compatible with ie and ff 
+     if(document.all)    return window.event; 
+     func=getEvent.caller; 
+     while(func!=null){ 
+         var arg0=func.arguments[0]; 
+         if(arg0){ 
+             if((arg0.constructor==Event || arg0.constructor ==MouseEvent) 
+                || (typeof(arg0)=="object" && arg0.preventDefault && arg0.stopPropagation)){     
+                return arg0; 
+              } 
+         } 
+          func=func.caller; 
+        } 
+        return null; 
+}
+//obtion the number of select, and execut the function
+function initSelect(){ 
+    //alert("InitSelect");
+    slt=zQuery(document,"select"); 
+    var sltLen=slt.length; 
+    for(var i=0;i<sltLen;i++){  
+     	if(slt[i].name == "auto_conn_time")
+        instSelect(slt[i]); 
+    } 
+} 
+}
+
+function goTestApply()
+{
+    var winoptions = "width=640,height=480,menubar=yes,toolbar=yes,status=yes,location=yes,resizable=yes";
+    if(document.forms[0].runtest.value == "yes")
+        window.open('BAS_wtest_l.htm','test_win',winoptions);
+}
+
+function loadcheck()
+{
+    var cf = document.forms[0];
+    if(isIE()){
+        cf.pppoe_username.size="24";
+        cf.pppoe_passwd.size="24";
+    }
+<%503%>
+    MacAddress=document.formname.Spoofmac.value;
+<%504%>
+    loadhelp('BAS_pppoe');
+    setIP();
+    setDNS();
+    setMAC();
+}
+function setIP()
+{
+    var cf = document.forms[0];
+    var dflag = cf.WANAssign[0].checked;
+    var region_gui = cf.gui_region.value;
+    setDisabled(dflag,cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4);
+    
+    DisableFixedIP = dflag;
+}
+function setDNS()
+{
+    var cf = document.forms[0];
+    var dflag = cf.DNSAssign[0].checked;
+    setDisabled(dflag,cf.DAddr1,cf.DAddr2,cf.DAddr3,cf.DAddr4,cf.PDAddr1,cf.PDAddr2,cf.PDAddr3,cf.PDAddr4);
+    DisableFixedDNS = dflag;
+}
+function setMAC()
+{
+    var cf = document.forms[0];
+
+<%503%>
+    if (cf.MACAssign[0].checked)
+        cf.Spoofmac.value = cf.wan_hwaddr_def.value;
+    else if(cf.MACAssign[1].checked)
+        cf.Spoofmac.value = cf.wan_hwaddr_pc.value;
+    else if (cf.MACAssign[2].checked)
+        cf.Spoofmac.value = cf.wan_hwaddr2.value;
+        
+    if (cf.MACAssign[2].checked)
+        cf.Spoofmac.disabled = false;
+    else
+        cf.Spoofmac.disabled = true;
+    DisableFixedMAC = cf.Spoofmac.disabled;
+<%504%>
+
+}
+
+function setServer()
+{
+    var cf = document.forms[0];
+    var stype = cf.login_type.selectedIndex;
+    if(stype==0) //pppoe
+        window.location.href="BAS_pppoe.htm";
+    else if(stype==1) //pppoa
+        window.location.href="BAS_pppoa.htm"
+}
+
+function show_idleout(form,conn_mode)
+{
+    var cf = document.forms[0];
+    if(conn_mode == 1) // Dial on Demand
+    {
+        DodDisable = false;
+        if(cf.gui_language.value == "German")
+        {
+              
+            var List = document.getElementById('auto_conn_time_id');          
+            cf.auto_conn_24hr.disabled = true;
+			List.disabled = true;
+        }
+    }
+    else
+    {
+        DodDisable = true;
+        if(cf.gui_language.value == "German")
+        {
+            //sSpan.style.background="url(selects_disabled.gif) no-repeat right center"; 
+            var List = document.getElementById('auto_conn_time_id');           
+            cf.auto_conn_24hr.disabled = false;
+			List.disabled = false;
+
+
+        }
+    }
+}
+
+function setConnMode()
+{
+    var cf = document.forms[0];
+    var conn_mode = cf.pppoe_dod.selectedIndex;
+
+
+    show_idleout(cf, conn_mode);
+
+    var msg = "";
+    if((conn_mode != 1) && !_isNumeric(cf.pppoe_idletime.value))
+    {
+        cf.pppoe_dod.selectedIndex = DodIndex;
+        if(cf.pppoe_idletime.value.length<=0)
+            msg+= "<%505%>";
+        else if(!_isNumeric(cf.pppoe_idletime.value))
+            msg+= "<%506%>";
+        if (msg.length > 1)
+        {
+            alert(msg);
+            return false;
+        }
+    }
+    else
+    {
+        DodIndex = cf.pppoe_dod.selectedIndex;
+        setDisabled(DodDisable,cf.pppoe_idletime);
+    }
+    return true;
+}
+
+function checkData()
+{
+    var cf = document.forms[0];
+    var msg = "";
+    var region_gui = cf.gui_region.value;
+	var wan_ip  = "<%507%>";
+	var openvpnEnable = "<%401%>";
+    if (!checkDslData())
+        return false;
+    
+    if (cf.device_mode.value == "0")
+    {
+        msg+= checkBlank(cf.pppoe_username, "<%508%>");
+        if(cf.pppoe_idletime.value.length<=0)
+            msg+= "<%505%>";
+        else if(!_isNumeric(cf.pppoe_idletime.value))
+            msg+= "<%506%>";
+        
+        if (region_gui == "Russian")
+        {
+            if((cf.myip_1.value.length>0)||(cf.myip_2.value.length>0)||(cf.myip_3.value.length>0)||(cf.myip_4.value.length>0))
+            {
+                if(checkIP(cf.myip_1,cf.myip_2,cf.myip_3,cf.myip_4,254)||(parseInt(cf.myip_4.value,10)==0))
+                    msg+= "<%509%>";
+                else if (checkIPMatchWithNetmask(cf.mymask_1,cf.mymask_2,cf.mymask_3,cf.mymask_4,cf.myip_1,cf.myip_2,cf.myip_3,cf.myip_4))
+                    msg+= "<%509%>";
+                else if(checkIP(cf.mymask_1,cf.mymask_2,cf.mymask_3,cf.mymask_4,255))
+                    msg += "<%405%>";
+                else
+                {
+                    cf.myip_1.value = parseInt(cf.myip_1.value,10);
+                    cf.myip_2.value = parseInt(cf.myip_2.value,10);
+                    cf.myip_3.value = parseInt(cf.myip_3.value,10);
+                    cf.myip_4.value = parseInt(cf.myip_4.value,10);
+                }
+                
+                var myIpAddr = (cf.myip_1.value << 24) | (cf.myip_2.value << 16) | (cf.myip_3.value << 8) | (cf.myip_4.value);
+                var netMask = (cf.mymask_1.value << 24) | (cf.mymask_2.value << 16) | (cf.mymask_3.value << 8) | (cf.mymask_4.value);
+                var dnsIpAddr1 = (cf.DAddr1.value << 24) | (cf.DAddr2.value << 16) | (cf.DAddr3.value << 8) | (cf.DAddr4.value);
+                var dnsIpAddr2 = (cf.PDAddr1.value << 24) | (cf.PDAddr2.value << 16) | (cf.PDAddr3.value << 8) | (cf.PDAddr4.value);
+                if(((myIpAddr&netMask) != (dnsIpAddr1&netMask)) && ((myIpAddr&netMask) != (dnsIpAddr2&netMask)))
+                {
+                    //if(!((cf.mygw_1.value.length>0)||(cf.mygw_2.value.length>0)||(cf.mygw_3.value.length>0)||(cf.mygw_4.value.length>0)))
+                    //{
+                    //    msg+= "IP адрес шлюза должен быть указан.\n"; 
+                    //}
+                }
+                
+                cf.static_pppoe_enable.value = 1;
+            }
+            else
+                cf.static_pppoe_enable.value = 0;
+        
+        }
+    
+        if(cf.WANAssign[1].checked)
+        {
+            if(checkIP(cf.WPethr1,cf.WPethr2,cf.WPethr3,cf.WPethr4,254)||(parseInt(cf.WPethr4.value,10)==0))
+                msg+= "<%510%>";
+            else
+            {
+                cf.WPethr1.value = parseInt(cf.WPethr1.value,10);
+                cf.WPethr2.value = parseInt(cf.WPethr2.value,10);
+                cf.WPethr3.value = parseInt(cf.WPethr3.value,10);
+                cf.WPethr4.value = parseInt(cf.WPethr4.value,10);
+            }
+            cf.pppoe_localip.value = cf.WPethr1.value+'.'+cf.WPethr2.value+'.'+cf.WPethr3.value+'.'+cf.WPethr4.value;
+    
+    		if(openvpnEnable == "enable"){
+    			if(wan_ip != cf.pppoe_localip.value){
+    				alert("<%410%>");
+    			}
+    		}
+        }
+        else
+        {
+            cf.pppoe_localip.value = "0.0.0.0";
+        }
+        if(cf.DNSAssign[1].checked)
+        {
+            if(checkIP(cf.DAddr1,cf.DAddr2,cf.DAddr3,cf.DAddr4,254)||(parseInt(cf.DAddr4.value,10)==0))
+                msg+= "<%407%>";
+            else
+            {
+                cf.DAddr1.value = parseInt(cf.DAddr1.value,10);
+                cf.DAddr2.value = parseInt(cf.DAddr2.value,10);
+                cf.DAddr3.value = parseInt(cf.DAddr3.value,10);
+                cf.DAddr4.value = parseInt(cf.DAddr4.value,10);
+            }
+            if(cf.PDAddr1.value.length>0 || cf.PDAddr2.value.length>0 || cf.PDAddr3.value.length>0 || cf.PDAddr4.value.length>0)
+            {
+                if(checkIP(cf.PDAddr1,cf.PDAddr2,cf.PDAddr3,cf.PDAddr4,254)||(parseInt(cf.PDAddr4.value,10)==0))
+                    msg+= "<%408%>";
+                else
+                {
+                    cf.PDAddr1.value = parseInt(cf.PDAddr1.value,10);
+                    cf.PDAddr2.value = parseInt(cf.PDAddr2.value,10);
+                    cf.PDAddr3.value = parseInt(cf.PDAddr3.value,10);
+                    cf.PDAddr4.value = parseInt(cf.PDAddr4.value,10);
+                }
+            }
+        }
+    
+    <%503%>    
+        if( checkMacStr(cf.Spoofmac) || MacStrallf(cf.Spoofmac) )
+            msg+= "<%0%>";
+        if (msg.length > 1)
+        {
+            alert(msg);
+            return false;
+        }
+    <%504%>    
+        //pppoe_ip_sel means internet pppoe connection
+        if(cf.WANAssign[1].checked)
+            cf.pppoe_ip_sel.value = 1;
+        else
+            cf.pppoe_ip_sel.value = 0;
+    
+        if (region_gui == "Russian") {
+            cf.pppoe_user_netmask.value = cf.mymask_1.value+'.'+cf.mymask_2.value+'.'+cf.mymask_3.value+'.'+cf.mymask_4.value;
+            cf.pppoe_user_ip.value = cf.myip_1.value+'.'+cf.myip_2.value+'.'+cf.myip_3.value+'.'+cf.myip_4.value;
+            //cf.pppoe_gateway.value = cf.mygw_1.value+'.'+cf.mygw_2.value+'.'+cf.mygw_3.value+'.'+cf.mygw_4.value;
+        }
+    	cf.wan_dns1_pri.value = cf.DAddr1.value+'.'+cf.DAddr2.value+'.'+cf.DAddr3.value+'.'+cf.DAddr4.value;
+        cf.wan_dns1_sec.value = cf.PDAddr1.value+'.'+cf.PDAddr2.value+'.'+cf.PDAddr3.value+'.'+cf.PDAddr4.value;
+    <%503%>
+        cf.wan_hwaddr2.value = cf.Spoofmac.value;
+    <%504%>
+        if(cf.opendns_parental_ctrl.value == "1")
+        {
+            if(cf.DNSAssign[0].checked || (cf.wan_dns1_pri.value != "208.67.222.222") || (cf.wan_dns1_sec.value != "208.67.220.220"))
+            {
+                if (!confirm("<%511%>"))
+                    return false;
+            }
+        }
+    
+        setDisabled(false,cf.pppoe_dod);
+    }
+<%503%>
+    return sumvalue(cf);
+<%504%>
+
+<%512%>
+	return true;
+<%513%>	
+}
+
+function resetspi()
+{
+	var cf = document.forms[0];
+	if (cf.en_nat[1].checked)
+		cf.disable_spi.disabled = false;	
+	else
+		cf.disable_spi.disabled = true;		
+}
+
+
+var ISP_ALL = 
+    new Array (
+    <%412%>
+        );
+var curr_country = "<%413%>";
+function setisp()
+{
+    var cf = document.forms[0];
+    var isp_list = cf.isp;
+    var index = cf.country.selectedIndex;
+    var curr_isp = "<%414%>";
+    var len=0, i=0;
+
+    isp_list.options.length = 100;
+    if (ISP_ALL[index].length > 0)
+    {
+        for (i=0; i<ISP_ALL[index].length; i+=2)
+        {
+            isp_list.options[len].text = ISP_ALL[index][i+1];
+            isp_list.options[len].value = ISP_ALL[index][i];
+            len++;
+        }
+        if (curr_country != cf.country.value)
+            curr_isp = ISP_ALL[index][0];
+    }
+
+    isp_list.options.length = len;
+
+    for (i=0; i<isp_list.options.length; i++)
+    {
+        if (isp_list.options[i].value == curr_isp)
+        {
+            isp_list[i].selected = true;
+            break;
+        }
+    }
+
+}
+
+function displayRouterItem()
+{
+    var cf = document.forms[0];
+    var dev_mode = cf.device_mode.value;
+    
+    if (dev_mode == "0")//Router mode
+    {
+        document.getElementById("router_item").style.display="block";
+    }
+    else//Modern mode
+    {
+        document.getElementById("router_item").style.display="none";
+    }
+}
+
+
+function loadSettings()
+{
+    var cf = document.forms[0];
+   	var spiEnable = "<%415%>";
+    var pppoe_user_ip = cf.pppoe_user_ip.value.split(".");
+    var pppoe_user_netmask = cf.pppoe_user_netmask.value.split(".");
+    var pppoe_gateway = cf.pppoe_gateway.value.split(".");
+    var region_gui = cf.gui_region.value;
+
+    var wan_ipaddr = cf.wan_ipaddr.value.split(".");
+    var pppoe_localip = cf.pppoe_localip.value.split(".");
+    var wan_dns_sel = cf.wan_dns_sel.value;
+    var wan_dns1_pri = cf.wan_dns1_pri.value.split(".");
+    var wan_dns1_sec = cf.wan_dns1_sec.value.split(".");
+    var wan_hwaddr_sel = cf.wan_hwaddr_sel.value;
+    cf.pppoe_idletime.value = <%514%> / 60;
+     
+	cf.loginreq[0].checked = true;
+
+    Loaddslsettings(100);
+    // Get pppoe_dod (nvram)
+    cf.pppoe_dod.selectedIndex = <%502%>;
+    if(cf.gui_language.value == "German")
+    {
+		var selectObj = document.getElementById("auto_conn_time_id");
+		
+        cf.auto_conn_time_default.value = parseInt(cf.auto_time.value, 10);
+        selectObj.value = parseInt(cf.auto_time.value, 10);
+    }
+    /*
+    if (cf.pppoe_dod.selectedIndex == 1)
+    {
+        DodDisable = false;
+        if(cf.gui_language.value == "German")
+        {
+            cf.auto_conn_24hr.disabled = true;
+            cf.auto_conn_time.disabled = true;
+        }
+    }
+    else
+    {
+        DodDisable = true;
+        if(cf.gui_language.value == "German")
+        {
+            cf.auto_conn_24hr.disabled = false;
+            cf.auto_conn_time.disabled = false;
+        }
+    }
+    */
+    show_idleout(cf, cf.pppoe_dod.selectedIndex);
+    
+    setDisabled(DodDisable,cf.pppoe_idletime);
+    if (cf.ipv6_proto.value == "6to4" || 
+        (cf.ipv6_proto.value == "auto" && cf.ipv6_proto_auto.value == "6to4"))
+    {
+        cf.pppoe_dod.selectedIndex = 0;
+        setDisabled(true,cf.pppoe_dod);
+        setDisabled(true,cf.pppoe_idletime);
+    }
+    
+    //Internal PPPoE interface
+    if( region_gui == "Russian")
+    {
+        if(cf.static_pppoe_enable.value == 1)
+        {
+            if (cf.pppoe_user_ip.value != "")
+            {
+                cf.myip_1.value = pppoe_user_ip[0];
+                cf.myip_2.value = pppoe_user_ip[1];
+                cf.myip_3.value = pppoe_user_ip[2];
+                cf.myip_4.value = pppoe_user_ip[3];
+            }
+            if (cf.pppoe_user_netmask.value != "")
+            {
+                cf.mymask_1.value = pppoe_user_netmask[0];
+                cf.mymask_2.value = pppoe_user_netmask[1];
+                cf.mymask_3.value = pppoe_user_netmask[2];
+                cf.mymask_4.value = pppoe_user_netmask[3];
+            }
+    
+        }
+        else
+        {
+            //setDisabled(true, cf.mygw_1, cf.mygw_2, cf.mygw_3, cf.mygw_4);
+        }
+        if ( (cf.pppoe_user_ip.value == "...") || (cf.pppoe_user_ip.value == "") )
+        {
+            //setDisabled(true, cf.mygw_1, cf.mygw_2, cf.mygw_3, cf.mygw_4);
+        }
+    }
+
+    //Internet PPPoE interface
+    if (cf.pppoe_localip.value == "0.0.0.0")
+    {
+      cf.WANAssign[0].checked = true;
+      cf.WPethr1.value = wan_ipaddr[0];
+      cf.WPethr2.value = wan_ipaddr[1];
+      cf.WPethr3.value = wan_ipaddr[2];
+      cf.WPethr4.value = wan_ipaddr[3];
+    }
+    else
+    {
+      cf.WANAssign[1].checked = true;
+      cf.WPethr1.value = pppoe_localip[0];
+      cf.WPethr2.value = pppoe_localip[1];
+      cf.WPethr3.value = pppoe_localip[2];
+      cf.WPethr4.value = pppoe_localip[3];
+    }
+    setIP();
+    cf.DNSAssign[wan_dns_sel].checked = true;
+    setDNS();
+    if (cf.wan_dns1_pri.value != "")
+    {
+        cf.DAddr1.value = wan_dns1_pri[0];
+        cf.DAddr2.value = wan_dns1_pri[1];
+        cf.DAddr3.value = wan_dns1_pri[2];
+        cf.DAddr4.value = wan_dns1_pri[3];
+    }
+    if (cf.wan_dns1_sec.value != "")
+    {
+        cf.PDAddr1.value = wan_dns1_sec[0];
+        cf.PDAddr2.value = wan_dns1_sec[1];
+        cf.PDAddr3.value = wan_dns1_sec[2];
+        cf.PDAddr4.value = wan_dns1_sec[3];
+    }
+
+	if (cf.wan_nat.value == 0) {
+		cf.en_nat[1].checked = true;
+		if (spiEnable == "0")
+			cf.disable_spi.checked = true;
+	else
+			cf.disable_spi.checked = false;		
+		}
+	else{
+		cf.en_nat[0].checked = true;	
+		cf.disable_spi.disabled = true;
+		}
+
+<%503%>
+    if (wan_hwaddr_sel == 0)
+        cf.Spoofmac.value = cf.wan_hwaddr_def.value;
+    else if (wan_hwaddr_sel == 2)
+        cf.Spoofmac.value = cf.wan_hwaddr2.value;
+    cf.MACAssign[wan_hwaddr_sel].checked = true;
+<%504%>
+
+    setisp();
+    
+    displayRouterItem();
+}
+
+function myip_update()
+{
+    var cf = document.forms[0];
+
+    if((cf.myip_1.value.length>0)&&(cf.myip_2.value.length>0)&&(cf.myip_3.value.length>0)&&(cf.myip_4.value.length>0))
+    {
+        setDisabled(false, cf.mygw_1, cf.mygw_2, cf.mygw_3, cf.mygw_4);
+    }
+    else
+    {
+        setDisabled(true, cf.mygw_1, cf.mygw_2, cf.mygw_3, cf.mygw_4);
+    } 
+}
+
+function pw_onfocus()
+{
+    var cf = document.forms[0];
+    cf.pppoe_passwd.value = "";
+    
+    document.getElementById("passwdEnterStatus").innerHTML="<input type=\"text\" name=\"pppoe_passwd\" size=\"15\" style=\"width:180px\" maxlength=\"63\" value=\"\">";       
+    setTimeout("document.forms[0].pppoe_passwd.focus();", 50);
+    return true;
+}
+
+function handle_mouse_wheel()
+{
+    if(flexbox_opened&!flex_scroll)
+        return false;
+    else
+    {
+        flex_scroll=false;
+        return true;
+    }
+}
+
+//Move from BAS_dsl.htm
+
+function loadvpivci(index)
+{
+    var cf = document.forms[0];
+    var multiplex;
+    var vpi;
+    var vci;
+    var vlanId;
+    var vlanId_enable;
+    var enableWan;
+    var vlanPri;
+    
+    switch(index)
+    {
+        case 0:
+            vpi=cf.atm0_vpi.value;
+            vci=cf.atm0_vci.value;
+            multiplex=cf.atm0_encap.value;
+            vlanId=cf.wan0_vlanId.value;
+            vlanId_enable = cf.wan0_vlanId_enable.value;
+            enableWan=cf.wan0_enabled.value;
+            vlanPri=cf.wan0_vlanPri.value;
+            break;
+            
+        case 1:
+            vpi=cf.atm1_vpi.value;
+            vci=cf.atm1_vci.value;
+            multiplex=cf.atm1_encap.value;
+            vlanId=cf.wan1_vlanId.value;
+            vlanId_enable = cf.wan1_vlanId_enable.value;
+            enableWan=cf.wan1_enabled.value;
+            vlanPri=cf.wan1_vlanPri.value;
+            //cf.dsl_multiplex.disabled = true;
+            break;
+            
+        default:
+            alert("<%416%>");
+            break;                                                                                
+    }
+    
+    
+    
+    if (multiplex == "LLC")
+ 	    cf.dsl_multiplex.selectedIndex = 0;
+    else 
+	    cf.dsl_multiplex.selectedIndex = 1;
+
+
+    if (vlanId_enable == "0"){
+        cf.vlanidActive.checked = false;
+        cf.vlan_id.disabled = true;
+        cf.vlan_prio.disabled = true;
+    }else{
+        cf.vlanidActive.checked = true;
+        cf.vlan_id.disabled = false;
+        cf.vlan_prio.disabled = false;
+    }
+
+    if (enableWan == "0"){
+        cf.enable_wan.checked = false;
+    }else{
+        cf.enable_wan.checked = true;
+    }
+    
+    cf.dsl_vpi.value=vpi;
+    cf.dsl_vci.value=vci;  
+    cf.vlan_id.value=vlanId; 
+    cf.vlan_prio.value=vlanPri;
+}
+
+function enableInterface()
+{
+    var cf = document.forms[0];
+    var index = cf.nowchoice.value;
+
+    if(cf.enable_wan.checked)
+        cf.wan_enabled.value = 1;
+    else
+        cf.wan_enabled.value = 0;
+}
+
+function Loaddslsettings(index)
+{
+    var cf = document.forms[0];
+    cf.adslChoice.selectedIndex = cf.nowchoice.value;
+    if (index == 100)
+    {
+        index = eval(cf.nowchoice.value);
+    }
+	/* setup vpivci */
+    loadvpivci(index);
+	
+    /* setup XTM mode */    
+    <%417%> 
+    if (cf.transfer_mode.value == "PTM")
+    {
+        cf.transfermode.selectedIndex = 1;
+        cf.dsl_multiplex.disabled = true;
+        cf.dsl_vpi.disabled = true;
+        cf.dsl_vci.disabled = true;
+        //cf.vlanidActive.disabled = false;
+        //cf.vlan_id.disabled = false;
+        
+        cf.dslmode.options.length = 1;
+    	cf.dslmode.options[0].text = "VDSL2";
+    	cf.dslmode.options[0].value = "0";      
+
+        cf.login_type.options.length = 1;
+    	cf.login_type.options[0].text = "PPPoE";
+    	cf.login_type.options[0].value = "0";     
+    	cf.login_type.selectedIndex = 0;
+    }
+    else
+    <%418%>     
+    {
+        cf.transfermode.selectedIndex = 0;
+        //grey out dsl pvc settings when user select "Must use Ehternet WAN"
+        if (cf.wan_preference.value == "2")
+        {
+            cf.dsl_multiplex.disabled = true;
+            cf.dsl_vpi.disabled = true;
+            cf.dsl_vci.disabled = true;
+        }
+        else
+        {
+            cf.dsl_multiplex.disabled = false;
+            cf.dsl_vpi.disabled = false;
+            cf.dsl_vci.disabled = false;
+        }
+        //cf.vlanidActive.disabled = true;
+        //cf.vlan_id.disabled = true;
+        
+        cf.dslmode.options.length = 4;
+    	cf.dslmode.options[0].text = "<%148%>";
+    	cf.dslmode.options[1].text = "ADSL";
+    	cf.dslmode.options[2].text = "ADSL2";
+    	cf.dslmode.options[3].text = "ADSL2+";
+    	cf.dslmode.options[0].value = "0";
+    	cf.dslmode.options[1].value = "1";
+    	cf.dslmode.options[2].value = "2";
+    	cf.dslmode.options[3].value = "3";
+    	
+        if (cf.dsl_mode.value == "1")
+            cf.dslmode.selectedIndex = 1;
+        else if (cf.dsl_mode.value == "2")
+            cf.dslmode.selectedIndex = 2;
+        else if (cf.dsl_mode.value == "3")
+            cf.dslmode.selectedIndex = 3;
+        else if (cf.dsl_mode.value == "4")
+            cf.dslmode.selectedIndex = 4;
+        else
+            cf.dslmode.selectedIndex = 0;
+
+
+        cf.login_type.options.length = 2;
+    	cf.login_type.options[0].text = "PPPoE";
+    	cf.login_type.options[0].value = "0";     
+    	cf.login_type.options[1].text = "PPPoA";
+    	cf.login_type.options[1].value = "1";  
+    	cf.login_type.selectedIndex = 0;   
+    }
+        		
+	ChangeModeChoice();
+
+    if (cf.wan_preference.value == "2")
+    {
+        cf.transfermode.disabled = true;
+        cf.dslmode.disabled = true;
+    }
+    else
+    {
+        cf.transfermode.disabled = false;
+        cf.dslmode.disabled = false;
+    }
+    
+	if ( cf.enable_wan.checked == true )
+	    cf.wan_enabled.value = 1;
+	else
+	    cf.wan_enabled.value = 0;
+	    
+<%419%>
+    if ( cf.iptv_bridge.value == "1" )
+        cf.WAN2Bridge.checked = true;
+    else
+        cf.WAN2Bridge.checked = false;
+<%420%>
+}
+
+function checkDslData()
+{
+    var cf = document.forms[0];
+    var msg = "";
+    var vpi = cf.dsl_vpi.value;
+    var vci = cf.dsl_vci.value;
+
+	/* check vpi vci */
+	//if ( cf.transfer_mode.value == "ATM" )
+	if (( cf.transfer_mode.value == "ATM" ) && (cf.wan_preference.value != "2"))
+    {
+        if( isNumeric(cf.dsl_vpi, 255) ) 
+            msg += "<%43%>.\n"
+        if( isNumeric(cf.dsl_vci, 65535) ) 
+            msg += "<%44%>.\n"
+        if (vpi < 0 || vpi > 255) 
+            msg += "<%45%>.\n"
+        if (vci < 32 || vci > 65535)
+    	    msg += "<%46%>."
+
+    	if (msg.length > 1)
+    	{
+    		alert(msg);
+    		return false;
+    	}
+    }
+
+    //Check vlan_id
+    if ( cf.vlanidActive.checked == true )
+    {
+        var vlan_id = parseInt(cf.vlan_id.value,10);
+        if ((!_isNumeric(cf.vlan_id.value)) || isNaN(vlan_id) || vlan_id > 4094 || vlan_id < 1) 
+        {
+            alert("<%52%>");
+            return false;
+        }
+        
+        var vlan_prio = parseInt(cf.vlan_prio.value,10);
+        if ((!_isNumeric(cf.vlan_prio.value)) || isNaN(vlan_prio) || vlan_prio > 7 || vlan_prio < 0) {
+            alert("<%421%>");
+            return false;
+        }
+    }
+
+<%419%>
+    if ( cf.WAN2Bridge.checked == true )
+        cf.iptv_bridge.value = 1;
+    else
+        cf.iptv_bridge.value = 0;
+<%420%>
+
+    cf.nowchoice.value = -1;
+    cf.requirelogin.value = "";
+    cf.wan_selected.value = "";
+	return true;
+}
+
+function isNum(name,value)
+{	
+	var i = 0;
+	for( i = 0;i < value.length;i++ ){
+	if ( (value.charAt(i) >= '0') && (value.charAt(i) <= '9') )
+			continue;
+	else{
+		alert(name+" <%6%>");
+		return false;
+		}
+	}
+	return true;
+}
+
+function chgQoS()
+{
+ 	var cf = document.forms[0];
+	var dflag = false;
+
+	if (cf.atm_qos.value == "ubr")
+		dflag = true;
+
+	cf.atm_pcr.disabled = dflag;
+	cf.atm_scr.disabled = dflag;
+	cf.atm_mbs.disabled = dflag;
+	if (cf.atm_qos.value == "cbr"){
+		cf.atm_scr.disabled = true;
+		cf.atm_mbs.disabled = true;
+		
+	}
+}
+
+function ChangeAdslChoice()
+{
+	var cf = document.forms[0];
+	cf.nowchoice.value=cf.adslChoice.value;
+	cf.wan_selected.value = "yes";
+	cf.submit();
+}
+	
+function ChangeISPChoice()
+{
+	var cf = document.forms[0];
+	cf.nowchoice.value=cf.adslChoice.value;
+	cf.isp_selected.value = "yes";
+	cf.submit();
+}	
+	
+function ChangeModeChoice()
+{
+	var cf = document.forms[0];
+	var mode = cf.transfermode.selectedIndex;
+
+    if (mode > 0)
+    {	        
+        cf.dsl_multiplex.disabled = true;
+        cf.dsl_vpi.disabled = true;
+        cf.dsl_vci.disabled = true;
+        cf.vlanidActive.disabled = false;
+        cf.vlan_id.disabled = false;
+        
+        cf.dslmode.options.length = 1;
+    	cf.dslmode.options[0].text = "VDSL2";
+    	cf.dslmode.options[0].value = "0"; 
+
+        cf.login_type.options.length = 1;
+    	cf.login_type.options[0].text = "PPPoE";
+    	cf.login_type.options[0].value = "0";   
+    	cf.login_type.selectedIndex = 0;  
+    }
+	else{ //ATM
+		
+        if (cf.wan_preference.value == "2")
+        {
+            cf.dsl_multiplex.disabled = true;
+            cf.dsl_vpi.disabled = true;
+            cf.dsl_vci.disabled = true;
+        }
+		else
+		{
+            cf.dsl_multiplex.disabled = false;
+            cf.dsl_vpi.disabled = false;
+            cf.dsl_vci.disabled = false;
+        }
+        cf.vlanidActive.disabled = false;
+        cf.vlan_id.disabled = false;
+        
+        cf.dslmode.options.length = 4;
+    	cf.dslmode.options[0].text = "<%148%>";
+    	cf.dslmode.options[1].text = "ADSL";
+    	cf.dslmode.options[2].text = "ADSL2";
+    	cf.dslmode.options[3].text = "ADSL2+";
+    	cf.dslmode.options[0].value = "0";
+    	cf.dslmode.options[1].value = "1";
+    	cf.dslmode.options[2].value = "2";
+    	cf.dslmode.options[3].value = "3";
+    	
+        if (cf.dsl_mode.value == "1")
+            cf.dslmode.selectedIndex = 1;
+        else if (cf.dsl_mode.value == "2")
+            cf.dslmode.selectedIndex = 2;
+        else if (cf.dsl_mode.value == "3")
+            cf.dslmode.selectedIndex = 3;
+        else if (cf.dsl_mode.value == "4")
+            cf.dslmode.selectedIndex = 4;
+        else
+            cf.dslmode.selectedIndex = 0;
+
+        cf.login_type.options.length = 2;
+    	cf.login_type.options[0].text = "PPPoE";
+    	cf.login_type.options[0].value = "0";     
+    	cf.login_type.options[1].text = "PPPoA";
+    	cf.login_type.options[1].value = "1";  
+    	cf.login_type.selectedIndex = 0;
+	}
+}
+
+function disableVLANID()
+{
+	var cf = document.forms[0];
+	if (cf.vlanidActive.checked == false)
+	{
+	    cf.vlan_id.disabled = true;
+	    cf.vlan_prio.disabled = true;
+	}
+	else
+	{
+	    cf.vlan_id.disabled = false;    
+	    cf.vlan_prio.disabled = false;
+	}
+}	
+	
+function chekcvlanidenable()
+{
+	var cf = document.forms[0];
+
+	if (cf.vlanidActive.checked == false )
+	    cf.vlan_id.value = -1;
+}
+
+function change_size()
+{
+    var sep_border_num = $(".table-seperate-border").length;
+    var min_height = $('.scroll-pane').css("height");
+    min_height = min_height.replace("px", "");
+
+    var width = document.documentElement.clientWidth > 620 ? document.documentElement.clientWidth : 620;
+    var height = document.documentElement.clientHeight > min_height ? document.documentElement.clientHeight : min_height;
+
+    $('.subtop-image').css("width", width);
+    $('.subtop-image').css("height", "32px");
+    
+    $('.body-image').css("width", width);
+    $('.body-image').css("height", height-30);
+    $('.body-image').css("position", "absolute");
+    $('.body-image').css("top", 5);
+    
+    $('.subfooter-image').css("width", width);
+    $('.subfooter-image').css("height", "24px");   
+    $('.subfooter-image').css("position", "relative");
+    $('.subfooter-image').css("top", -3);    
+    
+    $('.subhead2-table').css("position", "relative");
+    $('.subhead2-table').css("top", -3);
+    
+    if(get_browser()=="Netscape") 
+        $('.subhead2-table').css("left", 1);
+    $('.subhead2-table').css("width", width-27);
+    $('.scroll-pane').css("width", width-27);
+    
+    if(document.getElementById("topframe")) {    
+        $('.subhead2-table').css("height", (height-226)/2);
+        $('.scroll-pane').css("height", (height-226)/2);   
+    } else if(sep_border_num==2) {
+        $('.subhead2-table').css("height", height-120);
+        $('.scroll-pane').css("height", height-120);    
+    } else {
+        $('.subhead2-table').css("height", height-75);
+        $('.scroll-pane').css("height", height-75);        
+    }
+    
+    $('.subhead2-bottom').css("width", width);
+    
+    $('.button-help-arrow').css("position", "absolute");
+    $('.button-help-arrow').css("left", width/2);
+        
+    
+    $('.bas-help-frame-div').css("width", width-50); 
+    $('.help-frame-div').css("width", width-50); 
+    if(get_browser()=="Firefox"|| get_browser()=="Netscape") { 
+        $('.bas-help-frame-div').css("top", height-225);
+        $('.help-frame-div').css("top", height-225);
+    }    
+    else {
+        $('.bas-help-frame-div').css("top", height-230);
+        $('.help-frame-div').css("top", height-230);
+    }
+        
+    $('#helpframe').css("width", width-50);
+
+
+    
+    
+    if(document.getElementById('helpframe')) {
+        try{
+            document.getElementById('helpframe').contentWindow.change_size_helpPage(width);
+        }catch(e){}
+    }
+    
+    
+    $('.cover-image').css("display", "none");    
+        
+}
+
+function ChangeLoginChoice(index)
+{
+ 	var cf = document.forms[0];    
+    
+    if (index==1)
+        cf.requirelogin.value = "yes";
+    else
+        cf.requirelogin.value = "no";
+        
+    cf.submit();  
+}
+//-->
+</script>
+<style type="text/css">
+SELECT {
+	WIDTH: 180px; HEIGHT: 22px
+}
+
+</style>
+
+</head>
+
+<body  onload="change_size();loadSettings();loadcheck();goTestApply();" class="page-body"  onResize="change_size();" >
+<img class="cover-image" src="<%57%>">
+<img class="body-image" src="<%58%>">
+<div id="full-page-container">
+
+<form id="target"  name="formname" method="POST" action="pppoe.cgi">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue"> 
+<img class="subtop-image" src="<%59%>">
+<div class="subhead2"> <%297%></div>
+<table border="0"     class="subhead2-table">
+
+<tr align="left" valign="middle">
+<td  style="padding-top:10px;padding-bottom:10px" align="center" colspan="2" class="table-seperate-border">
+<button type="submit" value="SUBMIT"  onClick="buttonClick(this,'<%61%>');return checkData()" name="apply" class="button-apply" style="padding-left:10px"> <span class="roundleft_apply" ><%62%>&nbsp;<span class="apply-icon">&nbsp;&nbsp;&nbsp;&nbsp;</span></span><span class="roundright_apply">&nbsp;&nbsp;&nbsp;</span></button>
+<button type="button" value="BUTTON"  onClick="buttonClick(this,'<%63%>');reset();loadSettings();" name="Cancel" class="button-rule" style="padding-left:10px" ><span class="roundleft_button"><span class ="cancel-icon">&nbsp;&nbsp;&nbsp;&nbsp;<%64%></span></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+<button type="submit" value="SUBMIT"  onClick="buttonClick(this,'<%422%>');return checkData()" name="Test" class="button-apply" style="padding-left:10px"> <span class="roundleft_apply" ><%422%>&nbsp;<span class="apply-icon">&nbsp;&nbsp;&nbsp;&nbsp;</span></span><span class="roundright_apply">&nbsp;&nbsp;&nbsp;</span></button>
+
+</td>
+</tr>
+
+<tr><td class="scrollpane-table-seperate-border" colspan="2"><div class="scroll-pane" style="height:410px;width:620px;overflow:auto;scrolling:auto"><table style="border-collapse:collapse;width:97%">
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+<tr><td nowrap width="50%"><b><%423%></b></td>
+<td width="50%" align="right"><select name="country" size="1" onchange="setisp();ChangeISPChoice();"><%424%></select>  
+</td>
+</tr>
+
+<tr><td nowrap width="50%"><b><%425%></b></td>
+<td width="50%" align="right"><select name="isp" size=1 onChange=ChangeISPChoice()><option selected>Adam</option><option>Clubtelco</option><option>Dodo</option><option>Exetel</option></select></td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+
+<tr> 
+ <td nowrap width="50%"><%426%></TD>
+ <td width="50%" align="right"><select name="transfermode" onChange="ChangeModeChoice()" size="1">
+   <option value="ATM">ATM(ADSL)</option>
+<%427%>   
+   <option value="PTM">PTM(VDSL)</option>
+<%428%>   
+ </select></TD>
+</TR>
+
+<tr>
+ <td nowrap width="50%"><%429%></TD>
+ <td width="50%" align="right">
+ <SELECT name="dslmode" size="1">
+	 <option value="0"><%148%></option>
+	 <option value="1">ADSL</option>
+	 <option value="2">ADSL2</option>
+	 <option value="3">ADSL2+</option>
+<%427%>   	 
+	 <option value="4">VDSL2</option>
+<%428%> 	 
+ </SELECT></TD>
+</TR>
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<tr>
+  <td nowrap width="50%"><select name="adslChoice" size="1" onChange=ChangeAdslChoice()>
+    <option value="0">Internet</option>
+    <option value="1">IPTV</option>    
+    </script>
+  </select></td>
+  <td nowrap width="50%" align="right">&nbsp;</td>
+</tr>
+<tr><td>&nbsp;<input type="checkbox" name="enable_wan" value="enable_wan" onClick="enableInterface();"><b><%430%></b></td></tr>
+
+
+<tr>
+ <td nowrap width="50%" ><%431%></TD>
+ <td width="50%" align="right"><select name="dsl_multiplex" size="1">
+   <option value="LLC"><%50%></option>
+   <option value="VC"><%51%></option>
+ </select></TD>
+</TR>
+<TR>
+  <td nowrap width="50%">VPI</td>
+  <td nowrap width="50%" align="right" ><input type="text" name="dsl_vpi" class="num" value="" size="3" maxlength="3"></td>
+</tr>
+<TR>
+  <td nowrap width="50%">VCI</td>
+  <td nowrap width="50%" align="right"><input type="text" name="dsl_vci" class="num" value="" size="5" maxlength="5"></td>
+</tr>
+
+<tr><td colspan="2" height="8" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<TR>
+  <td nowrap width="50%">
+	<input type="checkbox" name="vlanidActive" value="vlanidEnable" onclick="disableVLANID()"><%432%> </td>
+  <td nowrap width="50%" align="right"><input type="text" class="num" name="vlan_id" size="5" maxlength="5"></td>
+</tr>
+
+<TR>
+  <td nowrap width="50%"><%433%> &nbsp; (0 ~ 7)</td>
+  <td nowrap width="50%" align="right" ><input type="text" name="vlan_prio" size="5" maxlength="1" value="0"></td>
+</tr>
+
+<%434%>
+<tr>
+  <td nowrap width="50%">
+  <input type="checkbox" name="WAN2Bridge" value="WAN2BridgeEnable"><%435%> </td>
+</tr>
+<%436%>
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+</div></td></tr>
+
+
+
+</table>
+<div id="router_item" style="display: block;">
+<table style="border-collapse:collapse;width:97%;">
+
+
+<tr>
+	<td colspan="2">
+	<a href="javascript:loadhelp('BAS_pppoe','question')" tabindex="-1"><b><%381%></b></a></td>
+</tr>
+<tr>
+	<td colspan="2"><input type="radio" name="loginreq" value="pppoe" onClick="ChangeLoginChoice(1)">
+	<a href="javascript:loadhelp('BAS_pppoe','question')" tabindex="-1"><%379%></a></td>
+</tr>
+<tr>
+	<td colspan="2"><input type="radio" name="loginreq" value="dhcp" onClick="ChangeLoginChoice(2)">
+	<a href="javascript:loadhelp('BAS_pppoe','question')" tabindex="-1"><%380%></a></td>
+</tr>
+<tr><td colspan="2" height="12"  ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+
+<tr>
+ <td width="50%"><a href="javascript:loadhelp('BAS_pppoe','isp')" tabindex="-1"><b><%515%></b></a></td>
+ <td width="50%" align="right"><select name="login_type" onChange="setServer()"><option selected>PPPoE</option><option>PPPoA</option></select></td>
+</tr>
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<tr>
+    <td><a href="javascript:loadhelp('BAS_pppoe','login')" tabindex="-1"><b><%516%></b></a></td>
+    <td align="right"><input type="text" name="pppoe_username" size="15" style="width:180px" maxlength="63" value="<%517%>"></td>
+</tr>
+<tr>
+	<td><a href="javascript:loadhelp('BAS_pppoe','password')" tabindex="-1"><b><%518%></b></a></td>
+	<td align="right">
+	<div id="passwdEnterStatus" style ="visibility:visible">
+	<input type="password" name="pppoe_passwd" size="15"  style="width:180px" maxlength="63" value="<%519%>" onfocus="pw_onfocus();">
+	</div>
+	</td>
+</tr>
+
+<tr>
+    <td nowrap><a href="javascript:loadhelp('BAS_pppoe','serv_name')" tabindex="-1"><%520%></a> &nbsp;</td>
+    <td align="right"><input type="text" name="pppoe_servicename" maxlength="63" size="15" value="<%521%>"></td>
+</tr>
+
+<tr>
+<td width="50%" nowrap><a href="javascript:loadhelp('BAS_pppoe','conn_mode')" tabindex="-1"><b><%522%></b></a></td>
+<td width="50%" align="right">
+    <select name="pppoe_dod" onChange="setConnMode()" size="1">
+        <option value=0><%523%></option>
+        <option value=1><%524%></option>
+        <option value=2><%525%></option>
+    </select></td>
+</tr>
+<tr>
+    <td nowrap><a href="javascript:loadhelp('BAS_pppoe','pppoe_idletime')" tabindex="-1"><%526%></a></td>
+    <td align="right"><input type="text" class="num" name="pppoe_idletime" size="3" maxlength="3"></td>
+</tr>
+
+<%527%>
+<tr>
+  <td nowrap>
+    <input type="checkbox"  <%528%> name="auto_conn_24hr" value="auto_conn_24hr"><%529%>
+	</td>
+	<td colspan="1">
+    <select id=auto_conn_time_id  name=auto_conn_time size="1">
+        <option value=0>00:00</option>
+        <option value=1>00:30</option>
+        <option value=2>01:00</option>
+        <option value=3>01:30</option>
+        <option value=4>02:00</option>
+        <option value=5>02:30</option>
+        <option value=6>03:00</option>
+        <option value=7>03:30</option>
+        <option value=8>04:00</option>
+        <option value=9>04:30</option>
+        <option value=10>05:00</option>
+        <option value=11>05:30</option>
+        <option value=12>06:00</option>
+        <option value=13>06:30</option>
+        <option value=14>07:00</option>	   
+        <option value=15>07:30</option>
+        <option value=16>08:00</option>
+        <option value=17>08:30</option>
+        <option value=18>09:00</option>
+        <option value=19>09:30</option>
+        <option value=20>10:00</option>
+        <option value=21>10:30</option>
+        <option value=22>11:00</option>
+        <option value=23>11:30</option>
+        <option value=24>12:00</option>
+        <option value=25>12:30</option>
+        <option value=26>13:00</option>
+        <option value=27>13:30</option>
+        <option value=28>14:00</option>
+        <option value=29>14:30</option>
+        <option value=30>15:00</option>
+        <option value=31>15:30</option>
+        <option value=32>16:00</option>
+        <option value=33>16:30</option>
+        <option value=34>17:00</option>
+        <option value=35>17:30</option>
+        <option value=36>18:00</option>
+        <option value=37>18:30</option>
+        <option value=38>19:00</option>
+        <option value=39>19:30</option>
+        <option value=40>20:00</option>
+        <option value=41>20:30</option>
+        <option value=42>21:00</option>
+        <option value=43>21:30</option>
+        <option value=44>22:00</option>
+        <option value=45>22:30</option>
+        <option value=46>23:00</option>
+        <option value=47>23:30</option>
+    </select>	
+	</td> 
+
+</tr>
+<%530%>
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+<tr>
+    <td colspan="2"><a href="javascript:loadhelp('BAS_pppoe','InternetIP')" tabindex="-1"><b><%441%></b></a></td>
+</tr>
+<tr>
+    <td colspan="2"><input type="radio" name="WANAssign" value="Dynamic" onClick="setIP()"><%442%></td>
+</tr>
+<tr>
+    <td nowrap><input type="radio" name="WANAssign" value="Fixed" onClick="setIP()"><%443%></td>
+    <td align="right" class="num">
+    <input type="text" name="WPethr1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheck(this,0)">.<input type="text" name="WPethr2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="WPethr3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="WPethr4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedIP) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,1)"></td>
+</tr>
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<tr>
+    <td colspan="2"><a href="javascript:loadhelp('BAS_pppoe','DNSaddress')" tabindex="-1"><b><%448%></b></a></td>
+</tr>
+
+<tr>
+    <td colspan="2"><input type="radio" name="DNSAssign" value="0" onClick="setDNS()"><%449%></td>
+</tr>
+
+<tr>
+    <td colspan="2"><input type="radio" name="DNSAssign" value="1" onClick="setDNS()"><%450%></td>
+</tr>
+
+<tr>
+        <td><img src="spacer.gif" width="20" height="12" border="0"><%451%></td>
+        <td align="right" class="num"><input type="text" name="DAddr1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheck(this,0)">.<input type="text" name="DAddr2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="DAddr3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="DAddr4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,1)"></td>
+</tr>
+<tr>
+        <td><img src="spacer.gif" width="20" height="12" border="0"><%452%></td>
+        <td align="right" class="num"><input type="text" name="PDAddr1" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="bscheck(event,this,1)" onkeyup="jumpcheck(this,0)">.<input type="text" name="PDAddr2" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="PDAddr3" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,0)">.<input type="text" name="PDAddr4" class="num" size="4" maxlength="3" onFocus="if(DisableFixedDNS) this.blur()" onkeydown="bscheck(event,this,0)" onkeyup="jumpcheck(this,1)"></td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<tr>
+    <td nowrap colspan="2"><b><%453%></b></td>
+</tr>
+<tr>
+	<td align="left"  colspan="1"><input type="radio" name="en_nat" value="1" onClick="resetspi();"><b><%454%></b></td>
+</tr>	
+<tr>
+	<td align="left"  colspan="1"><input type="radio" name="en_nat" value="0" onClick="resetspi();"><b><%455%></b></td>
+</tr>	
+<tr> 
+ <td colspan="2" style="display:none">&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox"  name="disable_spi" value="disable_spi"><b><%456%></b></td>
+</tr>
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+<%531%>
+<tr>
+    <td nowrap colspan="2"><a href="javascript:loadhelp('BAS_pppoe','localaddress')" tabindex="-1"><b><%457%></b></a></td>
+</tr>
+<tr>
+    <td colspan="2" nowrap><input type="radio" name="MACAssign" value="0" onClick="setMAC()"><%458%></td>
+</tr>
+<tr>
+    <td nowrap colspan="2"><input type="radio" name="MACAssign" value="1" onClick="setMAC()"><%459%></td>
+</tr>
+<tr>
+    <td nowrap align="left"><input type="radio" name="MACAssign" value="2" onClick="setMAC()"><%460%></td>
+    <td align="right" class="num"><input type="text" class="num" name="Spoofmac" size="17" maxlength="17" onFocus="if(DisableFixedMAC) this.blur()"></td>
+</tr>
+
+<%532%>
+
+<tr><td colspan="2" height="12" ><div style="background-image:url('liteblue.gif');width:100%">&nbsp;</div></td></tr>
+
+
+</table></div></div></td></tr>
+<tr valign="middle" align="center"><td class="table-seperate-border" colspan="2" style="padding-left:0px"><div class="bas-help-frame-div" > <iframe id="helpframe"  name=helpframe src="BAS_pppoe_h.htm" scrolling="no" class="help-iframe"  frameborder="0" onload="showHelpIframe();"></iframe> </div> </td> </tr>
+</table>
+   <img class="subfooter-image" src="img/subhead2-bottom.gif">
+<div class="subhead2-bottom" >
+    <span style="float:left;padding-left:10px;padding-top:5px"><img src="img/help-icon.gif" onmouseover="changeCursorPointer();" onclick="showHelpIframe();" onmouseout="changeCursorDefault();"></span>
+    <span class="subhead2-text" style="float:left;padding-left:3px;" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%211%> </span>
+    <span class="button-help-arrow">
+      <img src="img/helparrowdown-icon.gif" id="help-button" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();" ></span>
+    <span class="subhead2-text" style="text-decoration:underline;float:right;padding-right:10px" onclick="showHelpIframe();" onmouseover="changeCursorPointer();" onmouseout="changeCursorDefault();"> <%212%> </span>
+      </div>
+
+
+<INPUT name=requirelogin type=hidden value= "">
+<INPUT name=wan_selected type=hidden value= "">
+<INPUT name=isp_selected type=hidden value= "">
+<input type="hidden" name="runtest" value="<%37%>">
+<INPUT name=wan_ipaddr type=hidden value= "<%400%>">
+<INPUT name=pppoe_localip type=hidden value= "<%507%>">
+<INPUT name=pppoe_user_ip type=hidden value= "<%533%>">
+  <INPUT name=wan_dns_sel type=hidden value= "<%467%>">
+<INPUT name=wan_dns1_pri type=hidden value= "<%470%>">
+<INPUT name=wan_dns1_sec type=hidden value= "<%471%>">
+<INPUT name=wan_hwaddr_sel type=hidden value= "<%472%>">
+<INPUT name=wan_hwaddr_def type=hidden value= "<%473%>">
+<INPUT name=wan_hwaddr2 type=hidden value= "<%474%>">
+<INPUT name=wan_hwaddr_pc type=hidden value= "<%475%>">
+<INPUT name=opendns_parental_ctrl type=hidden value= "<%534%>">
+<INPUT name=pppoe_temp type=hidden value= "<%535%>">
+<INPUT name=pppoe_gateway type=hidden value="<%536%>">
+<INPUT name=gui_region type=hidden value="<%537%>">
+<INPUT name=pppoe_user_netmask type=hidden value="<%538%>">
+<INPUT name=static_pppoe_enable type=hidden value= "<%539%>">
+<INPUT name=pppoe_ip_sel type=hidden value= "<%540%>">
+<INPUT name=gui_language type=hidden value= "<%9%>">
+<INPUT name=auto_time type=hidden value= "<%541%>">
+<INPUT name=ipv6_proto type=hidden value= "<%542%>">
+<INPUT name=ipv6_proto_auto type=hidden value= "<%543%>">
+<input name=auto_conn_time_default type=hidden value= "0">
+  <INPUT name=wan_nat type=hidden value= "<%544%>">
+ 
+  <INPUT name=nowchoice type=hidden value= "<%478%>">
+  
+  <INPUT name=atm0_vpi type=hidden value= "<%479%>">
+  <INPUT name=atm0_vci type=hidden value= "<%480%>">
+  <INPUT name=atm0_multiplex type=hidden value= "<%481%>">
+  <INPUT name=atm0_encap type=hidden value= "<%482%>">
+
+  <INPUT name=atm1_vpi type=hidden value= "<%483%>">
+  <INPUT name=atm1_vci type=hidden value= "<%484%>">
+  <INPUT name=atm1_multiplex type=hidden value= "<%485%>">
+  <INPUT name=atm1_encap type=hidden value= "<%486%>">  
+
+  <INPUT name=wan0_dial type=hidden value= "<%487%>">
+
+  <INPUT name=dsl_mode type=hidden value= "<%488%>">
+  <INPUT name=transfer_mode type=hidden value= "<%489%>">
+  <INPUT name=wan0_vlanId_enable type=hidden value= "<%490%>">
+  <INPUT name=wan1_vlanId_enable type=hidden value= "<%491%>">
+  
+  <INPUT name=wan0_vlanId type=hidden value= "<%492%>">   			
+  <INPUT name=wan1_vlanId type=hidden value= "<%493%>">
+
+  <INPUT name=wan0_vlanPri type=hidden value= "<%494%>">   			
+  <INPUT name=wan1_vlanPri type=hidden value= "<%495%>">
+
+  <INPUT name=wan0_enabled type=hidden value= "<%496%>">
+  <INPUT name=wan1_enabled type=hidden value= "<%497%>">
+
+  <INPUT name=wan_enabled type=hidden value= "">
+  <INPUT name=wan_proto_cur_choice type=hidden value= "<%382%>">
+  <INPUT name=wan_preference type=hidden value= "<%498%>">
+    
+  <INPUT name=device_mode type=hidden value= "<%499%>">
+<%434%>
+  <INPUT name=iptv_bridge type=hidden value= "<%500%>">
+<%436%>
+<a name="helpframe-anchor"></a>
+</form>
+
+</div>
+</body>
+
+
+</html>

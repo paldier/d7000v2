@@ -1,0 +1,26 @@
+diff -Nur hostapd20-06/hostapd/.config hostapd20/hostapd/.config
+--- hostapd20-06/hostapd/.config	2013-04-24 16:34:48.000000000 +0300
++++ hostapd20/hostapd/.config	2013-04-24 17:08:51.000000000 +0300
+@@ -48,7 +48,7 @@
+ # This version is an experimental implementation based on IEEE 802.11w/D1.0
+ # draft and is subject to change since the standard has not yet been finalized.
+ # Driver support is also needed for IEEE 802.11w.
+-#CONFIG_IEEE80211W=y
++CONFIG_IEEE80211W=y
+ 
+ # Integrated EAP server
+ CONFIG_EAP=y
+diff -Nur hostapd20-06/src/drivers/driver_mtlk.c hostapd20/src/drivers/driver_mtlk.c
+--- hostapd20-06/src/drivers/driver_mtlk.c	2013-04-24 17:00:29.000000000 +0300
++++ hostapd20/src/drivers/driver_mtlk.c	2013-04-24 17:09:34.000000000 +0300
+@@ -200,6 +200,10 @@
+ 		ext->alg = IW_ENCODE_ALG_TKIP;
+ 	else if (alg == WPA_ALG_CCMP)
+ 		ext->alg = IW_ENCODE_ALG_CCMP;
++#ifdef CONFIG_IEEE80211W
++	else if (alg == WPA_ALG_IGTK)
++		ext->alg = IW_ENCODE_ALG_AES_CMAC;
++#endif /* CONFIG_IEEE80211W */
+ 	else {
+ 		wpa_printf(MSG_ERROR, "%s: unknown/unsupported algorithm %d\n",
+ 			__func__, alg);

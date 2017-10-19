@@ -1,0 +1,18 @@
+diff --exclude 'msvc*' -Npur orig/src/ap/ieee802_11_ht.c patched/src/ap/ieee802_11_ht.c
+--- orig/src/ap/ieee802_11_ht.c	2015-11-05 11:17:48.000000000 +0200
++++ patched/src/ap/ieee802_11_ht.c	2015-11-05 11:21:54.000000000 +0200
+@@ -217,6 +217,14 @@ void hostapd_2040_coex_action(struct hos
+ 		       HOSTAPD_LEVEL_DEBUG, "hostapd_public_action - action=%d",
+ 		       mgmt->u.action.u.public_action.action);
+ 
++	if (!iface->conf->obss_interval) {
++		hostapd_logger(hapd, mgmt->sa,
++			       HOSTAPD_MODULE_IEEE80211,
++			       HOSTAPD_LEVEL_DEBUG,
++			       "2040 coexistence is disabled, skipping frame");
++		return;
++	}
++	
+ 	if (!(iface->conf->ht_capab & HT_CAP_INFO_SUPP_CHANNEL_WIDTH_SET))
+ 		return;
+ 

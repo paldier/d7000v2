@@ -1,0 +1,114 @@
+# HG changeset patch
+# Parent 255f159c8681620431122f2cdb17d9989b9bbb3d
+
+diff --git a/hostapd/.config b/hostapd/.config
+--- a/hostapd/.config
++++ b/hostapd/.config
+@@ -281,10 +281,12 @@
+ # Interworking (IEEE 802.11u)
+ # This can be used to enable functionality to improve interworking with
+ # external networks.
+-#CONFIG_INTERWORKING=y
++CONFIG_INTERWORKING=y
+ 
+ # Hotspot 2.0
+-#CONFIG_HS20=y
++CONFIG_HS20=y
++
++CONFIG_P2P_MANAGER=y
+ 
+ # Enable SQLite database support in hlr_auc_gw, EAP-SIM DB, and eap_user_file
+ #CONFIG_SQLITE=y
+diff --git a/hostapd/config_file.c b/hostapd/config_file.c
+--- a/hostapd/config_file.c
++++ b/hostapd/config_file.c
+@@ -1541,7 +1541,7 @@
+ }
+ 
+ 
+-static int hs20_parse_wan_metrics(struct hostapd_bss_config *bss, char *buf,
++int hs20_parse_wan_metrics(struct hostapd_bss_config *bss, char *buf,
+ 				  int line)
+ {
+ 	u8 *wan_metrics;
+diff --git a/hostapd/config_file.h b/hostapd/config_file.h
+--- a/hostapd/config_file.h
++++ b/hostapd/config_file.h
+@@ -14,4 +14,6 @@
+ 		      struct hostapd_bss_config *bss, char *field,
+ 		      char *value);
+ 
++int hs20_parse_wan_metrics(struct hostapd_bss_config *bss, char *buf,
++				  int line);
+ #endif /* CONFIG_FILE_H */
+diff --git a/hostapd/ctrl_iface.c b/hostapd/ctrl_iface.c
+--- a/hostapd/ctrl_iface.c
++++ b/hostapd/ctrl_iface.c
+@@ -694,6 +694,22 @@
+ 
+ #endif /* CONFIG_HS20 */
+ 
++static int hostapd_ctrl_iface_update_wan_metrics(struct hostapd_data *hapd,
++						const char *cmd)
++{
++	struct hostapd_iface *iface = hapd->iface;
++	char buf[128];
++	int j;
++
++	os_strlcpy(buf, cmd, 128);
++	wpa_printf(MSG_DEBUG, "hostapd_ctrl_iface_update_wan_metrics, iface->num_bss=%d"
++			,iface->num_bss);
++	for (j = 0; j < iface->num_bss; j++) {
++		if (hs20_parse_wan_metrics(iface->bss[j]->conf, buf, 0) != 0)
++			return -1;
++	}
++	return 0;
++}
+ 
+ #ifdef CONFIG_INTERWORKING
+ 
+@@ -1502,6 +1518,9 @@
+ 			reply_len = -1;
+ #endif /* CONFIG_WPS_NFC */
+ #endif /* CONFIG_WPS */
++	} else if (os_strncmp(buf, "UPDATE_WAN_METRICS ", 19) == 0) {
++		if (hostapd_ctrl_iface_update_wan_metrics(hapd, buf + 19))
++			reply_len = -1;
+ #ifdef CONFIG_INTERWORKING
+ 	} else if (os_strncmp(buf, "SET_QOS_MAP_SET ", 16) == 0) {
+ 		if (hostapd_ctrl_iface_set_qos_map_set(hapd, buf + 16))
+diff --git a/hostapd/hostapd_cli.c b/hostapd/hostapd_cli.c
+--- a/hostapd/hostapd_cli.c
++++ b/hostapd/hostapd_cli.c
+@@ -694,6 +694,23 @@
+ 	return 0;
+ }
+ 
++static int hostapd_cli_cmd_update_wan_metrics(struct wpa_ctrl *ctrl,
++				int argc, char *argv[])
++{
++	char buf[200];
++	int res;
++
++	if (argc != 1) {
++		printf("Invalid 'update_wan_metrics' command - "
++			   "one argument is needed\n");
++		return -1;
++	}
++
++	res = os_snprintf(buf, sizeof(buf), "UPDATE_WAN_METRICS %s", argv[0]);
++	if (res < 0 || res >= (int) sizeof(buf))
++		return -1;
++	return wpa_ctrl_command(ctrl, buf);
++}
+ 
+ static int hostapd_cli_cmd_set_qos_map_set(struct wpa_ctrl *ctrl,
+ 					   int argc, char *argv[])
+@@ -998,6 +1015,7 @@
+ 	{ "set", hostapd_cli_cmd_set },
+ 	{ "get", hostapd_cli_cmd_get },
+ 	{ "set_qos_map_set", hostapd_cli_cmd_set_qos_map_set },
++	{ "update_wan_metrics", hostapd_cli_cmd_update_wan_metrics },
+ 	{ "send_qos_map_conf", hostapd_cli_cmd_send_qos_map_conf },
+ 	{ "chan_switch", hostapd_cli_cmd_chan_switch },
+ 	{ "hs20_wnm_notif", hostapd_cli_cmd_hs20_wnm_notif },

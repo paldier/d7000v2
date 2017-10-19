@@ -1,0 +1,46 @@
+From c99f575e1105810b1f0992166ab585550792566d Mon Sep 17 00:00:00 2001
+From: Jiang Liu <jiang.liu@linux.intel.com>
+Date: Thu, 9 Jan 2014 15:30:27 +0800
+Subject: [PATCH] intel_idle: close avn_cstates array with correct marker
+
+Close avn_cstates array with correct marker to avoid overflow
+in function intel_idle_cpu_init().
+
+[rjw: The problem was introduced when commit 22e580d07f65 was merged
+ on top of eba682a5aeb6 (intel_idle: shrink states tables).]
+
+Fixes: 22e580d07f65 (intel_idle: Fixed C6 state on Avoton/Rangeley processors)
+Signed-off-by: Jiang Liu <jiang.liu@linux.intel.com>
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+(cherry picked from commit 88390996c95b879ba365888199b45ace3f5ca80b)
+
+Signed-off-by: Nagaraj S <sivasankaranx.nagaraj@intel.com>
+---
+ drivers/idle/intel_idle.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/idle/intel_idle.c b/drivers/idle/intel_idle.c
+index 6f456f0..797ed29 100644
+--- a/drivers/idle/intel_idle.c
++++ b/drivers/idle/intel_idle.c
+@@ -329,7 +329,7 @@ static struct cpuidle_state atom_cstates[] = {
+ 	{
+ 		.enter = NULL }
+ };
+-static struct cpuidle_state avn_cstates[] __initdata = {
++static struct cpuidle_state avn_cstates[] = {
+ 	{
+ 		.name = "C1-AVN",
+ 		.desc = "MWAIT 0x00",
+@@ -344,6 +344,8 @@ static struct cpuidle_state avn_cstates[] __initdata = {
+ 		.exit_latency = 15,
+ 		.target_residency = 45,
+ 		.enter = &intel_idle },
++	{
++		.enter = NULL }
+ };
+ 
+ /**
+-- 
+1.7.9.5
+

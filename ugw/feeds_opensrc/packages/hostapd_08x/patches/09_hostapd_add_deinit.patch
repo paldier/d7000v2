@@ -1,0 +1,181 @@
+diff -Nur hostapd20-07/src/drivers/driver_mtlk.c hostapd20/src/drivers/driver_mtlk.c
+--- hostapd20-07/src/drivers/driver_mtlk.c	2013-06-09 16:41:02.000000000 +0300
++++ hostapd20/src/drivers/driver_mtlk.c	2013-06-09 16:45:15.000000000 +0300
+@@ -314,7 +314,7 @@
+ int
+ mtlk_ioctl_wrapper(struct mtlk_driver_data *drv, unsigned int cmd, void *ptr_struct)
+ {
+-	int ret=0, count_errors=0, ret_host_api;
++	int ret=0, count_errors=0;
+ 	unsigned char error_cause[32];
+ 	int fw_fails_before=0, fw_fails=0;
+ 	int sm_state=SEND_API;
+@@ -903,34 +903,10 @@
+ *  Parse the message arrived.
+ *  Use proprietary 'struct mtlk_nl_msghdr' to validate message is from mtlk driver.
+ * 
+-*  phdr data is built according to event:
+-*
++*  see driver_mtlk_readme.txt for more on next phdr data possible events:
+ *  Probe_req:
+-*   -------------------------
+-*  \  struct mtlk_nl_msghdr \
+-*  ---------------------------
+-*  \ struct ieee80211_mgmt  \
+-*  ---------------------------
+-*  \ ie                     \
+-*  \________________________\
+-*
+ *  FW Crash:
+-*   -------------------------
+-*  \  struct mtlk_nl_msghdr \
+-*  ---------------------------
+-*  \ wlanX data             \
+-*  \________________________\
+-*
+ *  FW Recovery:
+-*   -------------------------
+-*  \  struct mtlk_nl_msghdr \
+-*  ---------------------------
+-*  \ wlanX data             \
+-*  \________________________\
+-*
+-* where date:
+-* FW Crash: string=fw_crash
+-* FW Recovery: string with iwpriv gFWRecovery configuration (full fast complete time dumps)
+ */
+ static int
+ mtlk_nlink_parse_msg(mtlk_nlink_socket_t* nlink_socket, struct mtlk_nl_msghdr *phdr, int len, struct mtlk_driver_data *drv)
+@@ -1052,11 +1028,11 @@
+ 
+ 
+ /*
+-* mtlk_nlink_init - create and register the mtlk genl netlink socket used for probe
++* mtlk_gnl_nlink_init - create and register the mtlk genl netlink socket used for probe
+ * request messages as well as other events. Register callback to process netlink messaages.
+ * This code is based on the mtlk IRB implementation.
+ */
+-int mtlk_nlink_init(mtlk_nlink_socket_t *nlink_socket, struct mtlk_driver_data *drv)
++int mtlk_gnl_nlink_init(mtlk_nlink_socket_t *nlink_socket, struct mtlk_driver_data *drv)
+ {
+     int broadcast_group;
+     int enabled=1;
+@@ -1107,7 +1083,6 @@
+   goto end;
+ 
+ err_dealloc:
+-  nl_close(nlink_socket->sock);
+   nl_handle_destroy(nlink_socket->sock);
+ end:
+   return res;
+@@ -1115,17 +1090,17 @@
+ 
+ 
+ /*
+-* mtlk_nlink_deinit - unregister the mtlk netlink socket used for probe request messages
+-* as we ll as other messages (fw crash, etc.).
++* mtlk_gnl_nlink_deinit - unregister the mtlk netlink socket used for probe request messages
++* as well as other messages (fw crash, etc.).
+ */
+-void mtlk_nlink_deinit(mtlk_nlink_socket_t *netlink)
++void mtlk_gnl_nlink_deinit(mtlk_nlink_socket_t *netlink)
+ {
+-    MTLK_PRINT("gnl debug: In mtlk_nlink_deinit\n");
++    MTLK_PRINT("gnl debug: In mtlk_gnl_nlink_deinit\n");
+ 	if (netlink == NULL)
+ 		return;
+ 	if (netlink->sock >= 0) {
+ 		eloop_unregister_read_sock(nl_socket_get_fd(netlink->sock));
+-		close(nl_socket_get_fd(netlink->sock)); /* TODO: should replace by nl_close with address */
++		nl_handle_destroy(netlink->sock);
+ 	}
+ 	os_free(netlink);
+ }
+@@ -1141,7 +1116,7 @@
+ 	if (nl_socket == NULL)
+ 		return -1;
+ 
+-	if (mtlk_nlink_init(nl_socket, drv) == -1) {
++	if (mtlk_gnl_nlink_init(nl_socket, drv) == -1) {
+ 		os_free(nl_socket);
+         MTLK_PRINT("gnl debug: error in netlink_init\n");
+ 		return -1;
+@@ -1315,8 +1290,11 @@
+ {
+ 	struct mtlk_driver_data *drv = priv;
+ 
++	/* deinit wireless events netlink */
+ 	netlink_deinit(drv->netlink);
+-	mtlk_nlink_deinit(drv->nlink_socket);
++	/* deinit probe (and other events) gnl netlink */
++	mtlk_gnl_nlink_deinit(drv->nlink_socket);
++
+ 	(void) mtlk_set_iface_flags(drv, 0);
+ 	if (drv->ioctl_sock >= 0)
+ 		close(drv->ioctl_sock);
+@@ -1425,6 +1403,7 @@
+ const struct wpa_driver_ops wpa_driver_mtlk_ops = {
+ 	.name			= "mtlk",
+ 	.hapd_init		= mtlk_init,
++	.hapd_deinit	= mtlk_deinit,
+ 	.deinit			= mtlk_deinit,
+ 	.set_key		= mtlk_set_encryption,
+ 	.get_seqnum		= mtlk_get_seqnum,
+diff -Nur hostapd20-07/src/drivers/driver_mtlk_readme.txt hostapd20/src/drivers/driver_mtlk_readme.txt
+--- hostapd20-07/src/drivers/driver_mtlk_readme.txt	1970-01-01 02:00:00.000000000 +0200
++++ hostapd20/src/drivers/driver_mtlk_readme.txt	2013-06-09 16:45:22.000000000 +0300
+@@ -0,0 +1,54 @@
++This readme explain driver_mtlk.c file:
++1. Netlink related handlers
++2. Generic Netlink events
++
++
++1. Netlink related handlers:
++
++   _______________________________________________________________________________________________
++  |                               |  GENERIC NETLINK              | RT NETLINK                  |
++  |_______________________________|_______________________________|_____________________________|
++  -----------------------------------------------------------------------------------------------
++  | DB                            | drv->nlink_socket             | drv->netlink                |
++  -----------------------------------------------------------------------------------------------
++  | 1st level Init                | mtlk_receive_netlink_init ()  | mtlk_wireless_event_init()  |
++  -----------------------------------------------------------------------------------------------
++  |     2nd level Init            | mtlk_gnl_nlink_init ()        | netlink_init()              |
++  -----------------------------------------------------------------------------------------------
++  | 1st level de-Init             | mtlk_gnl_nlink_deinit()       | netlink_deinit()            |
++  -----------------------------------------------------------------------------------------------
++  |_______________________________|_______________________________|_____________________________|
++																	
++
++
++
++2. Generic Netlink events:
++
++  phdr data is built according to event:
++
++  Probe_req:
++  --------------------------
++  |  struct mtlk_nl_msghdr |
++  --------------------------
++  | struct ieee80211_mgmt  |
++  --------------------------
++  | ie                     |
++  |________________________|
++
++  FW Crash:
++  --------------------------
++  |  struct mtlk_nl_msghdr |
++  --------------------------
++  | wlanX data             |
++  |________________________|
++
++  FW Recovery:
++  --------------------------
++  |  struct mtlk_nl_msghdr |
++  --------------------------
++  | wlanX data             |
++  |________________________|
++
++ where date:
++ FW Crash: string=fw_crash
++ FW Recovery: string with iwpriv gFWRecovery configuration (full fast complete time dumps)

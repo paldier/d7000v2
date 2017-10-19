@@ -1,0 +1,79 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<%11%>
+<title>NETGEAR Router <%55%></title>
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+<script src="script/jquery.mousewheel.js"></script>
+<script type="text/javascript" src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<%12%>
+<script language="javascript" type="text/javascript">
+<!--
+
+
+    $(document).ready(function()
+    {	
+        $("#target").submit(function() {
+            buttonFilter();
+        });
+
+    });
+
+
+
+function goHome() {
+	if (top.tophideframe)
+		top.close();
+	else if(document.forms[0].call_by_genie.value == 1 )
+             window.location.href="genie_redirect_successpage3.htm";
+    else if (document.forms[0].enable_ap_mode.value == 1)
+	    location.href="RST_status.htm";
+    else
+		location.href="BAS_basic.htm"
+}
+function preCheck(){
+	if (top.tophideframe)
+		document.forms[0].Button.value = "<%1285%>";
+}
+//-->
+</script>
+</head>
+<body onLoad="preCheck();" style="margin:0px;background-color:#e5e5e5">
+<form id="target"  name="formname" action="ph_fail" method="POST">
+<input type="hidden" name="buttonHit"><input type="hidden" name="buttonValue"> 
+<table border="0"   width="100%">
+
+<tr>
+<td colspan="2" align="center">
+<h1><%1796%> </H1>
+</td>
+</tr>
+
+<tr>
+<td colspan="2" align="center">
+    <%1797%>
+</td>
+</tr>
+
+<tr></tr>
+<tr></tr>
+<tr></tr>
+<tr>
+<td colspan="2" align="center">
+&nbsp;&nbsp;&nbsp;<button type="Button" value="<%1748%>" name="Button" class="button-rule" onClick="buttonClick(this,'<%1748%>');goHome();"><span class="roundleft_button">&nbsp;&nbsp; <%1748%></span><span class="roundright_button">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>
+</tr>
+</table>
+<input type="hidden" name="enable_ap_mode" value="<%363%>">
+<input type="hidden" name="call_by_genie" value="<%1737%>">
+</form>
+<p></p>
+</body>
+
+</html>

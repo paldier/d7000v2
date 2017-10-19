@@ -1,0 +1,15 @@
+# HG changeset patch
+# Parent d3e96f7e85cc945b4b3c8173793adcffacb66963
+
+diff --git a/src/utils/os_unix.c b/src/utils/os_unix.c
+--- a/src/utils/os_unix.c
++++ b/src/utils/os_unix.c
+@@ -158,7 +158,7 @@
+ #if defined(__uClinux__) || defined(__sun__)
+ 	return -1;
+ #else /* defined(__uClinux__) || defined(__sun__) */
+-	if (os_daemon(0, 0)) {
++	if (os_daemon(0, 1)) {
+ 		perror("daemon");
+ 		return -1;
+ 	}

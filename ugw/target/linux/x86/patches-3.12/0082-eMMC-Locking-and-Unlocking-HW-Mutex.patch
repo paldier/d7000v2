@@ -1,0 +1,68 @@
+From c23d345321e916fd2726bb1a0db8055a8fc437bb Mon Sep 17 00:00:00 2001
+From: "Christensen, Taylor" <taylor.christensen@intel.com>
+Date: Mon, 9 Nov 2015 16:22:34 -0800
+Subject: [PATCH] eMMC: Locking and Unlocking HW Mutex
+
+Correct the locking and unlocking of HW Mutex
+during eMMC calls. This should be a complete system
+to lock and unlock in basic cases, but with the new NetIP
+subsystem that may not be the case.
+---
+ drivers/mmc/core/core.c |   27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/drivers/mmc/core/core.c b/drivers/mmc/core/core.c
+index d6b3462..7186da8 100644
+--- a/drivers/mmc/core/core.c
++++ b/drivers/mmc/core/core.c
+@@ -49,6 +49,11 @@
+ #include "sd_ops.h"
+ #include "sdio_ops.h"
+ 
++#ifdef CONFIG_HW_MUTEXES
++#include <linux/hw_mutex.h>
++#include <linux/mmc/sdhci.h>
++#endif
++
+ /* If the device is not responding */
+ #define MMC_CORE_TIMEOUT_MS	(10 * 60 * 1000) /* 10 minute timeout */
+ 
+@@ -1036,6 +1041,21 @@ int __mmc_claim_host(struct mmc_host *host, atomic_t *abort)
+ 		wake_up(&host->wq);
+ 	spin_unlock_irqrestore(&host->lock, flags);
+ 	remove_wait_queue(&host->wq, &wait);
++
++#ifdef CONFIG_HW_MUTEXES
++
++	spin_lock_irqsave(&host->lock, flags);
++
++	if((host->claimer == current) && (host->claim_cnt == 1)) {
++	  spin_unlock_irqrestore(&host->lock, flags);
++	  LOCK_EMMC_HW_MUTEX(host);
++	}
++	else {
++	  spin_unlock_irqrestore(&host->lock, flags);
++	}
++
++#endif
++
+ 	if (host->ops->enable && !stop && host->claim_cnt == 1)
+ 		host->ops->enable(host);
+ 	return stop;
+@@ -1067,6 +1087,13 @@ void mmc_release_host(struct mmc_host *host)
+ 		host->claimed = 0;
+ 		host->claimer = NULL;
+ 		spin_unlock_irqrestore(&host->lock, flags);
++
++#ifdef CONFIG_HW_MUTEXES
++
++		UNLOCK_EMMC_HW_MUTEX(host);
++
++#endif
++
+ 		wake_up(&host->wq);
+ 	}
+ }
+-- 
+1.7.9.5
+

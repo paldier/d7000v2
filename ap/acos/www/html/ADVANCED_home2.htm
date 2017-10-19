@@ -1,0 +1,872 @@
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+
+<%11%>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<!--
+<meta http-equiv="refresh" content="3">
+-->
+<title>NETGEAR Router D7000v2</title>
+<link rel="stylesheet" href="<%56%>">
+<link rel="stylesheet" href="css/scrollbar.css">
+<link rel="stylesheet" href="css/button.css">
+
+<script src="jquery.js"></script>
+
+<script src="script/jquery.mousewheel.js"></script>
+<script src="script/jquery.jscrollpane.min.js"></script>
+
+<script src="script/script.js"></script>
+<link rel="stylesheet" href="form.css">
+<STYLE TYPE="text/javascript">
+	classes.num.all.fontFamily = "Courier";
+	classes.num.all.fontSize = "10pt" ;
+</style>
+<script language="javascript" type="text/javascript" src="func.js"></script>
+<script language="javascript" type="text/javascript" src="msg.js"></script>
+<script language="javascript" type="text/javascript" src="utility.js"></script>
+<script language="javascript" type="text/javascript" src="browser.js"></script>
+
+<script language="javascript" type="text/javascript" src="md5.js"></script>
+<script language="javascript" type="text/javascript" src="wep.js"></script>
+<script language="javascript" type="text/javascript">
+<!--
+var DisableFixedDNS = false;
+var DisableFixedMAC = false;
+var MacAddress;
+var DodDisable = false;
+var DodIndex = 1;
+
+    $(document).ready(function()
+    {	
+        var form=document.forms[1];
+        var gui_region = form.curlang.value;
+    
+        $('.scroll-pane').jScrollPane('scrollbarMargin:5px');
+ 
+        $('#INT_setup').click(function(ev){ 
+            parent.loadPage2("BAS_basic.htm");
+        }); 
+
+        $('#wireless_setup').click(function(ev){ 
+            parent.loadPage2("<%252%>");
+        }); 
+        
+        $('#wireless_setup_5G').click(function(ev){ 
+            parent.loadPage2("<%252%>");
+        });         
+        
+        $('#guest_setup').click(function(ev){ 
+            parent.loadPage2("WLG_wireless_dual_band_2.htm");
+        });         
+  
+        $('#guest_setup_5G').click(function(ev){ 
+            parent.loadPage2("WLG_wireless_dual_band_2.htm");
+        });   
+  
+        $('#LAN_setup').click(function(ev){ 
+            parent.loadPage2("WLG_ap_dual_band.htm");
+        });          
+        
+        $('.basic-text-menu').each(function(){
+             if(gui_region=="Chinese"){
+                 $(this).addClass("basic-text-menu-pr"); 
+             }else{
+                 $(this).removeClass("basic-text-menu-pr"); 
+             }
+        });
+        $('.basic-text-subTitle').each(function(){
+             if(gui_region=="Chinese"){
+                 $(this).addClass("basic-text-subTitle-pr"); 
+             }else{
+                 $(this).removeClass("basic-text-subTitle-pr"); 
+             }
+        });
+        $('.basic-text-content').each(function(){
+             if(gui_region=="Chinese"){
+                 $(this).addClass("basic-text-content-pr"); 
+             }else{
+                 $(this).removeClass("basic-text-content-pr"); 
+             }
+        });
+        $('.box-header-text').each(function(){
+             if(gui_region=="Chinese"){
+                 $(this).addClass("box-header-text-pr"); 
+             }else{
+                 $(this).removeClass("box-header-text-pr"); 
+             }
+        });       
+        /* checking long string */
+        if($('.header-text1').text().length>=36 | $('.header-text2').text().length>=36){
+               $('#box-header-table1').addClass("box-header-table-large");
+               $('#box-header-table2').addClass("box-header-table-large");
+               $('#box-header-table1').removeClass("box-header-table");
+               $('#box-header-table2').removeClass("box-header-table");                    
+        }
+
+        if($('.header-text3').text().length>=36 | $('.header-text4').text().length>=36){
+               $('#box-header-table3').addClass("box-header-table-large");
+               $('#box-header-table4').addClass("box-header-table-large");
+               $('#box-header-table3').removeClass("box-header-table");
+               $('#box-header-table4').removeClass("box-header-table");  
+        }    
+        if($('.header-text5').text().length>=36 | $('.header-text6').text().length>=36){
+               $('#box-header-table5').addClass("box-header-table-large");
+               $('#box-header-table6').addClass("box-header-table-large");
+               $('#box-header-table5').removeClass("box-header-table");
+               $('#box-header-table6').removeClass("box-header-table");  
+        }   		
+		
+		       
+    });
+
+    function setHelpIframeVisible(){
+        $('.bas-help-frame-div').css("visibility","visible");
+    }
+
+
+    function showHelpIframe() {
+
+
+        var imgSrc=document.getElementById('help-button');
+
+        if(imgSrc.src.search("down")>=0)
+        {
+            $(".bas-help-frame-div").show();
+            imgSrc.src="img/helparrowup-icon.gif";
+        }
+        else
+        {
+            $(".bas-help-frame-div").hide();
+            imgSrc.src="img/helparrowdown-icon.gif";
+            setTimeout(setHelpIframeVisible,500);
+        }
+    }
+   
+    function loadhelp(fname,anchname)
+    {
+        if ((loadhelp.arguments.length == 1 ) || (anchname == "" ))
+            $('#page').attr("src",fname+"_h.htm");
+        else
+            $('#page').attr("src",fname+"_h.htm#"  + anchname);
+    }   
+    
+   
+
+function adjustPageLayout()
+{
+    adjustButtonSize();
+        var table_height1 = $('#page-table1')[0].clientHeight+"px";
+        var table_height2 = $('#page-table2')[0].clientHeight+"px";
+        var table_height3 = $('#page-table3')[0].clientHeight+"px";
+        var table_height4 = $('#page-table4')[0].clientHeight+"px";
+        var table_height5 = $('#page-table5')[0].clientHeight+"px";
+        var table_height6 = $('#page-table6')[0].clientHeight+"px";		
+    
+        if($('#page-table1')[0].clientHeight >=  $('#page-table2')[0].clientHeight)
+            $('#page-table2').css("height",table_height1);
+        else
+            $('#page-table1').css("height",table_height2);
+            
+        if($('#page-table3')[0].clientHeight >=  $('#page-table4')[0].clientHeight)
+            $('#page-table4').css("height",table_height3);
+        else
+            $('#page-table3').css("height",table_height4);    
+        if($('#page-table5')[0].clientHeight >=  $('#page-table6')[0].clientHeight)
+            $('#page-table6').css("height",table_height5);
+        else
+            $('#page-table5').css("height",table_height6);
+}
+
+function adjustButtonSize()
+{
+    if($($('#reboot')[0].parentNode)[0].scrollHeight > 25 ||
+        $($('#statistics')[0].parentNode)[0].scrollHeight > 25 ||
+        $($('#status')[0].parentNode)[0].scrollHeight > 25) 
+    {
+        $($('#reboot')[0].parentNode).addClass('page-table-button-large-left');
+        $($('#reboot')[0].parentNode).removeClass('page-table-button-left');
+        $($('#statistics')[0].parentNode).addClass('page-table-button-large-right');
+        $($('#statistics')[0].parentNode).removeClass('page-table-button-right');
+        $($('#status')[0].parentNode).addClass('page-table-button-large-right');
+        $($('#status')[0].parentNode).removeClass('page-table-button-right');
+    }
+}
+
+function advButtonClick(index){
+
+    if(index==0) // Show Statistics
+        openStatisticsWindow();
+    else if(index==1)
+    {    
+          openStatusWindow();
+	// document.forms[0].buttonSelect.value="1";
+    }
+    else if(index==2)
+    {
+        if(confirm("<%2667%>"))
+        {
+            document.forms[0].buttonSelect.value="2";
+            document.forms[0].submit(document.forms[0]);
+        }
+    }
+}
+
+function openStatWindow() {
+	window.open(this.form.stat_page.value, '','height=350,status=yes');
+	return ture;
+}
+
+
+function openStatusWindow()
+{
+    var conn = document.forms[0].wantype.value;
+    var winoptions;
+    if (conn == "dhcp")
+    //if (conn == "dhcp" || conn == "pppoe")
+            winoptions = "width=400,height=460,status=yes,resizable=yes";
+    else if (conn == "pppoe" || conn == "pppoa")
+    {
+		<%512%>
+        if ("<%2668%><%2669%>" == "1")
+                winoptions = "width=400,height=600,status=yes,resizable=yes";
+        else
+		<%513%>
+                    winoptions = "width=400,height=360,status=yes,resizable=yes";
+    }
+    else
+            winoptions = "width=400,height=260,status=yes,resizable=yes";
+    openDataSubWin('RST_wanstat.htm',winoptions);
+}
+
+function openStatisticsWindow()
+{
+    var conn = document.forms[0].wantype.value;
+    var form=document.forms[1];
+    var gui_region = form.curlang.value;
+    var winoptions;
+    if(gui_region=="German"){
+       winoptions = "width=1024,height=360,status=yes,resizable=yes";
+       openDataSubWin('RST_statistics.htm',winoptions);
+    }else{
+       winoptions = "width=780,height=360,status=yes,resizable=yes";
+       openDataSubWin('RST_statistics.htm',winoptions);
+    }
+}
+
+function loadSettings()
+{
+    var cf=document.forms[0];
+    
+    adjustPageLayout();
+ 	parent.$('#page2').css("visibility","visible");
+    parent.$('#page_contain2').removeClass('main-page-contain-loading'); 
+/* 
+	if (cf.enable_apmode.value == 1)
+    {
+
+        var statusButton;
+        cf.Status.disabled = 'true';
+        statusButton=document.getElementsByName("Status");
+        //statusButton.outerHTML='<button type="submit" disabled value="<%2018%>" name="Remove" class="button-grey" onClick="buttonClick(this,\'<%2018%>\');return remove_disk();"><span class="roundleft_grey">&nbsp;&nbsp; <%2018%></span><span class="roundright_grey">&nbsp;&nbsp;&nbsp;&nbsp;</span></button>';
+        statusButton.outerHTML='<button type="button" disabled class="button-grey" style="float:left" onClick="advButtonClick(1);" onMouseOver="changeCursorPointer();" onMouseOut="changeCursorDefault();" name="Status"><%771%></button>';
+        //removeButton[0].style.cursor='default';
+    }
+*/
+}
+
+//-->
+</script>
+
+
+</head>
+
+<body onload="change_size_ADVPage();loadSettings();" bgcolor="#E5E5E5" style="width:640px;margin:0px;padding:0px" onResize="change_size_ADVPage();">
+	<form action="newgui_adv_home.cgi" method="post">
+	<div id="scroll-pane" class="scroll-pane" style="height:420px;width:670px;overflow:auto;scrolling:auto">
+		<table>
+			<tr>
+				<td>
+					<div style="float:left;width:635px;positive:relative;border:0px;padding-left:3px;margin:0px">
+						<div style="float:left;width:310px;positive:relative;border:0px;margin-top;0px">
+                                                        <div id="box-header-table1" class="box-header-table">
+							<table>
+							  <tr class="box-header">
+								<td style="width:17px">
+								  <img src="img/good-icon.gif" style="padding-left:10px;padding-top:3px"/>
+								</td>
+								<td class="box-header-text header-text1"><%2670%></td>
+							  </tr>
+							</table>
+                                                        </div>
+							<table style="width:305px;background-color:#FFFFFF;margin-left:5px;border-collapse:collapse;border-right:3px solid #D0D0D0">
+								<tr align="left" valign="bottom"><td>
+									<table id="page-table1" class="page-table" style="width:300px;background-color:#FFFFFF;height:150px">
+										<tr style="height:6px;background-color:#FFFFFF">
+											<td colspan="2" class="basic-table-seperate-border"></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" width="25%" ><%1782%></td>
+											<td class="basic-text-content" width="75%"> <%2671%> </td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border" ><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2672%></td>
+											<td class="basic-text-content" > <%2673%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2674%></td>
+											<td class="basic-text-content" > <%2675%></td>
+										</tr>
+                                        <%702%>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-subTitle" ><%2676%></td>
+											<td class="basic-text-content" > </td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%670%> </td>
+											<td class="basic-text-content" > <%2677%> </td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%444%> </td>
+											<td class="basic-text-content" ><%245%> </td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%1675%> </td>
+											<td class="basic-text-content" ><%2678%> </td>
+										</tr>
+                                        <%704%>
+										<!--
+										<tr class="basic-text">
+											<td class="basic-text-menu" >Last Checked for Upgrade</td>
+											<td class="basic-text-content" >3/31/2010 14:55</td>
+										</tr>
+										-->  
+                                        <%705%>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2679%></td>
+											<td class="basic-text-content" ><%2680%></td>
+										</tr>
+                                        <%707%>
+										<tr >
+											<td class="basic-text-menu-bottom">&nbsp;</td>
+											<td class="basic-text-content-bottom"></td>
+										</tr>	                                        
+										<tr class="basic-text" style="align:center">
+											<td colspan="2" class="basic-table-seperate-border" style="background-color:#FFFFFF;">
+											<table >
+											<tr>
+											<td width="25%"></td>
+											<td  width="50%" class="page-table-button-left" align="center" onClick="advButtonClick(2);" onMouseOver="changeCursorPointer();" onMouseOut="changeCursorDefault();">
+													 <span id="reboot"><%2681%></span>	
+											</td>
+											<td width="25%"></td>
+											</tr>
+											</table>
+											</td>
+										</tr>		                                        
+									</table>
+								</td></tr>
+							</table>
+
+							<div class="page-table-bottom-2" > </div>
+
+						</div>
+
+						<div style="float:left;width:310px;posision:relative;">
+
+                                                        <div id="box-header-table2" class="box-header-table">
+							<table>
+
+								<tr class="box-header">
+									<td style="width:20px">
+										<%2682%>
+									</td>
+                                    <%702%>
+									<td class="box-header-text header-text2" style="cursor:pointer;" id="INT_setup"><%2683%></td>
+                                    <%704%>
+                                    <%705%>
+                                    <td class="box-header-text header-text2" style="cursor:pointer;" id="LAN_setup"><%2676%></td>
+                                    <%707%>
+								</tr>
+							</table>
+                                                        </div>
+
+							<table style="width:305px;background-color:#FFFFFF;margin-left:5px;border-collapse:collapse;border-right:3px solid #D0D0D0">
+								<tr align="left" valign="bottom"><td>
+									<table id="page-table2" class="page-table" style="width:300px;background-color:#FFFFFF;" >
+										<tr style="height:6px;background-color:#FFFFFF">
+											<td colspan="2" class="basic-table-seperate-border"></td>
+										</tr>
+
+
+										<tr class="basic-text">
+											<td class="basic-text-menu" width="25%" ><%670%> </td>
+                                            <%702%>
+											<td class="basic-text-content" width="75%"><%566%></td>
+                                            <%704%>
+                                            <%705%>
+											<td class="basic-text-content" width="75%"><%2677%></td>
+                                            <%707%>
+										</tr>
+                                        <%705%>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%1675%> </td>
+											<td class="basic-text-content" ><%2678%> </td>
+										</tr>    
+                                        <%707%>            
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" >Internet <%444%> </td>
+                                            <%702%>
+											<td class="basic-text-content" ><%968%></td>
+                                            <%704%>
+                                            <%705%>       
+                                            <td class="basic-text-content" ><%1224%></td>
+                                            <%707%>                                           
+										</tr>
+
+                                        <%702%>
+                                        <tr class="basic-text">
+                                            <td class="basic-text-menu" >IPTV <%444%> </td>
+                                            <td class="basic-text-content" ><%2684%></td>
+                                        </tr>
+                                        <%704%>
+
+
+                                        <%702%>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" >Internet <%2685%> </td>
+											<td class="basic-text-content" ><%2686%></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" >IPTV <%2685%> </td>
+											<td class="basic-text-content" ><%2687%></td>
+										</tr>
+
+                                        <%704%>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%445%> </td>
+                                            <%702%>
+											<td class="basic-text-content" ><%1281%></td>
+                                            <%704%>
+                                            <%705%>  
+                                            <td class="basic-text-content" ><%1225%></td>
+                                            <%707%>
+										</tr>
+                                        <%705%>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%560%> </td>
+											<td class="basic-text-content" ><%1228%> </td>
+										</tr>    
+                                        <%707%>                                           
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2688%> </td>
+                                            <%702%>
+											<td class="basic-text-content" ><%1232%></td>
+                                            <%704%>
+                                            <%705%>                                              
+											<td class="basic-text-content" ><%1233%><br><%1234%></td>
+                                            <%707%>
+										</tr>		
+			
+
+                                        <tr >
+											<td class="basic-text-menu-bottom">&nbsp;</td>
+											<td class="basic-text-content-bottom"></td>
+										</tr>	
+										<tr class="basic-text" style="align:center;">
+											<td colspan="2" class="basic-table-seperate-border" style="background-color:#FFFFFF;">
+											<table ><tr>
+											 <td colspan="1" class="page-table-button-right" align="center"   onClick="advButtonClick(0);" onMouseOver="changeCursorPointer();" onMouseOut="changeCursorDefault();">
+												 <span id="statistics"><%1156%></span>									 
+											</td>
+											 <td colspan="1" class="page-table-button-right" align="center"  onClick="advButtonClick(1);" onMouseOver="changeCursorPointer();" onMouseOut="changeCursorDefault();">
+												 <span id="status" name="Status"><%771%></span>									 
+											</td>
+											</tr>
+											</table></td>
+										</tr>										
+									</table>
+									<input type="hidden" style="float:left;height:0px"></input>	
+								</td></tr>
+							</table>
+							<div class="page-table-bottom-2"> </div>
+						</div>
+
+					</div> 
+				</td>
+			</tr>
+			<tr>
+				<td style="height:2px;"></td>
+			</tr>
+			<tr>
+				<td><div class="adv-home-table-seperate"></div><div class="adv-home-table-seperate-2"></div></td>
+			</tr>
+			<tr>
+				<td style="height:2px"></td>
+			</tr>
+			<tr>
+				<td>
+					<div style="float:left;width:635px;positive:relative;top:0px;padding-left:3px;">
+
+						<div style="float:left;width:310px;positive:relative;top:0px">
+
+                                                        <div id="box-header-table3" class="box-header-table">
+							<table>
+
+								<tr class="box-header">
+									<td style="width:17px">
+										<%2689%>
+									</td>
+									<td class="box-header-text header-text3" style="cursor:pointer;" id="wireless_setup"><%333%> (2.4GHz)</td>
+								</tr>
+							</table>
+                                                        </div>
+
+							<table style="width:305px;background-color:#FFFFFF;margin-left:5px;border-collapse:collapse;border-right:3px solid #D0D0D0">
+								<tr align="left" valign="bottom"><td>
+									<table id="page-table3" class="page-table" style="background-color:#FFFFFF;width:300px;height:150px">
+										<tr style="height:6px;background-color:#FFFFFF">
+											<td colspan="2" class="basic-table-seperate-border"></td>
+										</tr>
+
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%145%></td>
+											<td class="basic-text-content" style="white-space:pre"><%2690%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%133%></td>
+											<td class="basic-text-content" > <%2691%> </td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%147%></td>
+											<td class="basic-text-content" > <%2692%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%149%></td>
+											<td class="basic-text-content" > <%2693%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>										
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2694%></td>
+											<td class="basic-text-content" ><%2695%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2696%></td>
+											<td class="basic-text-content" ><%2697%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+                                                                       
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2698%></td>
+											<td class="basic-text-content" ><%2699%></td>
+										</tr>		
+                                        <tr >
+											<td class="basic-text-menu-bottom">&nbsp;</td>
+											<td class="basic-text-content-bottom"></td>
+										</tr>	                                        
+									</table>
+								</td></tr>
+							</table>
+
+							<div class="page-table-bottom-2" > </div>
+
+						</div> 
+
+						<div style="float:left;width:310px;positive:relative;">
+
+
+                                                        <div id="box-header-table4" class="box-header-table">
+							<table>
+
+								<tr class="box-header">
+									<td style="width:17px">
+										<%2700%>
+									</td>
+									<td class="box-header-text  header-text4" style="cursor:pointer;" id="wireless_setup_5G"><%333%> (5GHz)</td>
+								</tr>
+							</table>
+                                                        </div>
+
+							<table style="width:305px;background-color:#FFFFFF;margin-left:5px;border-collapse:collapse;border-right:3px solid #D0D0D0">
+								<tr align="left" valign="bottom"><td>
+									<table id="page-table4" class="page-table" style="background-color:#FFFFFF;width:300px;height:150px">
+										<tr style="height:6px;background-color:#FFFFFF">
+											<td colspan="2" class="basic-table-seperate-border"></td>
+										</tr>
+
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%145%></td>
+											<td class="basic-text-content" style="white-space:pre"><%2701%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%133%></td>
+											<td class="basic-text-content" ><%2702%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%147%></td>
+											<td class="basic-text-content" ><%2703%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%149%></td>
+											<td class="basic-text-content" ><%2704%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>										
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2694%></td>
+											<td class="basic-text-content" ><%2705%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2696%></td>
+											<td class="basic-text-content" ><%2706%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+                                                               
+										<tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2698%></td>
+											<td class="basic-text-content" ><%2707%></td>
+										</tr>
+                                        <tr >
+											<td class="basic-text-menu-bottom">&nbsp;</td>
+											<td class="basic-text-content-bottom"></td>
+										</tr>	                                        
+									</table>
+								</td></tr>
+							</table>
+							<div class="page-table-bottom-2" > </div>
+						</div> 
+
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td style="height:2px;"></td>
+			</tr>
+			<tr>
+				<td><div class="adv-home-table-seperate"></div><div class="adv-home-table-seperate-2"></div></td>
+			</tr>
+			<tr>
+				<td style="height:2px"></td>
+			</tr>
+			<tr>
+				<td>
+					<div style="float:left;width:635px;positive:relative;top:0px;padding-left:3px;">
+
+						<div style="float:left;width:310px;positive:relative;top:0px">
+
+                                                        <div id="box-header-table5" class="box-header-table">
+							<table>
+
+								<tr class="box-header">
+									<td style="width:17px">
+										<%2708%>
+									</td>
+									<td class="box-header-text  header-text5" style="cursor:pointer;" id="guest_setup"><%288%> (2.4 GHz)</td>
+								</tr>
+							</table>
+                                                        </div>
+
+							<table style="width:305px;background-color:#FFFFFF;margin-left:5px;border-collapse:collapse;border-right:3px solid #D0D0D0">
+								<tr align="left" valign="bottom"><td>
+									<table id="page-table5" class="page-table" style="background-color:#FFFFFF;width:300px;height:150px">
+										<tr style="height:6px;background-color:#FFFFFF">
+											<td colspan="2" class="basic-table-seperate-border"></td>
+										</tr>
+
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%145%></td>
+											<td class="basic-text-content" style="white-space:pre"><%2709%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2694%></td>
+											<td class="basic-text-content" ><%2710%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2696%></td>
+											<td class="basic-text-content" ><%2711%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+                                          
+                                                                                <tr class="basic-text">
+											<td class="basic-text-menu" ><%1607%></td>
+											<td class="basic-text-content" ><%2712%></td>
+										</tr>
+                                        <tr >
+											<td class="basic-text-menu-bottom">&nbsp;</td>
+											<td class="basic-text-content-bottom"></td>
+										</tr>	                                      
+									</table>
+								</td></tr>
+							</table>
+
+							<div class="page-table-bottom-2" > </div>
+
+						</div> 
+
+						<div style="float:left;width:310px;positive:relative;">
+
+                                                        <div id="box-header-table6" class="box-header-table">
+							<table>
+
+								<tr class="box-header">
+									<td style="width:17px">
+										<%2713%>
+									</td>
+									<td class="box-header-text  header-text6" style="cursor:pointer;" id="guest_setup_5G"><%288%> (5 GHz)</td>
+								</tr>
+							</table>
+                                                        </div>
+
+							<table style="width:305px;background-color:#FFFFFF;margin-left:5px;border-collapse:collapse;border-right:3px solid #D0D0D0">
+								<tr align="left" valign="bottom"><td>
+									<table id="page-table6" class="page-table" style="background-color:#FFFFFF;width:300px;height:150px">
+										<tr style="height:6px;background-color:#FFFFFF">
+											<td colspan="2" class="basic-table-seperate-border"></td>
+										</tr>
+
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%145%></td>
+											<td class="basic-text-content" style="white-space:pre"><%2714%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2694%></td>
+											<td class="basic-text-content" ><%2715%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%2696%></td>
+											<td class="basic-text-content" ><%2716%></td>
+										</tr>
+										<tr>
+											<td colspan="2" class="basic-table-seperate-border"><div class="basic-table-seperate"></div></td>
+										</tr>
+                                                           
+										<tr class="basic-text">
+											<td class="basic-text-menu" ><%1607%></td>
+											<td class="basic-text-content" ><%2717%></td>
+										</tr>	
+										<tr>
+											<td class="basic-text-menu" >&nbsp;</td>
+											<td class="basic-text-content" ></td>
+										</tr>	
+									
+									</table>
+								</td></tr>
+							</table>
+							<div class="page-table-bottom-2" > </div>
+						</div> 
+
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td style="height:2px;"></td>
+			</tr>
+			<tr>
+				<td><div class="adv-home-table-seperate"></div><div class="adv-home-table-seperate-2"></div></td>
+			</tr>
+			<tr>
+				<td style="height:2px"></td>
+			</tr>
+
+		</table>
+		</div>
+		<input type="hidden" value="1" name="buttonSelect"/>
+		<input type="hidden" name="wantype" value="<%1075%>">
+		<input type="hidden" name="enable_apmode" value="<%363%>">
+	</form>  
+    <form>
+        <input type="hidden" name="curlang" value="<%9%>">  
+    </form>    
+</body>
+</html>
+
+
+
