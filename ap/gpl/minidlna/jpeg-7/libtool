@@ -1,8 +1,8 @@
-#! /bin/bash
+#! /bin/sh
 
 # libtool - Provide generalized library-building support services.
 # Generated automatically by config.status (libjpeg) 7.0
-# Libtool was configured on host paldier-VirtualBox:
+# Libtool was configured on host server:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 #
 #   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005,
@@ -74,19 +74,19 @@ build=x86_64-unknown-linux-gnu
 build_os=linux-gnu
 
 # A sed program that does not truncate output.
-SED="/home/paldier/d7000/staging_dir/host/bin/sed"
+SED="/data/jenny/UGW-7.1.1-5.2.0.32/staging_dir/host/bin/sed"
 
 # Sed that helps us avoid accidentally triggering echo(1) options like -n.
 Xsed="$SED -e 1s/^X//"
 
 # A grep program that handles long lines.
-GREP="/home/paldier/d7000/staging_dir/host/bin/grep"
+GREP="/data/jenny/UGW-7.1.1-5.2.0.32/staging_dir/host/bin/grep"
 
 # An ERE matcher.
-EGREP="/home/paldier/d7000/staging_dir/host/bin/grep -E"
+EGREP="/data/jenny/UGW-7.1.1-5.2.0.32/staging_dir/host/bin/grep -E"
 
 # A literal string matcher.
-FGREP="/home/paldier/d7000/staging_dir/host/bin/grep -F"
+FGREP="/data/jenny/UGW-7.1.1-5.2.0.32/staging_dir/host/bin/grep -F"
 
 # A BSD- or MS-compatible name lister.
 NM="mips-openwrt-linux-uclibc-nm"
@@ -138,7 +138,7 @@ old_postuninstall_cmds=""
 LTCC="mips-openwrt-linux-uclibc-gcc -std=gnu99"
 
 # LTCC compiler flags.
-LTCFLAGS=" -Os -DXAGENT_CLOUD_SUPPORT -DD7000v2 -DCONFIG_INTEL_SDK -DOPENDNS_PARENTAL_CONTROL -Os"
+LTCFLAGS=" -Os -DD7000v2 -DCONFIG_INTEL_SDK -DOPENDNS_PARENTAL_CONTROL -Os"
 
 # Take the output of nm and produce a listing of raw symbols and C names.
 global_symbol_pipe="sed -n -e 's/^.*[	 ]\\([ABCDGIRSTW][ABCDGIRSTW]*\\)[	 ][	 ]*\\([_A-Za-z][_A-Za-z0-9]*\\)\$/\\1 \\2 \\2/p'"
@@ -156,7 +156,7 @@ global_symbol_to_c_name_address_lib_prefix="sed -n -e 's/^: \\([^ ]*\\) \$/  {\\
 objdir=.libs
 
 # Shell to use when invoking shell scripts.
-SHELL="/bin/bash"
+SHELL="/bin/sh"
 
 # An echo program that does not interpret backslashes.
 ECHO="echo"
@@ -240,10 +240,10 @@ finish_eval=""
 hardcode_into_libs=yes
 
 # Compile-time system search path for libraries.
-sys_lib_search_path_spec="/home/paldier/d7000/staging_dir/toolchain-mips_mips32_gcc-4.8-linaro_uClibc-0.9.33.2/lib/gcc/mips-openwrt-linux-uclibc/4.8.3 /home/paldier/d7000/staging_dir/toolchain-mips_mips32_gcc-4.8-linaro_uClibc-0.9.33.2/mips-openwrt-linux-uclibc/lib"
+sys_lib_search_path_spec="/data/jenny/UGW-7.1.1-5.2.0.32/staging_dir/toolchain-mips_mips32_gcc-4.8-linaro_uClibc-0.9.33.2/lib/gcc/mips-openwrt-linux-uclibc/4.8.3 /data/jenny/UGW-7.1.1-5.2.0.32/staging_dir/toolchain-mips_mips32_gcc-4.8-linaro_uClibc-0.9.33.2/mips-openwrt-linux-uclibc/lib"
 
 # Run-time system search path for libraries.
-sys_lib_dlsearch_path_spec="/lib /usr/lib /var/lib/VBoxGuestAdditions/lib /usr/lib/x86_64-linux-gnu/libfakeroot /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/local/lib /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/mesa-egl /usr/lib/x86_64-linux-gnu/mesa /lib32 /usr/lib32 /libx32 /usr/libx32 "
+sys_lib_dlsearch_path_spec="/lib /usr/lib /usr/lib/i386-linux-gnu/mesa /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib/i686-linux-gnu /usr/lib/i686-linux-gnu /usr/local/lib /lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/mesa-egl /usr/lib/x86_64-linux-gnu/mesa /lib32 /usr/lib32 "
 
 # Whether dlopen is supported.
 dlopen_support=unknown

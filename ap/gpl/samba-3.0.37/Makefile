@@ -37,7 +37,7 @@ configure:
 	 CC=$(CC) ./configure \
 	    --target=mips-openwrt-linux \
 	    --host=mips-openwrt-linux \
-	    --build=x86_64-pc-linux \
+	    --build=`/bin/arch`-linux \
 	    --enable-shared \
 	    --disable-static \
 	    --disable-cups \

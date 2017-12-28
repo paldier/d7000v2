@@ -44,10 +44,10 @@
 
 #define WLAN_REGION          WW_VERSION
 #define FW_REGION            WW_VERSION   /* true f/w region */
-
+ 
 /*formal version control*/
 #define AMBIT_HARDWARE_VERSION     "U12L358T00"
-#define AMBIT_SOFTWARE_VERSION     "V1.0.0.40"
+#define AMBIT_SOFTWARE_VERSION     "V1.0.0.45"
 #define AMBIT_UI_VERSION           "1.0.1"
 #define STRING_TBL_VERSION         "1.0.0.40_3.1.2.5"
 

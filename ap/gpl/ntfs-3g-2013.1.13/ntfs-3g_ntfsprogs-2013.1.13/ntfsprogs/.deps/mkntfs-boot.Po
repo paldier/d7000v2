@@ -1,3 +1,0 @@
-mkntfs-boot.o: boot.c boot.h
-
-boot.h:
