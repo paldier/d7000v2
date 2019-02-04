@@ -19,9 +19,9 @@ CONFIG_TARGET_lantiq_xrx500=y
 # CONFIG_TARGET_lantiq_xrx500_None is not set
 # CONFIG_TARGET_lantiq_xrx500_HAPS is not set
 # CONFIG_TARGET_lantiq_xrx500_grx500_evm is not set
-CONFIG_TARGET_lantiq_xrx500_easy350_anywan=y
+# CONFIG_TARGET_lantiq_xrx500_easy350_anywan is not set
 # CONFIG_TARGET_lantiq_xrx500_easy350_anywan_800m is not set
-# CONFIG_TARGET_lantiq_xrx500_easy350_anywan_router_800m is not set
+CONFIG_TARGET_lantiq_xrx500_easy350_anywan_router_800m=y
 # CONFIG_TARGET_lantiq_xrx500_easy350_m is not set
 # CONFIG_TARGET_lantiq_xrx500_easy550_anywan_gw is not set
 # CONFIG_TARGET_lantiq_xrx500_easy350_anywan_mpe is not set
@@ -98,11 +98,11 @@ CONFIG_TARGET_UBIFS_JOURNAL_SIZE=""
 # Image Options
 #
 CONFIG_TARGET_UBI_MTD_SUPPORT=y
-CONFIG_TARGET_ROOTFS_DATAFS_SIZE="5MiB"
-CONFIG_TARGET_DATAFS_JFFS2=y
-# CONFIG_TARGET_DATAFS_UBIFS is not set
+CONFIG_TARGET_ROOTFS_DATAFS_SIZE="20MiB"
+# CONFIG_TARGET_DATAFS_JFFS2 is not set
+CONFIG_TARGET_DATAFS_UBIFS=y
 # CONFIG_TARGET_DATAFS_NONE is not set
-# CONFIG_TARGET_ROOTFS_DATAFS_OVERLAY is not set
+CONFIG_TARGET_ROOTFS_DATAFS_OVERLAY=y
 CONFIG_TARGET_ROOTFS_IMAGE_PHYSICAL_ERASE_SIZE="128k"
 # CONFIG_KERNEL_LANTIQ_IMAGE_EXTRA_CHECKS is not set
 CONFIG_LANTIQ_OPENWRT_FIRMWARE=y
@@ -115,7 +115,7 @@ CONFIG_TARGET_ROOTFS_INCLUDE_FIT=y
 #
 # CONFIG_ALL_KMODS is not set
 # CONFIG_ALL is not set
-# CONFIG_SIGNED_PACKAGES is not set
+CONFIG_SIGNED_PACKAGES=y
 
 #
 # General build options
@@ -1205,9 +1205,9 @@ CONFIG_UBOOT_CONFIG_GRX500_667M_CL9=y
 # CONFIG_UBOOT_CONFIG_GRX500_64Mx8 is not set
 # CONFIG_UBOOT_CONFIG_GRX500_64Mx16 is not set
 # CONFIG_UBOOT_CONFIG_GRX500_128Mx8 is not set
-# CONFIG_UBOOT_CONFIG_GRX500_128Mx16 is not set
+CONFIG_UBOOT_CONFIG_GRX500_128Mx16=y
 # CONFIG_UBOOT_CONFIG_GRX500_256Mx8 is not set
-CONFIG_UBOOT_CONFIG_GRX500_256Mx16=y
+# CONFIG_UBOOT_CONFIG_GRX500_256Mx16 is not set
 # CONFIG_UBOOT_CONFIG_GRX500_512Mx8 is not set
 # CONFIG_UBOOT_CONFIG_GRX500_512Mx16 is not set
 CONFIG_UBOOT_CONFIG_GRX500_BL8=y
@@ -1233,15 +1233,15 @@ CONFIG_UBOOT_CONFIG_GRX500_ADDITIVE_LATENCY=1
 #
 # End of DDR configurations 
 #
-CONFIG_UBOOT_CONFIG_GRX500_CPU_600M=y
-# CONFIG_UBOOT_CONFIG_GRX500_CPU_800M is not set
+# CONFIG_UBOOT_CONFIG_GRX500_CPU_600M is not set
+CONFIG_UBOOT_CONFIG_GRX500_CPU_800M=y
 # CONFIG_UBOOT_CONFIG_GRX500_CPU_1000M is not set
 # CONFIG_UBOOT_CONFIG_GRX500_CPU_1200M is not set
-CONFIG_UBOOT_CONFIG_GRX500_CBM_FREQ_200M=y
+# CONFIG_UBOOT_CONFIG_GRX500_CBM_FREQ_200M is not set
 # CONFIG_UBOOT_CONFIG_GRX500_CBM_FREQ_300M is not set
 # CONFIG_UBOOT_CONFIG_GRX500_CBM_FREQ_400M is not set
 # CONFIG_UBOOT_CONFIG_GRX500_CBM_FREQ_480M is not set
-# CONFIG_UBOOT_CONFIG_GRX500_CBM_FREQ_600M is not set
+CONFIG_UBOOT_CONFIG_GRX500_CBM_FREQ_600M=y
 # CONFIG_UBOOT_CONFIG_GRX500_CBM_FREQ_800M is not set
 # CONFIG_UBOOT_CONFIG_GRX500_CBM_FREQ_1200M is not set
 # CONFIG_UBOOT_CONFIG_GRX500_CBM_FREQ_2400M is not set
@@ -1285,7 +1285,7 @@ CONFIG_UBOOT_CONFIG_NFSARGS="setenv bootargs ubi.mtd=system_sw root=/dev/nfs rw 
 CONFIG_UBOOT_CONFIG_RAMARGS="setenv bootargs root=/dev/ram rw"
 CONFIG_UBOOT_CONFIG_FLASHARGS="setenv bootargs ubi.mtd=system_sw rootfsname=$(rootfsname) ro rootfstype=squashfs do_overlay"
 CONFIG_UBOOT_CONFIG_ADDIP="setenv bootargs $(bootargs) ip=$(ipaddr):$(serverip):$(gatewayip):$(netmask):$(hostname):$(netdev):on"
-CONFIG_UBOOT_CONFIG_ADDMISC="setenv bootargs $(bootargs) console=$(console),$(baudrate) ethaddr=$(ethaddr) panic=1 $(mtdparts) init=/etc/preinit active_bank=$(active_bank) update_chk=$(update_chk) maxcpus=4 pci=pcie_bus_perf ethwan=$(ethwan) ubootver=$(ver)"
+CONFIG_UBOOT_CONFIG_ADDMISC="setenv bootargs $(bootargs) console=$(console),$(baudrate) ethaddr=$(ethaddr) panic=1 $(mtdparts) init=/etc/preinit active_bank=$(active_bank) update_chk=$(update_chk) maxcpus=4 pci=pcie_bus_perf ethwan=$(ethwan) ubootver=$(ver) mem=224M@512M"
 CONFIG_UBOOT_CONFIG_BOOTFILE="uImage"
 CONFIG_UBOOT_CONFIG_BOOT_CORE="uImage_bootcore"
 CONFIG_UBOOT_CONFIG_U_BOOT="u-boot.ltq"
@@ -1295,7 +1295,7 @@ CONFIG_UBOOT_CONFIG_FULLIMAGE="fullimage.img"
 CONFIG_UBOOT_CONFIG_TOTALIMAGE="totalimage.img"
 CONFIG_UBOOT_CONFIG_MTDIDS="nand0=17c00000.nand-parts"
 # CONFIG_UBOOT_CONFIG_USE_DEFAULT_MTDPARTS is not set
-CONFIG_UBOOT_CONFIG_MTDPARTS="mtdparts=17c00000.nand-parts:1m(uboot),256k(ubootconfigA),256k(ubootconfigB),256k(gphyfirmware),1m(calibration),16m(bootcore),108m(system_sw),-(res)"
+CONFIG_UBOOT_CONFIG_MTDPARTS="mtdparts=17c00000.nand-parts:1m(uboot),256k(ubootconfigA),256k(ubootconfigB),256k(gphyfirmware),1m(calibration),4m(bootcore),1m(nvram),512k(board_data),512k(POT1),512k(POT2),1m(TM1),1m(TM2),512k(ML1),512k(ML2),512k(ML3),512k(ML4),512k(ML5),512k(ML6),512k(ML7),512k(DebugMsg),5m(OpenVPN),512k(MISC1),512k(MISC2),512k(MISC3),105m(system_sw),-(res)"
 CONFIG_UBOOT_CONFIG_FLASH_NFS="run nfsargs addip addmisc;bootm $(kernel_addr)"
 CONFIG_UBOOT_CONFIG_NET_RAM="run run_bootcore;tftp $(loadaddr) $(tftppath)$(bootfile); run ramargs addip addmisc; bootm"
 CONFIG_UBOOT_CONFIG_NET_FLASH="run run_bootcore;tftp $(loadaddr) $(tftppath)$(bootfile); run flashargs addip addmisc; bootm"
@@ -1590,11 +1590,6 @@ CONFIG_PACKAGE_kmod-jffs2=y
 # CONFIG_PACKAGE_kmod-input-uinput is not set
 
 #
-# Intel
-#
-# CONFIG_PACKAGE_kmod-ipsec is not set
-
-#
 # LED modules
 #
 # CONFIG_PACKAGE_kmod-leds-gpio is not set
@@ -1614,7 +1609,6 @@ CONFIG_PACKAGE_kmod-jffs2=y
 # Lantiq
 #
 CONFIG_PACKAGE_kmod-atm_stack=y
-# CONFIG_PACKAGE_kmod-bonding is not set
 # CONFIG_PACKAGE_kmod-drv-toe is not set
 CONFIG_PACKAGE_kmod-grx500-a21=y
 # CONFIG_PACKAGE_kmod-grx500-emu is not set
@@ -1823,6 +1817,7 @@ CONFIG_PACKAGE_kmod-mii=y
 # CONFIG_PACKAGE_kmod-appletalk is not set
 # CONFIG_PACKAGE_kmod-atm is not set
 # CONFIG_PACKAGE_kmod-ax25 is not set
+# CONFIG_PACKAGE_kmod-bonding is not set
 # CONFIG_PACKAGE_kmod-bridge is not set
 # CONFIG_PACKAGE_kmod-capi is not set
 # CONFIG_PACKAGE_kmod-dnsresolver is not set
@@ -1830,6 +1825,7 @@ CONFIG_PACKAGE_kmod-mii=y
 # CONFIG_PACKAGE_kmod-gre6 is not set
 CONFIG_PACKAGE_kmod-ip6-tunnel=y
 # CONFIG_PACKAGE_kmod-ipip is not set
+# CONFIG_PACKAGE_kmod-ipsec is not set
 CONFIG_PACKAGE_kmod-iptunnel=y
 CONFIG_PACKAGE_kmod-iptunnel4=y
 CONFIG_PACKAGE_kmod-iptunnel6=y
@@ -2121,7 +2117,7 @@ CONFIG_XRX500_BOOTCORE_MODEL="GRX_350_550_BOOTCORE"
 # UGW Software
 #
 # CONFIG_PACKAGE_ltq-cgroups is not set
-# CONFIG_PACKAGE_readchip is not set
+CONFIG_PACKAGE_readchip=y
 
 #
 # Libraries
@@ -2152,10 +2148,13 @@ CONFIG_PACKAGE_libxtables=y
 #
 # CONFIG_PACKAGE_libcyassl is not set
 CONFIG_PACKAGE_libopenssl=y
+
+#
+# Configuration
+#
 CONFIG_OPENSSL_WITH_EC=y
 # CONFIG_OPENSSL_WITH_EC2M is not set
 # CONFIG_OPENSSL_WITH_SSL3 is not set
-# CONFIG_OPENSSL_HARDWARE_SUPPORT is not set
 # CONFIG_OPENSSL_ENGINE_CRYPTO is not set
 CONFIG_PACKAGE_libpolarssl=y
 
@@ -2174,49 +2173,7 @@ CONFIG_PACKAGE_libpolarssl=y
 CONFIG_PACKAGE_libblobmsg-json=y
 # CONFIG_PACKAGE_libcharset is not set
 # CONFIG_PACKAGE_libconfig is not set
-CONFIG_PACKAGE_libcurl=y
-
-#
-# SSL support
-#
-CONFIG_LIBCURL_POLARSSL=y
-# CONFIG_LIBCURL_CYASSL is not set
-# CONFIG_LIBCURL_AXTLS is not set
-# CONFIG_LIBCURL_OPENSSL is not set
-# CONFIG_LIBCURL_GNUTLS is not set
-# CONFIG_LIBCURL_NOSSL is not set
-
-#
-# Supported protocols
-#
-# CONFIG_LIBCURL_DICT is not set
-CONFIG_LIBCURL_FILE=y
-CONFIG_LIBCURL_FTP=y
-# CONFIG_LIBCURL_GOPHER is not set
-CONFIG_LIBCURL_HTTP=y
-CONFIG_LIBCURL_COOKIES=y
-# CONFIG_LIBCURL_IMAP is not set
-# CONFIG_LIBCURL_LDAP is not set
-# CONFIG_LIBCURL_POP3 is not set
-# CONFIG_LIBCURL_RTSP is not set
-# CONFIG_LIBCURL_SSH2 is not set
-CONFIG_LIBCURL_NO_SMB="!"
-# CONFIG_LIBCURL_SMTP is not set
-# CONFIG_LIBCURL_TELNET is not set
-# CONFIG_LIBCURL_TFTP is not set
-
-#
-# Miscellaneous
-#
-CONFIG_LIBCURL_PROXY=y
-# CONFIG_LIBCURL_CRYPTO_AUTH is not set
-# CONFIG_LIBCURL_TLS_SRP is not set
-# CONFIG_LIBCURL_LIBIDN is not set
-# CONFIG_LIBCURL_THREADED_RESOLVER is not set
-# CONFIG_LIBCURL_ZLIB is not set
-# CONFIG_LIBCURL_UNIX_SOCKETS is not set
-# CONFIG_LIBCURL_LIBCURL_OPTION is not set
-# CONFIG_LIBCURL_VERBOSE is not set
+# CONFIG_PACKAGE_libcurl is not set
 # CONFIG_PACKAGE_libdaemon is not set
 # CONFIG_PACKAGE_libdb47 is not set
 # CONFIG_PACKAGE_libdbus is not set
@@ -2268,8 +2225,8 @@ CONFIG_PACKAGE_liblua=y
 # CONFIG_PACKAGE_libnftnl is not set
 CONFIG_PACKAGE_libnl=y
 CONFIG_PACKAGE_libnl-tiny=y
-CONFIG_PACKAGE_libnl3=y
-CONFIG_PACKAGE_libogg=y
+# CONFIG_PACKAGE_libnl3 is not set
+# CONFIG_PACKAGE_libogg is not set
 CONFIG_PACKAGE_libol=y
 # CONFIG_PACKAGE_libopcodes is not set
 CONFIG_PACKAGE_libpcap=y
@@ -2693,6 +2650,85 @@ CONFIG_PACKAGE_iptables=y
 # CONFIG_PACKAGE_openvpn-nossl is not set
 # CONFIG_PACKAGE_openvpn-openssl is not set
 # CONFIG_PACKAGE_openvpn-polarssl is not set
+# CONFIG_PACKAGE_strongswan is not set
+# CONFIG_PACKAGE_strongswan-charon is not set
+# CONFIG_PACKAGE_strongswan-default is not set
+# CONFIG_PACKAGE_strongswan-full is not set
+# CONFIG_PACKAGE_strongswan-isakmp is not set
+# CONFIG_PACKAGE_strongswan-libtls is not set
+# CONFIG_PACKAGE_strongswan-minimal is not set
+# CONFIG_PACKAGE_strongswan-mod-addrblock is not set
+# CONFIG_PACKAGE_strongswan-mod-aes is not set
+# CONFIG_PACKAGE_strongswan-mod-af-alg is not set
+# CONFIG_PACKAGE_strongswan-mod-agent is not set
+# CONFIG_PACKAGE_strongswan-mod-attr is not set
+# CONFIG_PACKAGE_strongswan-mod-attr-sql is not set
+# CONFIG_PACKAGE_strongswan-mod-blowfish is not set
+# CONFIG_PACKAGE_strongswan-mod-ccm is not set
+# CONFIG_PACKAGE_strongswan-mod-cmac is not set
+# CONFIG_PACKAGE_strongswan-mod-connmark is not set
+# CONFIG_PACKAGE_strongswan-mod-constraints is not set
+# CONFIG_PACKAGE_strongswan-mod-coupling is not set
+# CONFIG_PACKAGE_strongswan-mod-ctr is not set
+# CONFIG_PACKAGE_strongswan-mod-curl is not set
+# CONFIG_PACKAGE_strongswan-mod-des is not set
+# CONFIG_PACKAGE_strongswan-mod-dhcp is not set
+# CONFIG_PACKAGE_strongswan-mod-dnskey is not set
+# CONFIG_PACKAGE_strongswan-mod-duplicheck is not set
+# CONFIG_PACKAGE_strongswan-mod-eap-identity is not set
+# CONFIG_PACKAGE_strongswan-mod-eap-md5 is not set
+# CONFIG_PACKAGE_strongswan-mod-eap-mschapv2 is not set
+# CONFIG_PACKAGE_strongswan-mod-eap-radius is not set
+# CONFIG_PACKAGE_strongswan-mod-eap-tls is not set
+# CONFIG_PACKAGE_strongswan-mod-farp is not set
+# CONFIG_PACKAGE_strongswan-mod-fips-prf is not set
+# CONFIG_PACKAGE_strongswan-mod-gcm is not set
+# CONFIG_PACKAGE_strongswan-mod-gcrypt is not set
+# CONFIG_PACKAGE_strongswan-mod-gmp is not set
+# CONFIG_PACKAGE_strongswan-mod-gmpdh is not set
+# CONFIG_PACKAGE_strongswan-mod-ha is not set
+# CONFIG_PACKAGE_strongswan-mod-hmac is not set
+# CONFIG_PACKAGE_strongswan-mod-kernel-libipsec is not set
+# CONFIG_PACKAGE_strongswan-mod-kernel-netlink is not set
+# CONFIG_PACKAGE_strongswan-mod-ldap is not set
+# CONFIG_PACKAGE_strongswan-mod-led is not set
+# CONFIG_PACKAGE_strongswan-mod-load-tester is not set
+# CONFIG_PACKAGE_strongswan-mod-md4 is not set
+# CONFIG_PACKAGE_strongswan-mod-md5 is not set
+# CONFIG_PACKAGE_strongswan-mod-mysql is not set
+# CONFIG_PACKAGE_strongswan-mod-nonce is not set
+# CONFIG_PACKAGE_strongswan-mod-openssl is not set
+# CONFIG_PACKAGE_strongswan-mod-pem is not set
+# CONFIG_PACKAGE_strongswan-mod-pgp is not set
+# CONFIG_PACKAGE_strongswan-mod-pkcs1 is not set
+# CONFIG_PACKAGE_strongswan-mod-pkcs11 is not set
+# CONFIG_PACKAGE_strongswan-mod-pkcs12 is not set
+# CONFIG_PACKAGE_strongswan-mod-pkcs7 is not set
+# CONFIG_PACKAGE_strongswan-mod-pkcs8 is not set
+# CONFIG_PACKAGE_strongswan-mod-pubkey is not set
+# CONFIG_PACKAGE_strongswan-mod-random is not set
+# CONFIG_PACKAGE_strongswan-mod-rc2 is not set
+# CONFIG_PACKAGE_strongswan-mod-resolve is not set
+# CONFIG_PACKAGE_strongswan-mod-revocation is not set
+# CONFIG_PACKAGE_strongswan-mod-sha1 is not set
+# CONFIG_PACKAGE_strongswan-mod-sha2 is not set
+# CONFIG_PACKAGE_strongswan-mod-smp is not set
+# CONFIG_PACKAGE_strongswan-mod-socket-default is not set
+# CONFIG_PACKAGE_strongswan-mod-socket-dynamic is not set
+# CONFIG_PACKAGE_strongswan-mod-sql is not set
+# CONFIG_PACKAGE_strongswan-mod-sqlite is not set
+# CONFIG_PACKAGE_strongswan-mod-sshkey is not set
+# CONFIG_PACKAGE_strongswan-mod-stroke is not set
+# CONFIG_PACKAGE_strongswan-mod-test-vectors is not set
+# CONFIG_PACKAGE_strongswan-mod-uci is not set
+# CONFIG_PACKAGE_strongswan-mod-unity is not set
+# CONFIG_PACKAGE_strongswan-mod-updown is not set
+# CONFIG_PACKAGE_strongswan-mod-whitelist is not set
+# CONFIG_PACKAGE_strongswan-mod-x509 is not set
+# CONFIG_PACKAGE_strongswan-mod-xauth-eap is not set
+# CONFIG_PACKAGE_strongswan-mod-xauth-generic is not set
+# CONFIG_PACKAGE_strongswan-mod-xcbc is not set
+# CONFIG_PACKAGE_strongswan-utils is not set
 # CONFIG_PACKAGE_xl2tpd is not set
 
 #

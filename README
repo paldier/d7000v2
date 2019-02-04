@@ -1,3 +1,8 @@
+./scripts/feeds update -a
+./scripts/feeds install -a
+ubuntu 12.04 or 14.04
+
+
 This is the buildsystem for the OpenWrt Linux distribution
 
 Please use "make menuconfig" to configure your appreciated
