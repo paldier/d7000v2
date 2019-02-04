@@ -1,7 +1,7 @@
 ./scripts/feeds update -a
 ./scripts/feeds install -a
 ubuntu 12.04 or 14.04
-
+without wifi/dsl driver
 
 This is the buildsystem for the OpenWrt Linux distribution
 
